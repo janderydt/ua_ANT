@@ -1,8 +1,7 @@
-#ignore all .mat, .log, .csv, .txt, .out, *.asv, *.png, *.tif, *.nc files
+#ignore all .mat, .log, .txt, .out, *.asv, *.png, *.tif, *.nc files
 *.mat
 *.log
 *.txt
-*.csv
 *.out
 *.asv
 *.png
