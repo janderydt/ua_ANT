@@ -1,0 +1,22 @@
+#ignore all .mat, .log, .csv, .txt, .out, *.asv, *.png, *.tif, *.nc files
+*.mat
+*.log
+*.txt
+*.csv
+*.out
+*.asv
+*.png
+*.tif 
+*.nc
+
+#ignore all hidden files
+._*
+
+#ignore python dir
+__pycache__/
+
+#ignore specific case folders, only track master folder
+ANT_Inverse/ANT_Inverse_1*/
+ANT_Inverse/ANT_Inverse_ForQing/
+ANT_Diagnostic/ANT_Diagnostic_1*/
+ANT_Data/ANT_Interpolants/GeoTiffFiles/

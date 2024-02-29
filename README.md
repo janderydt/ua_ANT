@@ -1,0 +1,1 @@
+Circum-Antarctic Ua configuration, developed for OCEAN:ICE. The programme is co-funded by the European Union, Horizon Europe Funding Programme for research and innovation under grant agreement Nr. 101060452 and by UK Research and Innovation.
