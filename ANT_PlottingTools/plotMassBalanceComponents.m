@@ -231,18 +231,18 @@ for yy=1:numel(years)
     %% For each year, compare Ua flux through Ua GL to Ua flux through GL0, FG1, FG2 from Gardner et al 2018
     % Assemble data in n*4 matrix, where n is the number of basins:
     % [qGLUa,qGL0,qFG1,qFG2]
-    M = zeros(4,numel(B.x)-1); xlabels=[];
-    for ii=2:numel(B.x)
-        M(1,ii-1) = B.qGL_tot{ii}+B.qOB_tot{ii}; % Ua GL flux
-        M(2,ii-1) = sum(GL0.flux(GL0.ind==ii)/1e12);  % GL0 flux
-        M(3,ii-1) = sum(FG1.flux(FG1.ind==ii)/1e12); % FG1 flux
-        M(4,ii-1) = sum(FG2.flux(FG2.ind==ii)/1e12); % FG2 flux
+    M = zeros(4,numel(B.x)); xlabels=[];
+    for ii=1:numel(B.x)
+        M(1,ii) = B.qGL_tot{ii}+B.qOB_tot{ii}; % Ua GL flux
+        M(2,ii) = sum(GL0.flux(GL0.ind==ii)/1e12);  % GL0 flux
+        M(3,ii) = sum(FG1.flux(FG1.ind==ii)/1e12); % FG1 flux
+        M(4,ii) = sum(FG2.flux(FG2.ind==ii)/1e12); % FG2 flux
         xlabels = [xlabels string(B.name{ii})];
     end
     % plot data
     H2=fig("units","inches","width",130*12/72.27,"height",45*12/72.27,"fontsize",14,"font","Helvetica");
-    bar([2:numel(B.x)],M');
-    xticks(2:numel(B.x)); xticklabels(xlabels);
+    bar([1:numel(B.x)],M');
+    xticks(1:numel(B.x)); xticklabels(xlabels);
     title(year_datestr(yy));
     
 end
