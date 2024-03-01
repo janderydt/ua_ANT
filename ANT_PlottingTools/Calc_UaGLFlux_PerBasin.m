@@ -1,4 +1,4 @@
-function [B,GL] = Define_UaGLFlux_PerBasin(MUA,F,GF,B,CtrlVar)
+function [B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,GF,B,CtrlVar)
 
 % GL flux
 GLgeo=GLgeometry(MUA.connectivity,MUA.coordinates,GF,CtrlVar);
@@ -19,7 +19,6 @@ end
 
 
 %% keep n longest GL segments
-%[xGL,yGL,GLgeo]=PlotGroundingLines(CtrlVarInRestartFile,MUA,GF);
 I = find(isnan(xGL)); I = [0;I(:);numel(xGL)+1];
 % make structure for individual GL segements
 for ii=1:numel(I)-1
@@ -34,11 +33,14 @@ for ii=1:numel(I)-1
     GL(ii).ind = 0*GL(ii).x+ii;
     GL(ii).basinindex = [];
 end
-[~,I] = maxk([GL(:).L],numel(GL));
+n_tokeep = numel(GL); % keep all segments
+[~,I] = maxk([GL(:).L],n_tokeep);
+
 %for ii=1:numel(I)
 %    GLtmp = GL(I(ii));
 %    plot(GLtmp.x,GLtmp.y,'-r','linewidth',2); 
 %end
+
 GL = GL(I);
 
 %% check proximity to basins

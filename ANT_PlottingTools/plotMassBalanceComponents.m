@@ -1,6 +1,6 @@
 function plotMassBalanceComponents
 
-%% This function plots mass balance components for grounded and floating ice
+%% This function plots mass balance components for grounded and/or floating ice
 %% Grounded ice: surface mass balance, ice-shelf flux and Ocean flux for individual basins
 %% Floating ice: surface mass balance, grounding line flux and calving flux for indididual ice shelves
 
@@ -47,6 +47,24 @@ if grounded
 filename = 'basins_IMBIE_v2.mat'; 
 B = load(filename);
 
+% Only keep ice rises and islands larger than 250km2. We don't treat
+% smaller ice rises and/or islands seperately
+Bx = B.x{1}; Bxtmp = [];
+By = B.y{1}; Bytmp = [];
+I = [0; find(isnan(Bx)); numel(Bx)+1];
+for ii=1:numel(I)-1
+    xtmp = Bx(I(ii)+1:I(ii+1)-1);
+    ytmp = By(I(ii)+1:I(ii+1)-1);
+    P = polyshape(xtmp(:),ytmp(:));
+    A = area(P)/1e6; % square km
+    if A>250
+        Bxtmp = [Bxtmp(:);xtmp(:);NaN];
+        Bytmp = [Bytmp(:);ytmp(:);NaN];
+    end
+end
+B.x{1} = Bxtmp;
+B.y{1} = Bytmp;
+
 %% To compare modelled fluxes with those from the literature, we need the flux gates that were used
 %% to calculate drainage. 
 %% flux gates from Gardner et al NSIDC
@@ -71,67 +89,49 @@ for yy=1:numel(years)
     Fvb.Values=F.vb;
     Frho.Values=F.rho;
     Fh.Values=F.h;
-    [xGL0,yGL0,qGL0]=FluxAcrossBoundary([GL0.X(:) GL0.X([2:end 1])'],[GL0.Y(:) GL0.Y([2:end 1])'],Fub,Fvb,Fh,Frho);
-    [xFG1,yFG1,qFG1]=FluxAcrossBoundary([FG1.X(:) FG1.X([2:end 1])'],[FG1.Y(:) FG1.Y([2:end 1])'],Fub,Fvb,Fh,Frho);
-    [xFG2,yFG2,qFG2]=FluxAcrossBoundary([FG2.X(:) FG2.X([2:end 1])'],[FG2.Y(:) FG2.Y([2:end 1])'],Fub,Fvb,Fh,Frho);
-    
-    % Order Ua nodes per basin
-    B = Define_UaNodes_PerBasin(MUA,B);
+    [GL0.x,GL0.y,GL0.flux,~,~]=FluxAcrossBoundary([GL0.X(:) GL0.X([2:end 1])'],[GL0.Y(:) GL0.Y([2:end 1])'],Fub,Fvb,Fh,Frho);
+    [FG1.x,FG1.y,FG1.flux,~,~]=FluxAcrossBoundary([FG1.X(:) FG1.X([2:end 1])'],[FG1.Y(:) FG1.Y([2:end 1])'],Fub,Fvb,Fh,Frho);
+    [FG2.x,FG2.y,FG2.flux,~,~]=FluxAcrossBoundary([FG2.X(:) FG2.X([2:end 1])'],[FG2.Y(:) FG2.Y([2:end 1])'],Fub,Fvb,Fh,Frho);
 
-    % Obtain Ua fluxes across the grounding line (GL) into floating areas
-    [B,GL] = Define_UaGLFlux_PerBasin(MUA,F,GF,B,CtrlVarInRestartFile);
+    % Order Fluxes per basin
+    [~,GL0.ind] = Define_Quantity_PerBasin(GL0.x,GL0.y,B);
+    [~,FG1.ind] = Define_Quantity_PerBasin(FG1.x,FG1.y,B);
+    [~,FG2.ind] = Define_Quantity_PerBasin(FG2.x,FG2.y,B);
 
-    % Obtain Ua fluxes across the open boundary (OB) into the ocean
-    B = Define_UaOBFlux_PerBasin(MUA,F,GF,B,CtrlVarInRestartFile); 
-
-    % figure; hold on;    
-    % plot(cell2mat([B.xGL]'),cell2mat([B.yGL]'),'.k');
-    % plot(xGL0,yGL0);
-    % plot(xFG1,yFG1);
-    % plot(xFG2,yFG2);
-    % sum(qGL0/1e12)
-    % sum(qFG1/1e12)
-    % sum(qFG2/1e12)
-    % qGL_tmp=B.qGL;
-    % sum(cell2mat(qGL_tmp'))/1e12 
-    % qGL_tmp{1}=[];
-    % sum(cell2mat(qGL_tmp'))/1e12
-    % qOB_tmp=B.qOB;
-    % sum(cell2mat(qOB_tmp'))/1e12
-    % qOB_tmp{1}=[];
-    % sum(cell2mat(qOB_tmp'))/1e12
-
-
-   % plot([B.x{}])
-    
+    % Order Ua elements per basin
+    basin = Define_Quantity_PerBasin(MUA.xEle,MUA.yEle,B);
     for ii=1:numel(B.x)
-        B.SMB{ii} = abs(sum(smb_grounded(B.UaEle{ii}),'omitmissing')/1e9); % assuming this is always positive
-        B.qGL_tot{ii} = abs(sum(B.qGL{ii},'omitmissing')/1e12); % assuming this is always positive
-        B.qOB_tot{ii} = abs(sum(B.qOB{ii},'omitmissing')/1e12); % assuming this is always positive
+        B.UaEle{ii} = basin(ii).ind;
     end
 
+    % Obtain Ua fluxes across the grounding line (qGL) into floating areas
+    [B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,GF,B,CtrlVarInRestartFile);
+
+    % Obtain Ua fluxes across the open boundary (qOB) into the ocean
+    B = Calc_UaOBFlux_PerBasin(MUA,F,GF,B,CtrlVarInRestartFile); 
+    
+    % Sum values of SMB, qGL and qOB for each basin
+    for ii=1:numel(B.x)
+        B.SMB{ii} = sum(smb_grounded(B.UaEle{ii}),'omitmissing')/1e9; 
+        B.qGL_tot{ii} = sum(B.qGL{ii},'omitmissing')/1e12; 
+        B.qOB_tot{ii} = sum(B.qOB{ii},'omitmissing')/1e12; 
+    end
+
+    % Initalize some variables for plotting
     if yy==1
         CM1 = crameri('lajolla',64);
-        % cmin1 = min(cell2mat(B.qGL'));
-        % cmax1 = max(cell2mat(B.qGL'));
-        % crange = cmax1-cmin1;
-        % cmin1 = 0;
-        % cmax1 = cmax1 + 0.5*crange;
         cmin1 = 0;
         cmax1 = 250;
-        B0 = B;
         CM2 = flipdim(crameri('vik',64),1);
-        % cmin2 = min(-cell2mat(B.qGL_tot')+cell2mat(B.SMB'));
-        % cmax2 = max(-cell2mat(B.qGL_tot')+cell2mat(B.SMB'));
-        % crange = cmax2-cmin2;
-        % cmin2 = cmin2 - 0.75*crange;
-        % cmax2 = cmax2 + 0.75*crange;
-        % cmin2 = -max(abs(cmin2),abs(cmax2));
-        % cmax2 = -cmin2;
         cmin2 = -250;
         cmax2 = 250;
+        % save data for first year in seperate variable
+        B0 = B;
     end
 
+    %% -------- %%
+    %% PLOTTING %%
+    %% -------- %%
     H=fig("units","inches","width",130*12/72.27,"height",45*12/72.27,"fontsize",14,"font","Helvetica");
 
     tlo_fig = tiledlayout(1,4,"TileSpacing","compact");
@@ -139,7 +139,8 @@ for yy=1:numel(years)
         ax_fig(i) = nexttile(tlo_fig,i); hold on;
     end
 
-    startB=1;
+    % To exclude values for the ice rises and islands, set startB=2
+    startB=2;
 
     %% SMB
     for ii=startB:numel(B.x)
@@ -227,8 +228,30 @@ for yy=1:numel(years)
         title("Change in GL Flux: "+year_datestr(yy)+"-"+year_datestr(1));
     end
 
+    %% For each year, compare Ua flux through Ua GL to Ua flux through GL0, FG1, FG2 from Gardner et al 2018
+    % Assemble data in n*4 matrix, where n is the number of basins:
+    % [qGLUa,qGL0,qFG1,qFG2]
+    M = zeros(4,numel(B.x)-1); xlabels=[];
+    for ii=2:numel(B.x)
+        M(1,ii-1) = B.qGL_tot{ii}+B.qOB_tot{ii}; % Ua GL flux
+        M(2,ii-1) = sum(GL0.flux(GL0.ind==ii)/1e12);  % GL0 flux
+        M(3,ii-1) = sum(FG1.flux(FG1.ind==ii)/1e12); % FG1 flux
+        M(4,ii-1) = sum(FG2.flux(FG2.ind==ii)/1e12); % FG2 flux
+        xlabels = [xlabels string(B.name{ii})];
+    end
+    % plot data
+    H2=fig("units","inches","width",130*12/72.27,"height",45*12/72.27,"fontsize",14,"font","Helvetica");
+    bar([2:numel(B.x)],M');
+    xticks(2:numel(B.x)); xticklabels(xlabels);
+    title(year_datestr(yy));
     
 end
+
+
+
+%% For the whole of Antarctica, compare Ua qGL/SMB/net with Gardner GL0, FG1, FG2/SMB/net
+%% for individual years
+
 
 end
 

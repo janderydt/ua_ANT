@@ -1,4 +1,4 @@
-function B = Define_UaOBFlux_PerBasin(MUA,F,GF,B,CtrlVar)
+function B = Calc_UaOBFlux_PerBasin(MUA,F,GF,B,CtrlVar)
 
 % We define OB nodes as Boundary nodes that are not afloat. 
 x = MUA.coordinates(:,1);
@@ -17,7 +17,7 @@ Fvb.Values=F.vb;
 Frho.Values=F.rho;
 Fh.Values=F.h;
 
-[xOB,yOB,qOB]=FluxAcrossBoundary(xOB,yOB,Fub,Fvb,Fh,Frho);
+[xOB,yOB,qOB,~,~]=FluxAcrossBoundary(xOB,yOB,Fub,Fvb,Fh,Frho);
 
 %% check proximity to basins
 PQ = [xOB(:) yOB(:)]; dist = [];

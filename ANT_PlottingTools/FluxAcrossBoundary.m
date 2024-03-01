@@ -1,4 +1,4 @@
-function [xB,yB,qB]=FluxAcrossBoundary(X,Y,Fub,Fvb,Fh,Fr)
+function [xB,yB,qB,qBx,qBy]=FluxAcrossBoundary(X,Y,Fub,Fvb,Fh,Fr)
 
 % INPUT: X and Y are (n,2) dimensional arrays with x/y coordinates of the endpoints 
 % of n edges through which the flux should be calculated. 
@@ -20,9 +20,10 @@ fprintf("Removing %s segments with zero length.\n",string(numel(Izerods)));
 ds(Izerods)=[];
 X(Izerods,:)=[];
 Y(Izerods,:)=[];
-    
-nx = (Y(:,2)-Y(:,1))./ds;
-ny = -(X(:,2)-X(:,1))./ds;
+   
+% pointing outward for clockwise ordered line segments
+nx = -(Y(:,2)-Y(:,1))./ds;
+ny = (X(:,2)-X(:,1))./ds;
 
 xB = 0.5*(X(:,1)+X(:,2));
 yB = 0.5*(Y(:,1)+Y(:,2));
