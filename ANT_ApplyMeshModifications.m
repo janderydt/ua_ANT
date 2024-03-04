@@ -5,8 +5,8 @@ function UserVar=ANT_ApplyMeshModifications(UserVar)
 %% domain boundary, and you would like to deactivate certain elements of the basemesh.
 
 % Load base mesh and domain boundary
-load(UserVar.BaseMesh);
-load(UserVar.BCs);
+load(UserVar.BaseMesh.Mesh);
+load(UserVar.BaseMesh.BCs);
 
 xEle=Nodes2EleMean(MUA.connectivity,MUA.coordinates(:,1));
 yEle=Nodes2EleMean(MUA.connectivity,MUA.coordinates(:,2));
@@ -53,6 +53,8 @@ end
 I = find(~inpoly([xEle(:) yEle(:)],[xB(:) yB(:)]));
 UserVar.BaseMesh.DeactivatedElements = I;
 
+x = MUA.coordinates(:,1);
+y = MUA.coordinates(:,2);
 [In,On] = inpoly([x(:) y(:)],[xB(:) yB(:)]);
 I = [1:MUA.Nnodes]; I(unique([find(In(:)==1);find(On(:)==1)]))=[];
 UserVar.BaseMesh.DeactivatedNodes = I;

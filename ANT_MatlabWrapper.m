@@ -138,7 +138,7 @@ if ~isempty(Inew)
     RunTable{ind,"ExpID"} = ExpID;
     RunTable{ind,'pgid'} = pgid;
     
-    copyfile('./ANT_',char(type),'_9999/',['./ANT_',char(type),'_',num2str(ExpID),'/']); 
+    copyfile(['./ANT_',char(type),'_9999/'],['./ANT_',char(type),'_',num2str(ExpID),'/']); 
 
     % initialize UserVar.Finished
     UserVar.Finished = 1;

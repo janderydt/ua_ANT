@@ -7,7 +7,7 @@ echo $pgid;
 
 $(
 
-start="addpath("mnt/md0/Ua/cases/ANT/"); cd /mnt/md0/Ua/cases/ANT/ANT_Inverse; ANT_MatlabWrapper($pgid,"Inverse")";
+start="addpath(\"/mnt/md0/Ua/cases/ANT\"); cd /mnt/md0/Ua/cases/ANT/ANT_Inverse; ANT_MatlabWrapper($pgid,\"Inverse\")";
 
 /usr/local/MATLAB/R2023b/bin/matlab -nodisplay -r "$start; quit;";
 
