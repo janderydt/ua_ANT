@@ -1,4 +1,4 @@
-function UserVar = ANT_GetUserVar(RunTable,ind,UserVar)
+function UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar)
 
 %% This function deals with all the information in the RunTable, and feeds that information 
 %% to Ua via the UserVar structure. The content of this function is entirely flexible, and

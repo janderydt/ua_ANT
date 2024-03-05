@@ -59,62 +59,130 @@ if ~isempty(Iexisting)
             % TO DO: check run has finished
             if RunTable{ind,'Restart'}==1
                 UserVar.Restart = 1;
+                fprintf(fid,"yes.\n");
                 fprintf(fid,"   ...ANT_MatlabWrapper: Restarting ExpID %s...\n",string(RunTable{ind,'ExpID'}));
-		        RunTable{ind,"Restart"} = 0;
+            else
+                fprintf(fid,"no.\n");
             end
 
             % now gather run info
             if type=="Diagnostic"
+
                 UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
-            elseif type=="Inverse"
-                UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar);
-            end
+
+                RunTable{ind,"SubmissionTime"}(:) = datestr(now); 
             
-            RunTable{ind,"SubmissionTime"}(:) = datestr(now); 
-            RunTable{ind,"Submitted"} = 1;
-            RunTable{ind,"Running"} = 1;
-            RunTable{ind,'pgid'} = pgid;
-            writetable(RunTable,Table);
-
-            % launch job
-            cd(UserVar.Experiment);
-
-            diary(UserVar.Experiment+".out")
-            diary on
-
-            something_submitted = 1;
-
-            fprintf(fid,'============================\n');
-            fprintf(fid,string(datetime("now"))+"\n");
-            fprintf(fid,'============================\n');
-            fprintf(fid,"> ANT_MatlabWrapper: (Re-)Submitted %s. \n",UserVar.Experiment);
-
-       	    try
-                UserVar = Ua2D(UserVar);
-            catch ME
+                RunTable{ind,"Submitted"} = 1;
+                RunTable{ind,"Running"} = 1;
+                RunTable{ind,'pgid'} = pgid;
+                writetable(RunTable,Table);
+    
+                % launch job
+                cd(UserVar.Experiment);
+    
+                diary(UserVar.Experiment+".out")
+                diary on
+    
+                something_submitted = 1;
+    
                 fprintf(fid,'============================\n');
                 fprintf(fid,string(datetime("now"))+"\n");
                 fprintf(fid,'============================\n');
-                fprintf(fid,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
+                fprintf(fid,"> ANT_MatlabWrapper: (Re-)Submitted %s. \n",UserVar.Experiment);
+    
+       	        try
+                    UserVar = Ua2D(UserVar);
+                catch ME
+                    fprintf(fid,'============================\n');
+                    fprintf(fid,string(datetime("now"))+"\n");
+                    fprintf(fid,'============================\n');
+                    fprintf(fid,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
+    
+                    UserVar.Finished = 0;
+    
+                    msgString = getReport(ME,'extended');
+                    fprintf(fid,"%s \n",msgString);
+                end
+    
+                cd ..
+        
+                % read Runtable again in case any changes were made by other
+                % processes
+                RunTable=readtable(Table); 
+                ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+                writetable(RunTable,Table);
+    
+                ANT_CleanUp(UserVar);
+    
+                diary off
 
-                UserVar.Finished = 0;
+            elseif type=="Inverse"
 
-                msgString = getReport(ME,'extended');
-                fprintf(fid,"%s \n",msgString);
+                UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar);
+                UserVar.Finished = 1;
+
+                UserVar.IterationsDone = RunTable{ind,"IterationsDone"};
+
+                while UserVar.IterationsDone < RunTable{ind,"Iterations"} && UserVar.Finished
+    
+                    UserVar.Iterations = min(5000,RunTable{ind,"Iterations"}-UserVar.IterationsDone);
+        
+                    RunTable{ind,"SubmissionTime"}(:) = datestr(now); 
+                    RunTable{ind,"Submitted"} = 1;
+                    RunTable{ind,"Running"} = 1;
+                    RunTable{ind,'pgid'} = pgid;
+                    writetable(RunTable,Table);
+        
+                    % launch job
+                    cd(UserVar.Experiment);
+    
+                    diary(UserVar.Experiment+".out")
+                    diary on
+    
+                    something_submitted = 1;
+    
+                    fprintf(fid,'============================\n');
+                    fprintf(fid,string(datetime("now"))+"\n");
+                    fprintf(fid,'============================\n');
+                    fprintf(fid,"> ANT_MatlabWrapper: (Re-)Submitted %s. %s iterations done.\n",UserVar.Experiment,num2str(UserVar.IterationsDone));
+            
+                    Inew = [];
+    
+                    try
+                        UserVar = Ua2D(UserVar);                
+                    catch ME
+                        fprintf(fid,'============================\n');
+                        fprintf(fid,string(datetime("now"))+"\n");
+                        fprintf(fid,'============================\n');
+                        fprintf(fid,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
+    
+                        UserVar.Finished = 0;
+    
+                        msgString = getReport(ME,'extended'); 
+                        fprintf(fid,"%s \n",msgString);
+                    end
+            
+                    if UserVar.Finished
+                        UserVar.Restart = 1;
+                    end
+                            
+                    cd ..
+            
+                    % read Runtable again in case any changes were made by other
+                    % processes
+                    RunTable=readtable(Table); 
+                    ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+                    RunTable{ind,"IterationsDone"} = UserVar.IterationsDone;        
+                    writetable(RunTable,Table);   
+    
+                end
+            
+                ANT_CleanUp(UserVar);
+
+                diary off
+
             end
 
-            cd ..
-    
-            % read Runtable again in case any changes were made by other
-            % processes
-            RunTable=readtable(Table); 
-            ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
-            writetable(RunTable,Table);
-
-            ANT_CleanUp(UserVar);
-
-            diary off
-    
         end
 
         kk=kk+1;
@@ -145,51 +213,112 @@ if ~isempty(Inew)
 
     % now gather run info
     UserVar.Experiment = ['ANT_',char(type),'_',num2str(ExpID)];
+
     if type=="Diagnostic"
+
         UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
-    elseif type=="Inverse"
-        UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar);
-    end
-    UserVar.Restart = 0;
 
-    % adjust table
-    RunTable{ind,"Submitted"} = 1;
-    RunTable{ind,"Running"} = 1;
-    RunTable{ind,"SubmissionTime"}(:) = datestr(now);        
-    writetable(RunTable,Table);
-
-    % launch job
-    cd(UserVar.Experiment);
-
-    diary(UserVar.Experiment+".out")
-    diary on
-
-    fprintf(fid,'============================\n');
-    fprintf(fid,string(datetime("now"))+"\n");
-    fprintf(fid,'============================\n');
-    fprintf(fid,"> ANT_MatlabWrapper: (Re-)Submitted %s. \n",UserVar.Experiment);
-
-    try
-        UserVar = Ua2D(UserVar);
-    catch ME
+        UserVar.Restart = 0;
+    
+        % adjust table
+        RunTable{ind,"Submitted"} = 1;
+        RunTable{ind,"Running"} = 1;
+        RunTable{ind,"SubmissionTime"}(:) = datestr(now);        
+        writetable(RunTable,Table);
+    
+        % launch job
+        cd(UserVar.Experiment);
+    
+        diary(UserVar.Experiment+".out")
+        diary on
+    
         fprintf(fid,'============================\n');
         fprintf(fid,string(datetime("now"))+"\n");
         fprintf(fid,'============================\n');
-        fprintf(fid,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
+        fprintf(fid,"> ANT_MatlabWrapper: (Re-)Submitted %s. \n",UserVar.Experiment);
+    
+        try
+            UserVar = Ua2D(UserVar);
+        catch ME
+            fprintf(fid,'============================\n');
+            fprintf(fid,string(datetime("now"))+"\n");
+            fprintf(fid,'============================\n');
+            fprintf(fid,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
+    
+            UserVar.Finished = 0;
+    
+            msgString = getReport(ME,'extended');
+            fprintf(fid,"%s \n",msgString);
+        end
+    
+        cd ..
+    
+        % read Runtable again in case any changes were made by other
+        % processes
+        RunTable=readtable(Table); 
+        ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+        writetable(RunTable,Table);   
 
-        UserVar.Finished = 0;
 
-        msgString = getReport(ME,'extended');
-        fprintf(fid,"%s \n",msgString);
+    elseif type=="Inverse"
+
+        UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar);
+
+        UserVar.IterationsDone = 0;
+        UserVar.Restart = 0;
+    
+        % adjust table
+        RunTable{ind,"Submitted"} = 1;
+        RunTable{ind,"Running"} = 1;
+    
+        while UserVar.IterationsDone < RunTable{ind,"Iterations"} && UserVar.Finished
+    
+            UserVar.Iterations = min(5000,RunTable{ind,"Iterations"}-UserVar.IterationsDone);
+    
+            RunTable{ind,"SubmissionTime"}(:) = datestr(now);        
+            writetable(RunTable,Table);
+    
+            % launch job
+            cd(UserVar.Experiment);
+    
+            diary(UserVar.Experiment+".out")
+            diary on
+    
+            fprintf(fid,'============================\n');
+            fprintf(fid,string(datetime("now"))+"\n");
+            fprintf(fid,'============================\n');
+            fprintf(fid,"> ANT_MatlabWrapper: (Re-)Submitted %s. %s iterations done.\n",UserVar.Experiment,num2str(UserVar.IterationsDone));
+    
+            try
+                UserVar = Ua2D(UserVar);                
+            catch ME
+                fprintf(fid,'============================\n');
+                fprintf(fid,string(datetime("now"))+"\n");
+                fprintf(fid,'============================\n');
+                fprintf(fid,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
+    
+                UserVar.Finished = 0;
+    
+                msgString = getReport(ME,'extended'); 
+                fprintf(fid,"%s \n",msgString);
+            end
+    
+            if UserVar.Finished
+                        UserVar.Restart = 1;
+            end
+                    
+            cd ..
+    
+            % read Runtable again in case any changes were made by other
+            % processes
+            RunTable=readtable(Table); 
+            ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+            RunTable{ind,"IterationsDone"} = UserVar.IterationsDone;        
+            writetable(RunTable,Table);   
+    
+        end
+
     end
-
-    cd ..
-
-    % read Runtable again in case any changes were made by other
-    % processes
-    RunTable=readtable(Table); 
-    ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
-    writetable(RunTable,Table);   
 
     ANT_CleanUp(UserVar);
 
