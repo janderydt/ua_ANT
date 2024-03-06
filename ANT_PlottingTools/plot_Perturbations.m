@@ -1,4 +1,4 @@
-function plotPerturbations
+function plot_Perturbations
 
 addpath(getenv("froot_tools"));
 

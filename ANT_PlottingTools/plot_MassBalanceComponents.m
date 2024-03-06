@@ -1,4 +1,4 @@
-function plotMassBalanceComponents
+function plot_MassBalanceComponents
 
 %% This function plots mass balance components for grounded and/or floating ice
 %% Grounded ice: surface mass balance, ice-shelf flux and Ocean flux for individual basins
