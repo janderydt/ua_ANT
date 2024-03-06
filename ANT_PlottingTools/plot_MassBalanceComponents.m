@@ -121,18 +121,37 @@ for yy=1:numel(years)
     if yy==1
         CM1 = crameri('lajolla',64);
         cmin1 = 0;
-        cmax1 = 250;
-        CM2 = flipdim(crameri('vik',64),1);
-        cmin2 = -250;
-        cmax2 = 250;
+        cmax1 = 350;
+        CMtmp = flipdim(crameri('vik',18),1);
+        CM2 = [CMtmp(1:9,:);0.95*ones(2,3);CMtmp(10:18,:)];
+        cmin2 = -150;
+        cmax2 = 150;
+        CMtmp = crameri('vik',14);
+        CM3 = [CMtmp(1:7,:);0.95*ones(2,3);CMtmp(8:14,:)];
+        cmin3 = -100;
+        cmax3 = 100;
         % save data for first year in seperate variable
         B0 = B;
+        Fh0 = Fh;
+        Fub0 = Fub;
+        Fvb0 = Fvb;
     end
 
     %% -------- %%
     %% PLOTTING %%
     %% -------- %%
-    H=fig("units","inches","width",130*12/72.27,"height",45*12/72.27,"fontsize",14,"font","Helvetica");
+    figure; hold on;
+    PlotMeshScalarVariable(CtrlVarInRestartFile,MUA,F.h-Fh0(MUA.coordinates(:,1),MUA.coordinates(:,2))); 
+    title("\Deltah "+year_datestr(yy)+"-"+year_datestr(1)); cb = colorbar; caxis([-100 100]);
+    PlotGroundingLines(CtrlVarInRestartFile,MUA,F.GF);
+
+    speed0 = hypot(Fub0(MUA.coordinates(:,1),MUA.coordinates(:,2)),Fvb0(MUA.coordinates(:,1),MUA.coordinates(:,2)));
+    speed = hypot(F.ub,F.vb);
+    figure; hold on; PlotMeshScalarVariable(CtrlVarInRestartFile,MUA,speed-speed0); 
+    title("\Deltau "+year_datestr(yy)+"-"+year_datestr(1)); cb = colorbar; caxis([-1000 1000]);
+    PlotGroundingLines(CtrlVarInRestartFile,MUA,F.GF);
+
+    H=fig('units','inches','width',130*12/72.27,'height',45*12/72.27,'fontsize',14,'font','Helvetica');
 
     tlo_fig = tiledlayout(1,4,"TileSpacing","compact");
     for i = 1:4
@@ -146,8 +165,8 @@ for yy=1:numel(years)
     for ii=startB:numel(B.x)
         pgon = polyshape(B.x{ii}/1e3,B.y{ii}/1e3,'Simplify',false); 
         [xc,yc] = centroid(pgon); 
-        h1(ii) = plot(ax_fig(1),pgon,'FaceColor',CM1(max(min(round(1+63/(cmax1-cmin1)*(B.SMB{ii}-cmin1)),64),1),:),'FaceAlpha',1); 
-        h1(ii).LineStyle = 'none';
+        h1(ii) = plot(ax_fig(1),pgon,'FaceColor',CM1(max(min(round(1+63/(cmax1-cmin1)*(B.SMB{ii}-cmin1)),64),1),:),'FaceAlpha',1,'EdgeColor',[0.75 0.75 0.75]); 
+        h1(ii).LineStyle = '-';
         text(ax_fig(1),xc,yc,{B.name{ii};string(round(B.SMB{ii}))+" Gt/yr"},'vert','middle','horiz','center','fontsize',8,'color',h1(ii).FaceColor*.25)
     end
     colormap(ax_fig(1),CM1); cb1=colorbar(ax_fig(1)); 
@@ -160,8 +179,8 @@ for yy=1:numel(years)
     for ii=startB:numel(B.x)
         pgon = polyshape(B.x{ii}/1e3,B.y{ii}/1e3,'Simplify',false); 
         [xc,yc] = centroid(pgon); 
-        h2(ii) = plot(ax_fig(2),pgon,'FaceColor',CM1(max(min(round(1+63/(cmax1-cmin1)*(B.qGL_tot{ii}-cmin1)),64),1),:),'FaceAlpha',1); 
-        h2(ii).LineStyle = 'none';
+        h2(ii) = plot(ax_fig(2),pgon,'FaceColor',CM1(max(min(round(1+63/(cmax1-cmin1)*(B.qGL_tot{ii}-cmin1)),64),1),:),'FaceAlpha',1,'EdgeColor',[0.75 0.75 0.75]); 
+        h2(ii).LineStyle = '-';
         text(ax_fig(2),xc,yc,{B.name{ii};string(round(B.qGL_tot{ii}))+" Gt/yr"},'vert','middle','horiz','center','fontsize',8,'color',h2(ii).FaceColor*.25)
     end
     colormap(ax_fig(2),CM1); 
@@ -172,8 +191,8 @@ for yy=1:numel(years)
     for ii=startB:numel(B.x)
         pgon = polyshape(B.x{ii}/1e3,B.y{ii}/1e3,'Simplify',false); 
         [xc,yc] = centroid(pgon); 
-        h3(ii) = plot(ax_fig(3),pgon,'FaceColor',CM1(max(min(round(1+63/(cmax1-cmin1)*(B.qOB_tot{ii}-cmin1)),64),1),:),'FaceAlpha',1); 
-        h3(ii).LineStyle = 'none';
+        h3(ii) = plot(ax_fig(3),pgon,'FaceColor',CM1(max(min(round(1+63/(cmax1-cmin1)*(B.qOB_tot{ii}-cmin1)),64),1),:),'FaceAlpha',1,'EdgeColor',[0.75 0.75 0.75]); 
+        h3(ii).LineStyle = '-';
         text(ax_fig(3),xc,yc,{B.name{ii};string(round(B.qOB_tot{ii}))+" Gt/yr"},'vert','middle','horiz','center','fontsize',8,'color',h3(ii).FaceColor*.25)
     end
     colormap(ax_fig(3),CM1); 
@@ -185,8 +204,8 @@ for yy=1:numel(years)
     for ii=startB:numel(B.x)
         pgon = polyshape(B.x{ii}/1e3,B.y{ii}/1e3,'Simplify',false); 
         [xc,yc] = centroid(pgon); 
-        h4(ii) = plot(ax_fig(4),pgon,'FaceColor',CM2(max(min(round(1+63/(cmax2-cmin2)*(B.SMB{ii}-B.qGL_tot{ii}-B.qOB_tot{ii}-cmin2)),64),1),:),'FaceAlpha',1); 
-        h4(ii).LineStyle = 'none';
+        h4(ii) = plot(ax_fig(4),pgon,'FaceColor',CM2(max(min(round(1+19/(cmax2-cmin2)*(B.SMB{ii}-B.qGL_tot{ii}-B.qOB_tot{ii}-cmin2)),20),1),:),'FaceAlpha',1,'EdgeColor',[0.75 0.75 0.75]); 
+        h4(ii).LineStyle = '-';
         text(ax_fig(4),xc,yc,{B.name{ii};string(round(B.SMB{ii}-B.qGL_tot{ii}-B.qOB_tot{ii}))+" Gt/yr"},'vert','middle','horiz','center','fontsize',8,'color',h4(ii).FaceColor*.25)
     end
     colormap(ax_fig(4),CM2); cb4=colorbar(ax_fig(4)); 
@@ -209,22 +228,23 @@ for yy=1:numel(years)
     xlabel(tlo_fig,"psx [km]"); ylabel(tlo_fig,"psy [km]"); 
 
     figure; hold on;
+
     %% Change in GL Flux
     if yy>1
         figure; hold on;
         for ii=startB:numel(B.x)
             pgon = polyshape(B.x{ii},B.y{ii},'Simplify',false); 
             [xc,yc] = centroid(pgon); 
-            h = plot(pgon,'FaceColor',CM2(max(min(round(1+63/(cmax2-cmin2)*(B.qGL_tot{ii}-B0.qGL_tot{ii}-cmin2)),64),1),:),'FaceAlpha',1); 
-            h.LineStyle = 'none';
+            h = plot(pgon,'FaceColor',CM3(max(min(round(1+15/(cmax3-cmin3)*(B.qGL_tot{ii}-B0.qGL_tot{ii}-cmin3)),16),1),:),'FaceAlpha',1,'EdgeColor',[0.75 0.75 0.75]); 
+            h.LineStyle = '-';
             text(xc,yc,{B.name{ii};string(round(B.qGL_tot{ii}-B0.qGL_tot{ii}))+" Gt/yr"},'vert','middle','horiz','center','fontsize',8,'color',h.FaceColor*.25)
         end
         PlotGroundingLines(CtrlVarInRestartFile,MUA,F.GF,[],[],[],'color','k');
         plot(MUA.Boundary.x,MUA.Boundary.y,'-k');
         axis equal; grid on; box on;
-        colormap(CM2); cb=colorbar; 
+        colormap(CM3); cb=colorbar; 
         cb.Label.String = "Change in GL Flux [Gt/yr]"; 
-        caxis([cmin2 cmax2]);
+        caxis([cmin3 cmax3]);
         title("Change in GL Flux: "+year_datestr(yy)+"-"+year_datestr(1));
     end
 
@@ -240,17 +260,14 @@ for yy=1:numel(years)
         xlabels = [xlabels string(B.name{ii})];
     end
     % plot data
-    H2=fig("units","inches","width",130*12/72.27,"height",45*12/72.27,"fontsize",14,"font","Helvetica");
+    
+    H2=fig('units','inches','width',130*12/72.27,'height',45*12/72.27,'fontsize',14,'font','Helvetica');
+
     bar([1:numel(B.x)],M');
     xticks(1:numel(B.x)); xticklabels(xlabels);
     title(year_datestr(yy));
     
 end
-
-
-
-%% For the whole of Antarctica, compare Ua qGL/SMB/net with Gardner GL0, FG1, FG2/SMB/net
-%% for individual years
 
 
 end
