@@ -17,7 +17,7 @@ end
 % GL fluxes will be defined at midpoints
 [xGLmid,yGLmid,qGL,qGLx,qGLy,Fub,Fvb,Fr,Fh,LakeNodes,GLgeo,ubGL,vbGL] = FluxAcrossGroundingLine_JDR(CtrlVar,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho,[],[],[],[],[],xGL,yGL,GLgeo);
 
-figure(111); hold on; quiver(xGLmid,yGLmid,qGLx/3e7,qGLy/3e7,'off');
+%figure(111); hold on; quiver(xGLmid,yGLmid,qGLx/3e7,qGLy/3e7,'off');
 
 %% keep n longest GL segments
 I = find(isnan(xGL)); I = [0;I(:);numel(xGL)+1];
@@ -53,15 +53,15 @@ for ii=1:numel(B.x)
 end
 [~,I] = min(dist,[],1); 
 
-CM = jet(numel(B.x));
-[~,CM] = cmpermute([],CM);
+%CM = jet(numel(B.x));
+%[~,CM] = cmpermute([],CM);
 for ii=1:numel(B.x)
     B.GLpoints{ii} = find(I==ii);
     B.xGL{ii} = xGL(B.GLpoints{ii});
     B.yGL{ii} = yGL(B.GLpoints{ii});
     B.qGL{ii} = qGL(B.GLpoints{ii});
-    figure(111); hold on;
-    plot(B.xGL{ii},B.yGL{ii},'.','color',CM(ii,:))
+    %figure(111); hold on;
+    %plot(B.xGL{ii},B.yGL{ii},'.','color',CM(ii,:))
 end
 
 for ii=1:numel(GL)
