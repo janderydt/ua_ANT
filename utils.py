@@ -21,10 +21,11 @@ def read_runinfo (table,runtype):
 
     if "Inverse" in runtype:
         data = data.astype({"pgid": int, "ExpID": int, "Submitted": int, "Running": int, "Error": int, "Finished": int,
-                            "Restart": int, "Iterations": int, "IterationsDone": int, "gsC": int, "gsA": int,
-                            "gaC": int, "gaA": int, "Velocity": int, "Geometry": int, "m": int, "Cstart": int, "n": int, "Aglenstart": int})
-        data = data.astype({"InvertFor": str, "GradientCalc": str, "Measurements": str, "SlidingLaw": str,
-                            "Mesh": str, "Comments": str})
+                            "Restart": int, "InverseIterationsDone": int, "SpinupYearsDone": int, "gsC": int, "gsA": int,
+                            "gaC": int, "gaA": int, "Velocity": int, "startGeometry": int, "m": int, "startC": int, "n": int, "startAglen": int})
+        data = data.astype({"InverseTargetIterations": str, "SpinupYears": str, "InvertFor": str, "GradientCalc": str, 
+                            "Measurements": str, "SlidingLaw": str,
+                            "startMesh": str, "Comments": str})
     elif "Diagnostic" in runtype:
         data = data.astype({"pgid": int, "ExpID": int, "Submitted": int, "Running": int, "Error": int, "Finished": int,
                             "Restart": int, "InverseA": int, "InverseAFill": int, "InverseC": int, "InverseCFill": int, 

@@ -9,7 +9,7 @@
 *.nc
 
 #ignore all hidden files
-._*
+.*
 
 #ignore python dir
 __pycache__/

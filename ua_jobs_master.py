@@ -31,7 +31,7 @@ if __name__ == "__main__":
             print('Runtype does not exist. Choose 1 or 2.')
 
     # Initialize the log file
-    logging.basicConfig(filename='jobs_master.log', level=logging.INFO, encoding='utf-8', format='%(message)s')
+    logging.basicConfig(filename=os.getcwd()+'/jobs_master.log', level=logging.INFO, encoding='utf-8', format='%(message)s')
 
     logging.info(runinfo)
 
