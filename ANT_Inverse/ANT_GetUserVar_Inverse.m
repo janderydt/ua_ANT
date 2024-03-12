@@ -4,16 +4,14 @@ function UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar,fid)
 %% to Ua via the UserVar structure. The content of this function is entirely flexible, and
 %% will need to be adapted based on which parameters you need to provide to Ua at runtime.
 
-cwd = pwd;
-
 % initialize variables: either start a new simulation with
 % an inverse cycle, or continue an existing simulation with
 % a spinup or inverse cycle
 
-iter_tmp = RunTable{ind,"InverseTargetIterations"}{:};
-UserVar.Inverse.TargetIterations = double(split(iter_tmp,"+"));
+iter_tmp = RunTable{ind,"InverseIterations"}{:};
+UserVar.Inverse.Iterations = str2double(split(iter_tmp,"+"));
 UserVar.Inverse.IterationsDone = RunTable{ind,"InverseIterationsDone"};
-UserVar.Inverse.Cycle = find([0 cumsum(UserVar.Inverse.Iterations)]==UserVar.Inverse.IterationsDone);
+UserVar.Inverse.Cycle = find([0; cumsum(UserVar.Inverse.Iterations)]==UserVar.Inverse.IterationsDone);
 if isempty(UserVar.Inverse.Cycle) & UserVar.Restart == 0
     fprintf(fid,"Expecting InverseIterationsDone to be equal to [%s] but got %s instead.\n",...
             sprintf('%.0f,' , iter_tmp),string(UserVar.Inverse.IterationsDone));
@@ -26,20 +24,15 @@ elseif isempty(UserVar.Inverse.Cycle) & UserVar.Restart
 end
 
 spinup_tmp = RunTable{ind,"SpinupYears"}{:};
-UserVar.Spinup.Iterations = double(split(spinup_tmp,"+"));
-UserVar.Spinup.Years = RunTable{ind,"SpinupYearsDone"};
-UserVar.Spinup.Cycle = find([0 cumsum(UserVar.Spinup.Years)]==UserVar.Spinup.YearsDone);
-if isempty(UserVar.Spinup.Cycle)
-    fprintf(fid,"Expecting SpinupYearsDone to be equal to [%s] but got %s instead.\n",...
-            sprintf('%.0f,' , spinup_tmp),string(UserVar.Spinup.YearsDone));
-    error("Unexpected number of InverseIterationsDone.");
-end
+UserVar.Spinup.Years = str2double(split(spinup_tmp,"+"));
 
-if UserVar.Inverse.Cycle == 0
+UserVar.Inverse.NameOfRestartInputFile = UserVar.Experiment + "-RestartFile.mat";
+
+if UserVar.Inverse.Cycle == 1
     %% start first inverse cycle
     UserVar.InverseCycle = 1;
     UserVar.SpinupCycle = 0;
-    fprintf(fid,"Start inverse cycle %s.\n",string(UserVar.Inverse.Cycle));
+    fprintf(fid,"> %s: Start inverse cycle %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle));
     UserVar = ANT_GetUserVar_FirstInverseRun(RunTable,ind,UserVar);
 
 else
@@ -47,14 +40,14 @@ else
         %% start new inverse cycle
         UserVar.InverseCycle = 1;
         UserVar.SpinupCycle = 0;
-        fprintf(fid,"Start inverse cycle %s.\n",string(UserVar.Inverse.Cycle));
+        fprintf(fid,"> %s: Start inverse cycle %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle));
         UserVar = ANT_GetUserVar_InverseAfterSpinup(RunTable,ind,UserVar);
 
     elseif UserVar.Inverse.Cycle > UserVar.Spinup.Cycle
         %% start spinup cycle
         UserVar.SpinupCycle = 1;
         UserVar.InverseCycle = 0;
-        fprintf(fid,"Start spinup cycle %s.\n",string(UserVar.Spinup.Cycle));
+        fprintf(fid,"> %s: Start spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
         UserVar = ANT_GetUserVar_Spinup(RunTable,ind,UserVar);
     else
         error("Something odd happened: number of inverse cycles (%s) should be >= number of spinup cycles (%s).",...
@@ -66,7 +59,7 @@ end
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
     case {2000,2009,2014,2018}
-        UserVar.GeometryInterpolants = [cwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+        UserVar.GeometryInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
@@ -86,6 +79,7 @@ UserVar.UaOutputDirectory = './ResultsFiles';
 
 % Initialize other variables
 UserVar.Finished = 1;
+
 
 end
 
@@ -108,23 +102,22 @@ UserVar.Inverse.logC.ga = RunTable{ind,"gaC"};
 UserVar.Inverse.logAGlen.ga = RunTable{ind,"gaA"};
 
 %% geometry interpolants from spinup
-UserVar.Inverse.NameOfRestartInputFile = UserVar.Experiment + "-RestartFile.mat";
 UserVar.Spinup.NameOfRestartFiletoRead = ...
-    strrep(UserVar.Inverse.NameOfRestartOutputFile,"-RestartFile","_SpinupCycle"+string(UserVar.Spinup.Cycle)+"-RestartFile");
+    strrep(UserVar.Inverse.NameOfRestartInputFile,"-RestartFile","_SpinupCycle"+string(UserVar.Spinup.Cycle)+"-RestartFile");
 load(UserVar.Spinup.NameOfRestartFiletoRead,"F","MUA");
-FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B.,"linear");
+FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
 Fb = FB; Fb.Values = F.b;
 Fs = FB; Fs.Values = F.s;
-UserVar.GeometryInterpolants = "GeometryInterpolants_fromSpinupCycle"+UserVar.Spinup.Cycle;
+UserVar.GeometryInterpolants = "./GeometryInterpolants_fromSpinupCycle"+UserVar.Spinup.Cycle+".mat";
 save(UserVar.GeometryInterpolants,"FB","Fb","Fs");
 
 %% velocity interpolants
 UserVar.Velocity = RunTable{ind,"Velocity"};
 switch UserVar.Velocity
     case 2000
-        UserVar.VelocityInterpolants = [cwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat'];
     case {2009,2014,2018} 
-        UserVar.VelocityInterpolants = [cwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_',num2str(UserVar.Velocity),'-',num2str(UserVar.Velocity+1),'_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_',num2str(UserVar.Velocity),'-',num2str(UserVar.Velocity+1),'_MeaSUREs_ITSLIVE_Velocities.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
 end
@@ -148,7 +141,6 @@ function UserVar = ANT_GetUserVar_Spinup(RunTable,ind,UserVar)
 UserVar.Restart = 1;
 
 % copy and rename inverse restart file
-UserVar.Inverse.NameOfRestartInputFile = UserVar.Experiment + "-RestartFile.mat";
 UserVar.Spinup.NameOfRestartFiletoRead = ...
     strrep(UserVar.Inverse.NameOfRestartOutputFile,"-RestartFile","_SpinupCycle"+string(UserVar.Spinup.Cycle)+"-RestartFile");
 copyfile(UserVar.Inverse.NameOfRestartInputFile,UserVar.Spinup.NameOfRestartFiletoRead);
@@ -157,7 +149,7 @@ copyfile(UserVar.Inverse.NameOfRestartInputFile,UserVar.Spinup.NameOfRestartFile
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
     case {2000,2009,2014,2018}
-        UserVar.GeometryInterpolants = [cwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+        UserVar.GeometryInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
@@ -186,7 +178,7 @@ UserVar.Inverse.logAGlen.ga = RunTable{ind,"gaA"};
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
     case {2000,2009,2014,2018}
-        UserVar.GeometryInterpolants = [cwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+        UserVar.GeometryInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
@@ -198,9 +190,9 @@ UserVar.DensityInterpolant = UserVar.GeometryInterpolants;
 UserVar.Velocity = RunTable{ind,"Velocity"};
 switch UserVar.Velocity
     case 2000
-        UserVar.VelocityInterpolants = [cwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat'];
     case {2009,2014,2018} 
-        UserVar.VelocityInterpolants = [cwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_',num2str(UserVar.Velocity),'-',num2str(UserVar.Velocity+1),'_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_',num2str(UserVar.Velocity),'-',num2str(UserVar.Velocity+1),'_MeaSUREs_ITSLIVE_Velocities.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
 end
@@ -209,13 +201,13 @@ end
 switch char(RunTable{ind,"startMesh"}{:})
     case {'2000_meshmin5000_meshmax100000','2000_meshmin1500_meshmax100000'}
         % adjust and copy mesh files  
-        UserVar.BaseMesh.Mesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+RunTable{ind,"Mesh"}+"_extrudemesh0_variableboundaryres1";
-        UserVar.BaseMesh.BCs = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_"+RunTable{ind,"Mesh"}+"_extrudemesh0_variableboundaryres1";
+        UserVar.BaseMesh.Mesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+RunTable{ind,"startMesh"}+"_extrudemesh0_variableboundaryres1";
+        UserVar.BaseMesh.BCs = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_"+RunTable{ind,"startMesh"}+"_extrudemesh0_variableboundaryres1";
         UserVar = ANT_ApplyMeshModifications(UserVar);
     case {'2000_2009_2014_2018_meshmin3000_meshmax100000'}
 	% adjust and copy mesh files
-	    UserVar.BaseMesh.Mesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+ RunTable{ind,"Mesh"}+"_extrudemesh1_variableboundaryres1";
-        UserVar.BaseMesh.BCs = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_"+RunTable{ind,"Mesh"}+"_extrudemesh1_variableboundaryres1";
+	    UserVar.BaseMesh.Mesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+ RunTable{ind,"startMesh"}+"_extrudemesh1_variableboundaryres1";
+        UserVar.BaseMesh.BCs = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_"+RunTable{ind,"startMesh"}+"_extrudemesh1_variableboundaryres1";
         UserVar = ANT_ApplyMeshModifications(UserVar);
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Mesh flag in RunTable.']);

@@ -1,8 +1,6 @@
 function ANT_MatlabWrapper(pgid,type)
 
-cwd = pwd;
-
-logfile = cwd+"/jobs_master.log";
+logfile = pwd+"/jobs_master.log";
 fid = fopen(logfile,'a+');
 
 UserVar.fid = fid;
@@ -14,18 +12,15 @@ if strfind(hostname,"C23000100")
     UserVar.hostname = "C23000100";
     NumWorkers = 25;
 end
-Table = cwd+"/RunTable.csv";
+UserVar.Table = pwd+"/RunTable.csv";
 
 addpath(getenv("froot_tools"));
 
 %% read table
-if exist(Table,'file')
-    RunTable=readtable(Table); 
-    Iexisting = find(RunTable{:,'ExpID'}~=0);
-    Inew = find(RunTable{:,'ExpID'}==0);
-else    
-    error("Runtable does not exist"); 
-end
+RunTable = ANT_ReadWritetable(UserVar,[],'read');
+
+Iexisting = find(RunTable{:,'ExpID'}~=0);
+Inew = find(RunTable{:,'ExpID'}==0);
 
 %% launch jobs
 % initialize some variables
@@ -78,35 +73,35 @@ if ~isempty(Iexisting)
                 UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
 
                 % launch Ua job
-                ANT_UaJob(RunTable,ind,UserVar,pgid,fid)
+                UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
     
             elseif type=="Inverse"
                 
-                % initialize variables
+                % initialize User variables
                 UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar,fid);
 
                 % cumulative sum of number of iterations at the end of each
                 % inverse cycle
-                it_tmp = cumsum(UserVar.Inverse.TargetIterations);
+                it_tmp = cumsum(UserVar.Inverse.Iterations);
 
                 %% Inverse cycle
                 if UserVar.InverseCycle
                 
                     while UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && UserVar.Finished
     
-                        UserVar.Iterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
+                        UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
 
-                        ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
+                        UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
 
-                        RunTable{ind,"IterationsDone"} = UserVar.Inverse.IterationsDone;   
-                        writetable(RunTable,Table);
+                        RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
+                        [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
             
                     end            
 
                 %% Spinup cycle
                 elseif UserVar.SpinupCycle
 
-                    ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
+                    UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
 
                 end
 
@@ -155,26 +150,29 @@ if ~isempty(Inew)
 
         UserVar.Restart = 0;
     
-        ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
+        UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
 
 
     elseif type=="Inverse"
 
+        % initialize User variables
+        UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar,fid);
+
         % cumulative sum of number of iterations at the end of each
         % inverse cycle
-        it_tmp = cumsum(UserVar.Inverse.TargetIterations);
+        it_tmp = cumsum(UserVar.Inverse.Iterations);
 
         %% Inverse cycle
         if UserVar.InverseCycle
         
             while UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && UserVar.Finished
 
-                UserVar.Iterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
+                UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
 
-                ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
+                UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
 
-                RunTable{ind,"IterationsDone"} = UserVar.Inverse.IterationsDone;   
-                writetable(RunTable,Table);
+                RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
+                [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
     
             end
     
@@ -182,7 +180,7 @@ if ~isempty(Inew)
         %% Spinup cycle
         elseif UserVar.SpinupCycle
 
-            ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
+            UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
 
         end
 

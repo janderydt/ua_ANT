@@ -1,11 +1,11 @@
-function ANT_UaJob(RunTable,ind,UserVar,pgid,fid)
+function UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid)
 
 % log changes in table
 RunTable{ind,"SubmissionTime"}(:) = datestr(now); 
 RunTable{ind,"Submitted"} = 1;
 RunTable{ind,"Running"} = 1;
 RunTable{ind,'pgid'} = pgid;
-writetable(RunTable,Table);
+[~]=ANT_ReadWritetable(UserVar,RunTable,'write');
 
 % launch job
 cd(UserVar.Experiment);
@@ -44,6 +44,7 @@ cd ..
 
 % read Runtable again in case any changes were made by other
 % processes
-RunTable=readtable(Table); 
-ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);     
-writetable(RunTable,Table);
+RunTable=ANT_ReadWritetable(UserVar,[],'read');
+ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+
+[~]=ANT_ReadWritetable(UserVar,RunTable,'write');

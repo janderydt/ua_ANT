@@ -63,25 +63,20 @@ v2struct(F);
 time=CtrlVar.time;
 plots='';
 
-if contains(plots,'-save-')
+if UserVar.SpinupCycle
     
     % save data in files with running names
     % check if folder 'ResultsFiles' exists, if not create
     
     if exist(fullfile(cd,UserVar.Outputsdirectory),'dir')~=7
-        mkdir(CtrlVar.Outputsdirectory) ;
+        mkdir(UserVar.Outputsdirectory) ;
     end
-    
-    if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')==0
-  
-        
-        FileName=sprintf('%s/%07i-Nodes%i-Ele%i-Tri%i-kH%i-%s.mat',...
-            CtrlVar.Outputsdirectory,round(100*time),MUA.Nnodes,MUA.Nele,MUA.nod,1000*CtrlVar.kH,CtrlVar.Experiment);
-        fprintf(' Saving data in %s \n',FileName)
-        save(FileName,'UserVar','CtrlVar','MUA','F')
-        
-    end
-    
+            
+    FileName=sprintf('%s/%s_SpinupCycle%s_%07i.mat',...
+        UserVar.Outputsdirectory,CtrlVar.Experiment,UserVar.Spinup.Cycle,round(100*time));
+    fprintf(' Saving data in %s \n',FileName)
+    save(FileName,'UserVar','CtrlVar','MUA','F');
+            
 end
 
 if contains(plots,'-plot-')
@@ -160,9 +155,9 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'Start of inverse run')
 end
 
 if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
-    UserVar.IterationsDone = RunInfo.Inverse.Iterations(end);
-    UserVar.IterationsDoneInThisRun = UserVar.IterationsDone-UserVar.Inverse.Iter0;
-	if UserVar.IterationsDoneInThisRun == CtrlVar.Inverse.Iterations
+    UserVar.Inverse.IterationsDone = RunInfo.Inverse.Iterations(end);
+    UserVar.Inverse.IterationsDoneInThisRun = UserVar.Inverse.IterationsDone-UserVar.Inverse.Iter0;
+	if UserVar.Inverse.IterationsDoneInThisRun == CtrlVar.Inverse.Iterations(UserVar.Inverse.Cycle)
     		UserVar.Finished = 1;
 	else
     		UserVar.Finished = 0;            
@@ -170,7 +165,7 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
         		'Writing restart file and breaking out.\n'],num2str(UserVar.IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
     end    
     WriteAdjointRestartFile(UserVar,CtrlVar,MUA,BCs,F,F.GF,l,RunInfo,InvStartValues,Priors,Meas,BCsAdjoint,InvFinalValues);
-    NameOfRestartOutputFile = erase(CtrlVar.Inverse.NameOfRestartOutputFile,".mat")+"_It"+string(UserVar.IterationsDone)+".mat";
+    NameOfRestartOutputFile = erase(CtrlVar.Inverse.NameOfRestartOutputFile,".mat")+"_It"+string(UserVar.Inverse.IterationsDone)+".mat";
     copyfile(CtrlVar.Inverse.NameOfRestartOutputFile,NameOfRestartOutputFile);
 end
 

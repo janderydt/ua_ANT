@@ -102,7 +102,7 @@ CtrlVar.PlotXYscale=1;
 
 %% Inverse options
 if UserVar.InverseCycle
-    CtrlVar.Inverse.Iterations=UserVar.Iterations; % Number of inverse iterations
+    CtrlVar.Inverse.Iterations=UserVar.TargetIterations; % Number of inverse iterations
     
     CtrlVar.Inverse.DataMisfit.GradientCalculation=UserVar.Inverse.GradientCalculation; % {'Adjoint','FixPoint'}
     
