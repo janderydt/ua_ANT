@@ -3,12 +3,8 @@ function ANT_CleanUp(UserVar)
 Table="RunTable.csv";
 
 % read table
-if exist(Table,'file')
-    RunTable=readtable(Table); 
-    ind = find(RunTable{:,'ExpID'}==UserVar.ExpID);
-else    
-    error("Runtable does not exist"); 
-end
+RunTable=ReadWritetable(UserVar,[],'read'); 
+ind = find(RunTable{:,'ExpID'}==UserVar.ExpID);
 
 % add flags and timestamps to table
 if UserVar.Finished==1
@@ -39,4 +35,4 @@ end
 
 RunTable{ind,"pgid"} = 0;
 
-writetable(RunTable,Table);
+[~]=ReadWritetable(UserVar,RunTable,'write');
