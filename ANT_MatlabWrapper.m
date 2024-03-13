@@ -146,7 +146,8 @@ if ~isempty(Inew)
 
     % now gather run info
     UserVar.Experiment = ['ANT_',char(type),'_',num2str(ExpID)];
-
+    
+    while ~UserVar.Finished
     if type=="Diagnostic"
 
         UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
@@ -168,7 +169,7 @@ if ~isempty(Inew)
         %% Inverse cycle
         if UserVar.InverseCycle
         
-            while UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && UserVar.Finished
+            while UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished
 
                 UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
 
@@ -187,6 +188,7 @@ if ~isempty(Inew)
 
         end
 
+    end
     end
 
     ANT_CleanUp(UserVar);

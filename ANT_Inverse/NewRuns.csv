@@ -1,1 +1,2 @@
 pgid,ExpID,Submitted,SubmissionTime,Running,Error,ErrorTime,Finished,FinishedTime,Restart,InverseIterations,InverseIterationsDone,SpinupYears,SpinupYearsDone,InvertFor,GradientCalc,gsC,gsA,gaC,gaA,Measurements,Velocity,startGeometry,startMesh,SlidingLaw,m,startC,n,startAglen,Comments
+0,0,0,13/02/24 03:57,0,0,06/02/24 22:26,0,15/02/24 13:24,0,2+2+2,0,0.001+0.001,0,-logA-logC-,Adjoint,100000,100000,1,1,-uv-,2000,2000,2000_2009_2014_2018_meshmin3000_meshmax100000,Weertman,3,1814,3,1814,NaN

@@ -36,9 +36,9 @@ catch ME
     fprintf(fid,"%s \n",msgString);
 end
 
-if UserVar.Finished
-    UserVar.Restart = 1;
-end
+%if UserVar.Finished
+%    UserVar.Restart = 1;
+%end
         
 cd ..
 
