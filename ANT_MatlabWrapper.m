@@ -55,7 +55,7 @@ if ~isempty(Iexisting)
         
         if indnsnr
             fprintf(fid,"   ...ANT_MatlabWrapper: ExpID %s has been not yet been submitted. Let's check if a " + ...
-                "restart is required...\n",string(RunTable{ind,'ExpID'}));
+                "restart is required...",string(RunTable{ind,'ExpID'}));
             % new run or restart?
             if RunTable{ind,'Restart'}==1
                 UserVar.Restart = 1;

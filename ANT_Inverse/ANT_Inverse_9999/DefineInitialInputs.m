@@ -29,9 +29,11 @@ CtrlVar.nip=6;
 CtrlVar.niph=6;    
 CtrlVar.RefineMeshOnStart=0;
 
-% always read intial mesh
-CtrlVar.ReadInitialMesh=1;
-CtrlVar.ReadInitialMeshFileName=UserVar.InitialMeshFileName;
+% read intial mesh in inverse simulation
+if UserVar.InverseCycle
+    CtrlVar.ReadInitialMesh=1;
+    CtrlVar.ReadInitialMeshFileName=UserVar.InitialMeshFileName;
+end
 
 % refine mesh around GL at first spinup cycle 
 if UserVar.SpinupCycle && UserVar.Spinup.Cycle==1    
@@ -78,7 +80,7 @@ if UserVar.InverseCycle
     CtrlVar.InfoLevel=0;
     CtrlVar.Inverse.WriteRestartFile=1;  % always a good idea to write a restart file. 
     CtrlVar.Inverse.NameOfRestartInputFile = UserVar.Inverse.NameOfRestartInputFile;
-    CtrlVar.Inverse.NameOfRestartOutputFile = CtrlVar.Inverse.NameOfRestartInputFile;
+    CtrlVar.Inverse.NameOfRestartOutputFile = UserVar.Inverse.NameOfRestartInputFile;
     CtrlVar.Inverse.SaveSlipperinessEstimateInSeperateFile=true;
     CtrlVar.Inverse.SaveAGlenEstimateInSeperateFile=true;
     CtrlVar.NameOfFileForSavingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;

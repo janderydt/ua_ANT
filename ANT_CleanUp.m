@@ -3,7 +3,7 @@ function ANT_CleanUp(UserVar)
 Table="RunTable.csv";
 
 % read table
-RunTable=ReadWritetable(UserVar,[],'read'); 
+RunTable=ANT_ReadWritetable(UserVar,[],'read'); 
 ind = find(RunTable{:,'ExpID'}==UserVar.ExpID);
 
 % add flags and timestamps to table
@@ -35,4 +35,4 @@ end
 
 RunTable{ind,"pgid"} = 0;
 
-[~]=ReadWritetable(UserVar,RunTable,'write');
+[~]=ANT_ReadWritetable(UserVar,RunTable,'write');

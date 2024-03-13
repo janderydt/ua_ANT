@@ -25,9 +25,36 @@ end
 
 spinup_tmp = RunTable{ind,"SpinupYears"}{:};
 UserVar.Spinup.Years = str2double(split(spinup_tmp,"+"));
+UserVar.Spinup.YearsDone = RunTable{ind,"SpinupYearsDone"};
+UserVar.Spinup.Cycle = find([0; cumsum(UserVar.Spinup.Years)]==UserVar.Spinup.YearsDone);
 
+% Restart files
 UserVar.Inverse.NameOfRestartInputFile = UserVar.Experiment + "-RestartFile.mat";
 
+% Density
+UserVar.Geometry = RunTable{ind,"startGeometry"};
+switch UserVar.Geometry
+    case {2000,2009,2014,2018}
+        UserVar.GeometryInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+    otherwise
+        error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
+end
+UserVar.DensityInterpolant = UserVar.GeometryInterpolants;
+
+% Sliding law
+UserVar.SlidingLaw = RunTable{ind,"SlidingLaw"}{:};
+UserVar.SlidingCoefficient =  RunTable{ind,"m"};
+UserVar.NameOfFileForSavingSlipperinessEstimate="ANT_Inverse_"+string(RunTable{ind,"ExpID"})+"_C-Estimate.mat";
+
+% Rheology
+UserVar.n =  RunTable{ind,"n"};
+UserVar.NameOfFileForSavingAGlenEstimate="ANT_Inverse_"+string(RunTable{ind,"ExpID"})+"_AGlen-Estimate.mat";
+
+% Outputs
+UserVar.UaOutputDirectory = './ResultsFiles';
+
+% Initialize other variables
+UserVar.Finished = 1;
 if UserVar.Inverse.Cycle == 1
     %% start first inverse cycle
     UserVar.InverseCycle = 1;
@@ -55,31 +82,6 @@ else
     end
 end
 
-% Density
-UserVar.Geometry = RunTable{ind,"startGeometry"};
-switch UserVar.Geometry
-    case {2000,2009,2014,2018}
-        UserVar.GeometryInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
-    otherwise
-        error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
-end
-UserVar.DensityInterpolant = UserVar.GeometryInterpolants;
-
-% Sliding law
-UserVar.SlidingLaw = RunTable{ind,"SlidingLaw"}{:};
-UserVar.SlidingCoefficient =  RunTable{ind,"m"};
-UserVar.NameOfFileForSavingSlipperinessEstimate="ANT_Inverse_"+string(RunTable{ind,"ExpID"})+"_C-Estimate.mat";
-
-% Rheology
-UserVar.n =  RunTable{ind,"n"};
-UserVar.NameOfFileForSavingAGlenEstimate="ANT_Inverse_"+string(RunTable{ind,"ExpID"})+"_AGlen-Estimate.mat";
-
-% Outputs
-UserVar.UaOutputDirectory = './ResultsFiles';
-
-% Initialize other variables
-UserVar.Finished = 1;
-
 
 end
 
@@ -104,12 +106,12 @@ UserVar.Inverse.logAGlen.ga = RunTable{ind,"gaA"};
 %% geometry interpolants from spinup
 UserVar.Spinup.NameOfRestartFiletoRead = ...
     strrep(UserVar.Inverse.NameOfRestartInputFile,"-RestartFile","_SpinupCycle"+string(UserVar.Spinup.Cycle)+"-RestartFile");
-load(UserVar.Spinup.NameOfRestartFiletoRead,"F","MUA");
+load("./"+UserVar.Experiment+"/"+UserVar.Spinup.NameOfRestartFiletoRead,"F","MUA");
 FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
 Fb = FB; Fb.Values = F.b;
 Fs = FB; Fs.Values = F.s;
-UserVar.GeometryInterpolants = "./GeometryInterpolants_fromSpinupCycle"+UserVar.Spinup.Cycle+".mat";
-save(UserVar.GeometryInterpolants,"FB","Fb","Fs");
+UserVar.GeometryInterpolants = "GeometryInterpolants_fromSpinupCycle"+UserVar.Spinup.Cycle+".mat";
+save("./"+UserVar.Experiment+"/"+UserVar.GeometryInterpolants,"FB","Fb","Fs");
 
 %% velocity interpolants
 UserVar.Velocity = RunTable{ind,"Velocity"};
@@ -123,9 +125,9 @@ switch UserVar.Velocity
 end
 
 %% refined mesh from spinup
-UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
+UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
 UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_RefinedMesh.mat";
-save(UserVar.InitialMeshFileName,"MUA")
+save("./"+UserVar.Experiment+"/"+UserVar.InitialMeshFileName,"MUA")
 
 %% sliding law
 UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
@@ -142,8 +144,9 @@ UserVar.Restart = 1;
 
 % copy and rename inverse restart file
 UserVar.Spinup.NameOfRestartFiletoRead = ...
-    strrep(UserVar.Inverse.NameOfRestartOutputFile,"-RestartFile","_SpinupCycle"+string(UserVar.Spinup.Cycle)+"-RestartFile");
-copyfile(UserVar.Inverse.NameOfRestartInputFile,UserVar.Spinup.NameOfRestartFiletoRead);
+    strrep(UserVar.Inverse.NameOfRestartInputFile,"-RestartFile","_SpinupCycle"+string(UserVar.Spinup.Cycle)+"-RestartFile");
+copyfile("./"+string(UserVar.Experiment)+"/"+UserVar.Inverse.NameOfRestartInputFile,...
+    "./"+string(UserVar.Experiment)+"/"+UserVar.Spinup.NameOfRestartFiletoRead);
 
 %% Read geometry interpolants from Runtable
 UserVar.Geometry = RunTable{ind,"startGeometry"};

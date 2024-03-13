@@ -169,5 +169,21 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
     copyfile(CtrlVar.Inverse.NameOfRestartOutputFile,NameOfRestartOutputFile);
 end
 
+if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')
+    years_tmp = [0; cumsum(UserVar.Spinup.Years)];
+    UserVar.Spinup.YearsDoneInThisRun = CtrlVar.time;
+    UserVar.Spinup.YearsDone = years_tmp(UserVar.Spinup.Cycle) + UserVar.Spinup.YearsDoneInThisRun;
+    if UserVar.Spinup.YearsDoneInThisRun == CtrlVar.TotalTime
+            UserVar.Finished = 1;
+    else
+            UserVar.Finished = 0;
+            fprintf(CtrlVar.fidlog,['Simulation did not reach expected end time. Done %s years instead of %s. ',...
+                    'Writing restart file and breaking out.\n'],num2str(UserVar.YearsDoneInThisRun),num2str(CtrlVar.TotalTime));
+    end
+    WriteForwardRunRestartFile(UserVar,CtrlVar,MUA,BCs,F,GF,l,RunInfo);
+    NameOfRestartOutputFile = erase(CtrlVar.Spinup.NameOfRestartOutputFile,".mat")+"_Yrs"+string(UserVar.Spinup.YearsDone)+".mat";
+    copyfile(CtrlVar.Spinup.NameOfRestartOutputFile,NameOfRestartOutputFile);
+end
+
 
 end
