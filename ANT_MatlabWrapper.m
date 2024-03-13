@@ -103,6 +103,9 @@ if ~isempty(Iexisting)
 
                     UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
 
+                    RunTable{ind,"SpinupYearsDone"} = UserVar.Spinup.YearsDone;   
+                    [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
+
                 end
 
             end

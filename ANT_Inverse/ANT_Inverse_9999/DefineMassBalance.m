@@ -1,13 +1,11 @@
-function [UserVar,as,ab]=DefineMassBalance(UserVar,CtrlVar,MUA,time,s,b,h,S,B,rho,rhow,GF)
+function [UserVar,as,ab]=DefineMassBalance(UserVar,CtrlVar,MUA,F)
 
 persistent Fsmb_RACMO_climatology;
 
 x=MUA.coordinates(:,1);
 y=MUA.coordinates(:,2);
-    
-if UserVar.SpinupCycle
 
-   
+if UserVar.SpinupCycle
     %% Surface mass balance: RACMO 2000-2018 climatology
     
     if isempty(Fsmb_RACMO_climatology)
@@ -39,13 +37,15 @@ if UserVar.SpinupCycle
     GF =IceSheetIceShelves(CtrlVar,MUA,F.GF);
     [LakeNodes,OceanNodes,LakeElements,OceanElements] = LakeOrOcean3(CtrlVar,MUA,GF);
     
-    I = find(LakeNodes & GF.node==1);
+    I = find(LakeNodes & GF.node>0.5);
     ab(I) = 0;
 
-else
+elseif UserVar.InverseCycle
 
-    as = 0*x;
     ab = 0*x;
+    as = 0*x;
+
+end
 
 end
 

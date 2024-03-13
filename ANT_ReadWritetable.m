@@ -21,6 +21,5 @@ switch mode
             error("Runtable does not exist"); 
         end
     case 'write'
-	RunTable	
         writetable(RunTable,UserVar.Table);
 end

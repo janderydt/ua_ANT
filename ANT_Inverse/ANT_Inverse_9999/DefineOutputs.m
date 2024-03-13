@@ -68,12 +68,12 @@ if UserVar.SpinupCycle
     % save data in files with running names
     % check if folder 'ResultsFiles' exists, if not create
     
-    if exist(fullfile(cd,UserVar.Outputsdirectory),'dir')~=7
-        mkdir(UserVar.Outputsdirectory) ;
+    if exist(fullfile(cd,UserVar.UaOutputDirectory),'dir')~=7
+        mkdir(UserVar.UaOutputDirectory) ;
     end
             
     FileName=sprintf('%s/%s_SpinupCycle%s_%07i.mat',...
-        UserVar.Outputsdirectory,CtrlVar.Experiment,UserVar.Spinup.Cycle,round(100*time));
+        UserVar.UaOutputDirectory,CtrlVar.Experiment,string(UserVar.Spinup.Cycle),round(100*time));
     fprintf(' Saving data in %s \n',FileName)
     save(FileName,'UserVar','CtrlVar','MUA','F');
             
@@ -157,7 +157,7 @@ end
 if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
     UserVar.Inverse.IterationsDone = RunInfo.Inverse.Iterations(end);
     UserVar.Inverse.IterationsDoneInThisRun = UserVar.Inverse.IterationsDone-UserVar.Inverse.Iter0;
-	if UserVar.Inverse.IterationsDoneInThisRun == CtrlVar.Inverse.Iterations(UserVar.Inverse.Cycle)
+	if UserVar.Inverse.IterationsDoneInThisRun == CtrlVar.Inverse.Iterations
     		UserVar.Finished = 1;
 	else
     		UserVar.Finished = 0;            
@@ -165,7 +165,7 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
         		'Writing restart file and breaking out.\n'],num2str(UserVar.IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
     end    
     WriteAdjointRestartFile(UserVar,CtrlVar,MUA,BCs,F,F.GF,l,RunInfo,InvStartValues,Priors,Meas,BCsAdjoint,InvFinalValues);
-    NameOfRestartOutputFile = erase(CtrlVar.Inverse.NameOfRestartOutputFile,".mat")+"_It"+string(UserVar.Inverse.IterationsDone)+".mat";
+    NameOfRestartOutputFile = erase(CtrlVar.Inverse.NameOfRestartOutputFile,".mat")+"_InverseCycle"+string(UserVar.Inverse.Cycle)+".mat";
     copyfile(CtrlVar.Inverse.NameOfRestartOutputFile,NameOfRestartOutputFile);
 end
 
@@ -181,8 +181,8 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')
                     'Writing restart file and breaking out.\n'],num2str(UserVar.YearsDoneInThisRun),num2str(CtrlVar.TotalTime));
     end
     WriteForwardRunRestartFile(UserVar,CtrlVar,MUA,BCs,F,GF,l,RunInfo);
-    NameOfRestartOutputFile = erase(CtrlVar.Spinup.NameOfRestartOutputFile,".mat")+"_Yrs"+string(UserVar.Spinup.YearsDone)+".mat";
-    copyfile(CtrlVar.Spinup.NameOfRestartOutputFile,NameOfRestartOutputFile);
+    NameOfRestartOutputFile = erase(CtrlVar.NameOfRestartFiletoRead,".mat")+"_SpinupCycle"+string(UserVar.Spinup.Cycle)+".mat";
+    copyfile(CtrlVar.NameOfRestartFiletoRead,NameOfRestartOutputFile);
 end
 
 

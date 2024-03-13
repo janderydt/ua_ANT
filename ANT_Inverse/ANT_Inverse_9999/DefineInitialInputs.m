@@ -17,7 +17,8 @@ elseif UserVar.SpinupCycle
     CtrlVar.RestartTime=0; 
     CtrlVar.ResetTime=1;
     CtrlVar.ResetTimeStep=1;    % perhaps this has to be reconsidered if model has issues converging
-    CtrlVar.InitialDiagnosticStep=1;    
+    CtrlVar.InitialDiagnosticStep=1; 
+    CtrlVar.NameOfRestartFiletoRead = UserVar.NameOfRestartFiletoRead;   
 else
     error("Unknown run case");
 end
@@ -79,8 +80,8 @@ if UserVar.InverseCycle
     CtrlVar.InfoLevelNonLinIt=0;
     CtrlVar.InfoLevel=0;
     CtrlVar.Inverse.WriteRestartFile=1;  % always a good idea to write a restart file. 
-    CtrlVar.Inverse.NameOfRestartInputFile = UserVar.Inverse.NameOfRestartInputFile;
-    CtrlVar.Inverse.NameOfRestartOutputFile = UserVar.Inverse.NameOfRestartInputFile;
+    CtrlVar.Inverse.NameOfRestartInputFile = UserVar.NameOfRestartFiletoRead;
+    CtrlVar.Inverse.NameOfRestartOutputFile = UserVar.NameOfRestartFiletoRead;
     CtrlVar.Inverse.SaveSlipperinessEstimateInSeperateFile=true;
     CtrlVar.Inverse.SaveAGlenEstimateInSeperateFile=true;
     CtrlVar.NameOfFileForSavingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
@@ -91,7 +92,7 @@ else
     CtrlVar.DefineOutputsDt=1;
     CtrlVar.WriteRestartFile = 1;
     CtrlVar.WriteRestartFileInterval = 100;
-    CtrlVar.NameOfRestartFiletoWrite = UserVar.Spinup.NameOfRestartFiletoRead;
+    CtrlVar.NameOfRestartFiletoWrite = UserVar.NameOfRestartFiletoRead;
 end
 CtrlVar.CreateOutputsEndOfRun=1;
 

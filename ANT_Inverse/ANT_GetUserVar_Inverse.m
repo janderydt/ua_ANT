@@ -29,7 +29,7 @@ UserVar.Spinup.YearsDone = RunTable{ind,"SpinupYearsDone"};
 UserVar.Spinup.Cycle = find([0; cumsum(UserVar.Spinup.Years)]==UserVar.Spinup.YearsDone);
 
 % Restart files
-UserVar.Inverse.NameOfRestartInputFile = UserVar.Experiment + "-RestartFile.mat";
+UserVar.NameOfRestartFiletoRead = UserVar.Experiment + "-RestartFile.mat";
 
 % Density
 UserVar.Geometry = RunTable{ind,"startGeometry"};
@@ -92,7 +92,7 @@ end
 
 function UserVar = ANT_GetUserVar_InverseAfterSpinup(RunTable,ind,UserVar)
 
-UserVar.Restart = 1;
+UserVar.Restart = 0;
 
 %% Read inversion parameters from Runtable
 UserVar.Inverse.Measurements = RunTable{ind,"Measurements"}{:};
@@ -104,13 +104,13 @@ UserVar.Inverse.logC.ga = RunTable{ind,"gaC"};
 UserVar.Inverse.logAGlen.ga = RunTable{ind,"gaA"};
 
 %% geometry interpolants from spinup
-UserVar.Spinup.NameOfRestartFiletoRead = ...
-    strrep(UserVar.Inverse.NameOfRestartInputFile,"-RestartFile","_SpinupCycle"+string(UserVar.Spinup.Cycle)+"-RestartFile");
-load("./"+UserVar.Experiment+"/"+UserVar.Spinup.NameOfRestartFiletoRead,"F","MUA");
+NameOfRestartFiletoRead = ...
+    strrep(UserVar.NameOfRestartFiletoRead,".mat","_SpinupCycle"+string(UserVar.Spinup.Cycle-1)+".mat");
+load("./"+UserVar.Experiment+"/"+NameOfRestartFiletoRead,"F","MUA");
 FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
 Fb = FB; Fb.Values = F.b;
 Fs = FB; Fs.Values = F.s;
-UserVar.GeometryInterpolants = "GeometryInterpolants_fromSpinupCycle"+UserVar.Spinup.Cycle+".mat";
+UserVar.GeometryInterpolants = "GeometryInterpolants_fromSpinupCycle"+string(UserVar.Spinup.Cycle-1)+".mat";
 save("./"+UserVar.Experiment+"/"+UserVar.GeometryInterpolants,"FB","Fb","Fs");
 
 %% velocity interpolants
@@ -125,7 +125,7 @@ switch UserVar.Velocity
 end
 
 %% refined mesh from spinup
-UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
+UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
 UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_RefinedMesh.mat";
 save("./"+UserVar.Experiment+"/"+UserVar.InitialMeshFileName,"MUA")
 
@@ -143,10 +143,10 @@ function UserVar = ANT_GetUserVar_Spinup(RunTable,ind,UserVar)
 UserVar.Restart = 1;
 
 % copy and rename inverse restart file
-UserVar.Spinup.NameOfRestartFiletoRead = ...
-    strrep(UserVar.Inverse.NameOfRestartInputFile,"-RestartFile","_SpinupCycle"+string(UserVar.Spinup.Cycle)+"-RestartFile");
-copyfile("./"+string(UserVar.Experiment)+"/"+UserVar.Inverse.NameOfRestartInputFile,...
-    "./"+string(UserVar.Experiment)+"/"+UserVar.Spinup.NameOfRestartFiletoRead);
+%UserVar.Spinup.NameOfRestartFiletoRead = ...
+%    strrep(UserVar.Inverse.NameOfRestartInputFile,"-RestartFile","_SpinupCycle"+string(UserVar.Spinup.Cycle)+"-RestartFile");
+%copyfile("./"+string(UserVar.Experiment)+"/"+UserVar.Inverse.NameOfRestartInputFile,...
+%    "./"+string(UserVar.Experiment)+"/"+UserVar.Spinup.NameOfRestartFiletoRead);
 
 %% Read geometry interpolants from Runtable
 UserVar.Geometry = RunTable{ind,"startGeometry"};
@@ -156,6 +156,9 @@ switch UserVar.Geometry
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
+
+%% mesh boundary
+UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
 
 %% sliding law
 UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
