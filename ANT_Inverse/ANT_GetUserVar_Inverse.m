@@ -1,4 +1,4 @@
-function UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar,fid)
+function UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar)
 
 %% This function deals with all the information in the RunTable, and feeds that information 
 %% to Ua via the UserVar structure. The content of this function is entirely flexible, and
@@ -13,12 +13,12 @@ UserVar.Inverse.Iterations = str2double(split(iter_tmp,"+"));
 UserVar.Inverse.IterationsDone = RunTable{ind,"InverseIterationsDone"};
 UserVar.Inverse.Cycle = find([0; cumsum(UserVar.Inverse.Iterations)]==UserVar.Inverse.IterationsDone);
 if isempty(UserVar.Inverse.Cycle) & UserVar.Restart == 0
-    fprintf(fid,"Expecting InverseIterationsDone to be equal to [%s] but got %s instead.\n",...
+    fprintf(UserVar.fid,"Expecting InverseIterationsDone to be equal to [%s] but got %s instead.\n",...
             sprintf('%.0f,' , iter_tmp),string(UserVar.Inverse.IterationsDone));
     error("Unexpected number of InverseIterationsDone.");
 elseif isempty(UserVar.Inverse.Cycle) & UserVar.Restart
     %% restarting inverse cycle - no need to gather other variables
-    fprintf(fid,"Restarting inverse cycle. Leaving ANT_GetUserVar_Inverse\n");
+    fprintf(UserVar.fid,"Restarting inverse cycle. Leaving ANT_GetUserVar_Inverse\n");
     UserVar.InverseCyle = 1;
     return;
 end
@@ -54,12 +54,16 @@ UserVar.NameOfFileForSavingAGlenEstimate="ANT_Inverse_"+string(RunTable{ind,"Exp
 UserVar.UaOutputDirectory = './ResultsFiles';
 
 % Initialize other variables
-UserVar.Finished = 1;
 if UserVar.Inverse.Cycle == 1
     %% start first inverse cycle
     UserVar.InverseCycle = 1;
     UserVar.SpinupCycle = 0;
-    fprintf(fid,"> %s: Start inverse cycle %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle));
+
+    fprintf(UserVar.fid,'============================\n');
+    fprintf(UserVar.fid,string(datetime("now"))+"\n");
+    fprintf(UserVar.fid,'============================\n');
+    fprintf(UserVar.fid,"> %s: Start inverse cycle %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle));
+
     UserVar = ANT_GetUserVar_FirstInverseRun(RunTable,ind,UserVar);
 
 else
@@ -67,15 +71,26 @@ else
         %% start new inverse cycle
         UserVar.InverseCycle = 1;
         UserVar.SpinupCycle = 0;
-        fprintf(fid,"> %s: Start inverse cycle %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle));
+
+        fprintf(UserVar.fid,'============================\n');
+        fprintf(UserVar.fid,string(datetime("now"))+"\n");
+        fprintf(UserVar.fid,'============================\n');
+        fprintf(UserVar.fid,"> %s: Start inverse cycle %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle));
+
         UserVar = ANT_GetUserVar_InverseAfterSpinup(RunTable,ind,UserVar);
 
     elseif UserVar.Inverse.Cycle > UserVar.Spinup.Cycle
         %% start spinup cycle
         UserVar.SpinupCycle = 1;
         UserVar.InverseCycle = 0;
-        fprintf(fid,"> %s: Start spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
+
+        fprintf(UserVar.fid,'============================\n');
+        fprintf(UserVar.fid,string(datetime("now"))+"\n");
+        fprintf(UserVar.fid,'============================\n');
+        fprintf(UserVar.fid,"> %s: Start spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
+        
         UserVar = ANT_GetUserVar_Spinup(RunTable,ind,UserVar);
+
     else
         error("Something odd happened: number of inverse cycles (%s) should be >= number of spinup cycles (%s).",...
             string(UserVar.Inverse.Cycle),string(UserVar.Spinup.Cycle));

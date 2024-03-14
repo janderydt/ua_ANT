@@ -149,43 +149,47 @@ if contains(plots,'-plot-')
     %%
 end
 
-if UserVar.Spinup.Cycle == numel(UserVar.Spinup.Years) & UserVar.Inverse.Cycle == numel(UserVar.Inverse.Iterations)
-    UserVar.Finished = 1;
-else
-    UserVar.Finished = 0;
-end
-
 if strcmp(CtrlVar.DefineOutputsInfostring,'Start of inverse run')
     UserVar.Inverse.Iter0 =  RunInfo.Inverse.Iterations(end);
     fprintf(CtrlVar.fidlog,'Restarting. Number of iterations already done: %s.\n',num2str(UserVar.Inverse.Iter0));
 end
 
 if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
-    UserVar.Inverse.IterationsDone = RunInfo.Inverse.Iterations(end);
-    UserVar.Inverse.IterationsDoneInThisRun = UserVar.Inverse.IterationsDone-UserVar.Inverse.Iter0;
-	if UserVar.Inverse.IterationsDoneInThisRun ~= CtrlVar.Inverse.Iterations
+    % calculate total number of iterations done over all inverse cycles
+    IterationsDoneInThisRun = RunInfo.Inverse.Iterations(end)-UserVar.Inverse.Iter0;
+    UserVar.Inverse.IterationsDone = UserVar.Inverse.IterationsDone + IterationsDoneInThisRun;
+	if IterationsDoneInThisRun ~= CtrlVar.Inverse.Iterations
     		UserVar.Finished = 1;
     		fprintf(CtrlVar.fidlog,['Simulation did not reach expected number of iterations. Done %s instead of %s. ',...
-        		'Writing restart file and breaking out.\n'],num2str(UserVar.IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
-    end    
+        		'Writing restart file and breaking out.\n'],num2str(IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
+    end
     WriteAdjointRestartFile(UserVar,CtrlVar,MUA,BCs,F,F.GF,l,RunInfo,InvStartValues,Priors,Meas,BCsAdjoint,InvFinalValues);
     NameOfRestartOutputFile = erase(CtrlVar.Inverse.NameOfRestartOutputFile,".mat")+"_InverseCycle"+string(UserVar.Inverse.Cycle)+".mat";
     copyfile(CtrlVar.Inverse.NameOfRestartOutputFile,NameOfRestartOutputFile);
 end
 
 if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')
-    years_tmp = [0; cumsum(UserVar.Spinup.Years)];
-    UserVar.Spinup.YearsDoneInThisRun = CtrlVar.time;
-    UserVar.Spinup.YearsDone = years_tmp(UserVar.Spinup.Cycle) + UserVar.Spinup.YearsDoneInThisRun;
-    if UserVar.Spinup.YearsDoneInThisRun ~= CtrlVar.TotalTime
+    % calculate total number of years over all spinup cycles
+    YearsDoneInThisRun = CtrlVar.time;
+    UserVar.Spinup.YearsDone = UserVar.Spinup.YearsDone + YearsDoneInThisRun;
+    if YearsDoneInThisRun ~= CtrlVar.TotalTime
             UserVar.Finished = 1;
             fprintf(CtrlVar.fidlog,['Simulation did not reach expected end time. Done %s years instead of %s. ',...
-                    'Writing restart file and breaking out.\n'],num2str(UserVar.YearsDoneInThisRun),num2str(CtrlVar.TotalTime));
+                    'Writing restart file and breaking out.\n'],num2str(YearsDoneInThisRun),num2str(CtrlVar.TotalTime));
     end
-    if UserVar.Spinup.Cycle == numel(UserVar.Spinup.Y) & UserVar.Inverse.Cycle == numel()
     WriteForwardRunRestartFile(UserVar,CtrlVar,MUA,BCs,F,GF,l,RunInfo);
     NameOfRestartOutputFile = erase(CtrlVar.NameOfRestartFiletoRead,".mat")+"_SpinupCycle"+string(UserVar.Spinup.Cycle)+".mat";
     copyfile(CtrlVar.NameOfRestartFiletoRead,NameOfRestartOutputFile);
+end
+
+if contains(CtrlVar.DefineOutputsInfostring,{'Last call','End of Inverse Run'})
+    years_tmp = cumsum(UserVar.Spinup.Years);
+    it_tmp = cumsum(UserVar.Inverse.Iterations);
+    if UserVar.Inverse.IterationsDone == it_tmp(end) && UserVar.Spinup.YearsDone == years_tmp(end)
+        UserVar.Finished = 1;
+    else
+        UserVar.Finished = 0;
+    end
 end
 
 end

@@ -5,18 +5,24 @@ switch mode
         if exist(UserVar.Table,'file')
             opts = detectImportOptions(UserVar.Table);
             % set some variable types    
-            I=find(contains(opts.VariableNames,'InverseIterations'));
-            opts.VariableTypes(I)={'char'};
-            I=find(contains(opts.VariableNames,'InverseIterationsDone'));
-            opts.VariableTypes(I)={'double'};
-            I=find(contains(opts.VariableNames,'SpinupYears'));
-            opts.VariableTypes(I)={'char'};
-            I=find(contains(opts.VariableNames,'SpinupYearsDone'));
-            opts.VariableTypes(I)={'double'};
-            I=find(contains(opts.VariableNames,'Comments'));
-            opts.VariableTypes(I)={'char'};
+            if UserVar.type == "Inverse"
+                I=find(contains(opts.VariableNames,'InverseIterations'));
+                opts.VariableTypes(I)={'char'};
+                I=find(contains(opts.VariableNames,'InverseIterationsDone'));
+                opts.VariableTypes(I)={'double'};
+                I=find(contains(opts.VariableNames,'SpinupYears'));
+                opts.VariableTypes(I)={'char'};
+                I=find(contains(opts.VariableNames,'SpinupYearsDone'));
+                opts.VariableTypes(I)={'double'};
+                I=find(contains(opts.VariableNames,'Comments'));
+                opts.VariableTypes(I)={'char'};
+            elseif UserVar.type == "Diagnostic"
+
+            elseif UserVar.type == "Transient"
+
+            end
             % read table
-            RunTable=readtable(UserVar.Table,opts);  
+            RunTable=readtable(UserVar.Table,opts); 
         else    
             error("Runtable does not exist"); 
         end

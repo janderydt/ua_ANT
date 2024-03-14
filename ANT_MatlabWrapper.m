@@ -1,5 +1,7 @@
 function ANT_MatlabWrapper(pgid,type)
 
+UserVar.type = type;
+
 logfile = pwd+"/jobs_master.log";
 fid = fopen(logfile,'a+');
 
@@ -56,6 +58,7 @@ if ~isempty(Iexisting)
         if indnsnr
             fprintf(fid,"   ...ANT_MatlabWrapper: ExpID %s has been not yet been submitted. Let's check if a " + ...
                 "restart is required...",string(RunTable{ind,'ExpID'}));
+            UserVar.Finished = 0;
             % new run or restart?
             if RunTable{ind,'Restart'}==1
                 UserVar.Restart = 1;
@@ -69,43 +72,74 @@ if ~isempty(Iexisting)
             % now gather run info and launch job
             if type=="Diagnostic"
 
+                fprintf(fid,'============================\n');
+                fprintf(fid,string(datetime("now"))+"\n");
+                fprintf(fid,'============================\n');
+                fprintf(fid,"> %s: Submitted.\n",UserVar.Experiment);
+
+
                 % run info
                 UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
 
                 % launch Ua job
-                UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
+                UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
             elseif type=="Inverse"
                 
-                % initialize User variables
-                UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar,fid);
+                while ~UserVar.Finished
 
-                % cumulative sum of number of iterations at the end of each
-                % inverse cycle
-                it_tmp = cumsum(UserVar.Inverse.Iterations);
-
-                %% Inverse cycle
-                if UserVar.InverseCycle
-                
-                    while UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && UserVar.Finished
+                    % read Runtable again in case any changes were made by other
+                    % processes
+                    RunTable=ANT_ReadWritetable(UserVar,[],'read');
+                    ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+     
+                    % initialize User variables
+                    UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar);
     
-                        UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
+                    % cumulative sum of number of iterations at the end of each
+                    % inverse cycle
+                    it_tmp = cumsum(UserVar.Inverse.Iterations);
+    
+                    %% Inverse cycle
+                    if UserVar.InverseCycle
+                    
+                        while UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished
+        
+                            UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
+    
+                            UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
+    
+                            %adjust Runtable
+                            RunTable=ANT_ReadWritetable(UserVar,[],'read');
+                            ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+                            RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
+                            [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
+                
+                        end   
 
-                        UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
-
-                        RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
+                        fprintf(fid,'============================\n');
+                        fprintf(fid,string(datetime("now"))+"\n");
+                        fprintf(fid,'============================\n');
+                        fprintf(UserVar.fid,"> %s: End inverse cycle %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle));
+    
+                    %% Spinup cycle
+                    elseif UserVar.SpinupCycle
+    
+                        UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
+    
+                        %adjust Runtable
+                        RunTable=ANT_ReadWritetable(UserVar,[],'read');
+                        ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+                        RunTable{ind,"SpinupYearsDone"} = UserVar.Spinup.YearsDone;   
                         [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
-            
-                    end            
 
-                %% Spinup cycle
-                elseif UserVar.SpinupCycle
-
-                    UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
-
-                    RunTable{ind,"SpinupYearsDone"} = UserVar.Spinup.YearsDone;   
-                    [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
-
+                        fprintf(fid,'============================\n');
+                        fprintf(fid,string(datetime("now"))+"\n");
+                        fprintf(fid,'============================\n');
+                        fprintf(UserVar.fid,"> %s: End spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
+    
+                    end
+        
                 end
 
             end
@@ -128,7 +162,7 @@ if ~isempty(Inew)
 
     ind = Inew(1);
 
-    % generate unique ExpID and copy default scripts to new folder
+    % generate unique ExpID and save to run table
     existingID = RunTable{:,"ExpID"};
     ExpID = 0;
     while ismember(ExpID,existingID) 
@@ -137,58 +171,88 @@ if ~isempty(Inew)
     UserVar.ExpID = ExpID;
     RunTable{ind,"ExpID"} = ExpID;
     RunTable{ind,'pgid'} = pgid;
-    
+
+    [~]=ANT_ReadWritetable(UserVar,RunTable,'write');
+
+    % make copy of master folder for new experiment
     copyfile(['./ANT_',char(type),'_9999/'],['./ANT_',char(type),'_',num2str(ExpID),'/']); 
 
-    % initialize UserVars
-    UserVar.Finished = 1;
+    % initialize some UserVars
+    UserVar.Finished = 0;
     UserVar.Restart = 0;
-
-    % now gather run info
     UserVar.Experiment = ['ANT_',char(type),'_',num2str(ExpID)];
     
-    while ~UserVar.Finished
+    % now gather run info
     if type=="Diagnostic"
+
+        fprintf(fid,'============================\n');
+        fprintf(fid,string(datetime("now"))+"\n");
+        fprintf(fid,'============================\n');
+        fprintf(fid,"> %s: Submitted.\n",UserVar.Experiment);
 
         UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
 
         UserVar.Restart = 0;
     
-        UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
-
+        UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
 
     elseif type=="Inverse"
 
-        % initialize User variables
-        UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar,fid);
+        while ~UserVar.Finished
+            
+            % read Runtable again in case any changes were made by other
+            % processes
+            RunTable=ANT_ReadWritetable(UserVar,[],'read');
+            ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+               
+            % initialize User variables
+            UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar);
+    
+            % cumulative sum of number of iterations at the end of each
+            % inverse cycle
+            it_tmp = cumsum(UserVar.Inverse.Iterations);
+    
+            %% Inverse cycle
+            if UserVar.InverseCycle
+            
+                while UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished
+    
+                    UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
+    
+                    UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
+    
+                    %adjust Runtable
+                    RunTable=ANT_ReadWritetable(UserVar,[],'read');
+                    ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+                    RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
+                    [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
 
-        % cumulative sum of number of iterations at the end of each
-        % inverse cycle
-        it_tmp = cumsum(UserVar.Inverse.Iterations);
+                end     
 
-        %% Inverse cycle
-        if UserVar.InverseCycle
-        
-            while UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished
+                fprintf(fid,'============================\n');
+                fprintf(fid,string(datetime("now"))+"\n");
+                fprintf(fid,'============================\n');
+                fprintf(UserVar.fid,"> %s: End inverse cycle %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle));
+    
+            %% Spinup cycle
+            elseif UserVar.SpinupCycle
+    
+                UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
 
-                UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
-
-                UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
-
-                RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
+                %adjust Runtable
+                RunTable=ANT_ReadWritetable(UserVar,[],'read');
+                ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+                RunTable{ind,"SpinupYearsDone"} = UserVar.Spinup.YearsDone;   
                 [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
+
+                fprintf(fid,'============================\n');
+                fprintf(fid,string(datetime("now"))+"\n");
+                fprintf(fid,'============================\n');
+                fprintf(UserVar.fid,"> %s: End spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
     
             end
-    
-
-        %% Spinup cycle
-        elseif UserVar.SpinupCycle
-
-            UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid);
 
         end
-
-    end
     end
 
     ANT_CleanUp(UserVar);

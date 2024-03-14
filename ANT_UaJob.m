@@ -1,4 +1,4 @@
-function UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid,fid)
+function UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid)
 
 % log changes in table
 RunTable{ind,"SubmissionTime"}(:) = datestr(now); 
@@ -15,25 +15,23 @@ diary on
 
 something_submitted = 1;
 
-fprintf(fid,'============================\n');
-fprintf(fid,string(datetime("now"))+"\n");
-fprintf(fid,'============================\n');
-fprintf(fid,"> ANT_MatlabWrapper: (Re-)Submitted %s.\n",UserVar.Experiment);
-
 Inew = [];
 
 try
-    UserVar = Ua2D(UserVar);                
+    UserVar = Ua2D(UserVar);   
+    UserVar.Error = 0;
+    
 catch ME
-    fprintf(fid,'============================\n');
-    fprintf(fid,string(datetime("now"))+"\n");
-    fprintf(fid,'============================\n');
-    fprintf(fid,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
+    fprintf(UserVar.fid,'============================\n');
+    fprintf(UserVar.fid,string(datetime("now"))+"\n");
+    fprintf(UserVar.fid,'============================\n');
+    fprintf(UserVar.fid,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
 
-    UserVar.Finished = 0;
+    UserVar.Finished = 1;
+    UserVar.Error = 1;
 
     msgString = getReport(ME,'extended'); 
-    fprintf(fid,"%s \n",msgString);
+    fprintf(UserVar.fid,"%s \n",msgString);
 end
 
 %if UserVar.Finished
@@ -41,10 +39,3 @@ end
 %end
         
 cd ..
-
-% read Runtable again in case any changes were made by other
-% processes
-RunTable=ANT_ReadWritetable(UserVar,[],'read');
-ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
-
-[~]=ANT_ReadWritetable(UserVar,RunTable,'write');

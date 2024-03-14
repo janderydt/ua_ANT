@@ -1,13 +1,11 @@
 function ANT_CleanUp(UserVar)
 
-Table="RunTable.csv";
-
 % read table
 RunTable=ANT_ReadWritetable(UserVar,[],'read'); 
 ind = find(RunTable{:,'ExpID'}==UserVar.ExpID);
 
 % add flags and timestamps to table
-if UserVar.Finished==1
+if UserVar.Finished==1 && UserVar.Error==0
 
     RunTable{ind,"Submitted"} = 0;
     RunTable{ind,"Running"} = 0;
