@@ -61,7 +61,7 @@ if UserVar.SpinupCycle
     
     CtrlVar.RefineMeshOnStart=0;
     CtrlVar.InfoLevelAdaptiveMeshing=1;                                            
-    CtrlVar.AdaptMeshInitial=0  ; % remesh in first iteration (Itime=1)  even if mod(Itime,CtrlVar.AdaptMeshInterval)~=0.
+    CtrlVar.AdaptMeshInitial=1  ; % remesh in first iteration (Itime=1)  even if mod(Itime,CtrlVar.AdaptMeshInterval)~=0.
     CtrlVar.AdaptMeshAndThenStop=0;    % if true, then mesh will be adapted but no further calculations performed
                                        % useful, for example, when trying out different remeshing options (then use CtrlVar.doAdaptMeshPlots=1 to get plots)
     CtrlVar.AdaptMeshMaxIterations=10;
