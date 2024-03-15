@@ -7,11 +7,11 @@ echo $pgid;
 
 host=$(hostname)
 
-if [ "$host"="C23000100" ]; then
+if [ "$host" = "C23000100" ]; then
     start="addpath(\"/mnt/md0/Ua/cases/ANT\"); cd /mnt/md0/Ua/cases/ANT/ANT_Inverse; ANT_MatlabWrapper("$pgid",\"Inverse\")";    
 fi
 
-if [ "$host"="sauron" ]; then
+if [ "$host" = "sauron" ]; then
     start="addpath(\"/home/wchm8/Documents/Ua/cases/ANT\"); cd /home/wchm8/Documents/Ua/cases/ANT/ANT_Inverse; ANT_MatlabWrapper("$pgid",\"Inverse\")";
 fi
 
