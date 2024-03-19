@@ -17,8 +17,10 @@ switch mode
                 I=find(contains(opts.VariableNames,'Comments'));
                 opts.VariableTypes(I)={'char'};
             elseif UserVar.type == "Diagnostic"
+            	% none to correct
 
             elseif UserVar.type == "Transient"
+            	% none to correct
 
             end
             % read table

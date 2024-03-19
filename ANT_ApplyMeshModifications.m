@@ -12,13 +12,18 @@ xEle=Nodes2EleMean(MUA.connectivity,MUA.coordinates(:,1));
 yEle=Nodes2EleMean(MUA.connectivity,MUA.coordinates(:,2));
 
 % take care of potential nans in boundary
-variable = round(UserVar.Geometry);
-BCx = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,1);
-BCy = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,2);
-Inan = find(isnan(BCx));
-if ~isempty(Inan)
-    BCx = BCx(1:Inan(1)-1);
-    BCy = BCy(1:Inan(1)-1);
+if isfield(UserVar,'Geometry')
+    variable = round(UserVar.Geometry);
+    BCx = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,1);
+    BCy = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,2);
+    Inan = find(isnan(BCx));
+    if ~isempty(Inan)
+        BCx = BCx(1:Inan(1)-1);
+        BCy = BCy(1:Inan(1)-1);
+    end
+else
+    BCx = MUA.Boundary.x;
+    BCy = MUA.Boundary.y;
 end
 
 % remove elements that have 1 node or more outside the boundary
@@ -33,7 +38,7 @@ ElementsToBeDeactivated = find(sum(NodesToBeDeactivated,2)>0);
 Indtmp = find(~cn2);
 ElementsToBeDeactivated = unique([ElementsToBeDeactivated(:); Indtmp(:)]);
 
-MUA_tmp=DeactivateMUAelements(CtrlVar,MUA,ElementsToBeDeactivated);
+MUA_tmp = DeactivateMUAelements(CtrlVar,MUA,ElementsToBeDeactivated);
 
 % remove 'disconnected' elements: ensure that each element has at least 1 edge
 % in common with 1 other element

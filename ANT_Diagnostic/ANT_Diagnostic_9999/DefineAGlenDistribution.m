@@ -6,7 +6,7 @@ tmp = load(AGlenFile,'MUA','AGlen','n');
 n = tmp.n(1);
 
 % map AGlen onto basemesh, with zeros where there is no data
-base = load("../"+UserVar.BaseMesh.Mesh+".mat");
+base = load("../"+UserVar.BaseMesh.Mesh);
 CtrlVar.MapOldToNew.method = "ShapeAndScattered";
 AGlen_outside = 0;
 [~,AGlen_base] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,base.MUA,AGlen_outside,tmp.AGlen);
@@ -19,7 +19,7 @@ Izero = find(AGlen==0);
 x = MUA.coordinates(:,1); y = MUA.coordinates(:,2);
 if ~isempty(Izero)
     FillA = load(UserVar.NameOfFileForReadingAGlenEstimateFill);
-    FAGlenFill = scatteredInterpolant(FillA.xA,FillA.yA,FillA.AGlen,'nearest');
+    FAGlenFill = scatteredInterpolant(FillA.MUA.coordinates(:,1),FillA.MUA.coordinates(:,2),FillA.AGlen,'nearest');
     AGlen(Izero) = FAGlenFill(x(Izero),y(Izero));
     fprintf("Using AGlen from file %s and filling holes with %s.\n",AGlenFile,UserVar.NameOfFileForReadingAGlenEstimateFill);
 else
