@@ -15,15 +15,14 @@ yEle=Nodes2EleMean(MUA.connectivity,MUA.coordinates(:,2));
 if isfield(UserVar,'Geometry')
     variable = round(UserVar.Geometry);
     BCx = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,1);
-    BCy = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,2);
-    Inan = find(isnan(BCx));
-    if ~isempty(Inan)
-        BCx = BCx(1:Inan(1)-1);
-        BCy = BCy(1:Inan(1)-1);
-    end
+    BCy = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,2);   
 else
-    BCx = MUA.Boundary.x;
-    BCy = MUA.Boundary.y;
+    error(['ExpID ',RunTable{ind,"ExpID"},': Do not know Geometry.']);
+end
+Inan = find(isnan(BCx));
+if ~isempty(Inan)
+    BCx = BCx(1:Inan(1)-1);
+    BCy = BCy(1:Inan(1)-1);
 end
 
 % remove elements that have 1 node or more outside the boundary

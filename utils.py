@@ -31,7 +31,7 @@ def read_runinfo (table,runtype):
                             "Restart": int, "InverseA": int, "InverseAFill": int, "InverseCycleA":int , 
                             "InverseC": int, "InverseCFill": int, "InverseCycleC": int,
                             "Calv": int, "ISthick": int, "InverseCycleIS": int, "GIthick": int, "InverseCycleGI": int})
-        data = data.astype({"Comments": str})
+        data = data.astype({"BaseMesh": str, "Comments": str})
     else:
         log.info('   ...Unknown run type')
 
