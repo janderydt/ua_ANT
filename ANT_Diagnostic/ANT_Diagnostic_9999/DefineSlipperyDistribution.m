@@ -8,14 +8,11 @@ muk=0.5 ;
 tmp = load(CFile,'MUA','C','m');
 m = tmp.m(1);
 
-% map C onto basemesh, with zeros where there is no data
-base = load("../"+UserVar.BaseMesh.Mesh);
+% map C onto mesh, with zeros where there is no data
 CtrlVar.MapOldToNew.method = "ShapeAndScattered";
 C_outside = 0;
-[~,C_base] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,base.MUA,C_outside,tmp.C);
-C_base(UserVar.BaseMesh.DeactivatedNodes) = 0;
+[~,C] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,C_outside,tmp.C);
 
-[~,C] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],base.MUA,MUA,C_outside,C_base);
 Izero = find(C==0);
 
 % where no value for C is available, take it from UserVar.NameOfFileForReadingSlipperinessEstimateFill

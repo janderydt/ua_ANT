@@ -6,13 +6,10 @@ tmp = load(AGlenFile,'MUA','AGlen','n');
 n = tmp.n(1);
 
 % map AGlen onto basemesh, with zeros where there is no data
-base = load("../"+UserVar.BaseMesh.Mesh);
 CtrlVar.MapOldToNew.method = "ShapeAndScattered";
 AGlen_outside = 0;
-[~,AGlen_base] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,base.MUA,AGlen_outside,tmp.AGlen);
-AGlen_base(UserVar.BaseMesh.DeactivatedNodes) = 0;
+[~,AGlen] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,AGlen_outside,tmp.AGlen);
 
-[~,AGlen] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],base.MUA,MUA,AGlen_outside,AGlen_base);
 Izero = find(AGlen==0);
 
 % where no value for AGlen is available, take it from UserVar.NameOfFileForReadingAGlenEstimateFill

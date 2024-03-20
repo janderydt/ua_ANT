@@ -38,26 +38,37 @@ end
 
 %% CALVING
 UserVar.Calv = RunTable{ind,"Calv"};
+FiletoRead = "../ANT_Inverse/ANT_Inverse_"+string(UserVar.Calv)+...
+        "/ANT_Inverse_"+string(UserVar.Calv)+"-RestartFile.mat";
+load(FiletoRead,"MUA","CtrlVarInRestartFile");
+CtrlVar = CtrlVarInRestartFile;
 
+MeshBoundaryCoordinates = [MUA.Boundary.x(:) MUA.Boundary.y(:)];
+MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates";
+InitialMeshFileName = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_InitialMesh";
 
-%% density interpolant: same as ice shelf run
-UserVar.DensityInterpolant = UserVar.ISGeometryInterpolants;
+save(MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
+save(InitialMeshFileName,"MUA","CtrlVar");
 
-%% target mesh: take mesh from ice shelf run as base mesh 
-if floor(UserVar.ISGeometry/1e3)==1
-    UserVar.BaseMesh.BCs = "../ANT_Inverse/ANT_Inverse_"+string(UserVar.ISGeometry)+...
-        "/ANT_Inverse_"+string(UserVar.ISGeometry)+"_MeshBoundaryCoordinates.mat";
-    NameOfFiletoRead = "../ANT_Inverse/ANT_Inverse_"+string(UserVar.ISGeometry)+...
-        "/ANT_Inverse_"+string(UserVar.ISGeometry)+"-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleIS"})+".mat";
-    load(NameOfFiletoRead,"CtrlVarInRestartFile","MUA"); CtrlVar = CtrlVarInRestartFile;
-    UserVar.BaseMesh.Mesh = "./"+UserVar.Experiment+"/"+"BaseMesh.mat";
-    save(UserVar.BaseMesh.Mesh,"CtrlVar","MUA");
-else
-    error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise ISthick flag in RunTable.']);
+UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates";
+UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_InitialMesh";
+
+%%basemesh
+switch char(RunTable{ind,"BaseMesh"}{:})
+    case {'2000_meshmin5000_meshmax100000','2000_meshmin1500_meshmax100000'}
+        % adjust and copy mesh files
+        UserVar.BaseMesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+RunTable{ind,"BaseMesh"}+"_extrudemesh0_variableboundaryres1";
+    case {'2000_2009_2014_2018_meshmin3000_meshmax100000'}
+        % adjust and copy mesh files
+        UserVar.BaseMesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+ RunTable{ind,"BaseMesh"}+"_extrudemesh1_variableboundaryres1";
+    otherwise
+        error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Mesh flag in RunTable.']);
 end
 
-UserVar = ANT_ApplyMeshModifications(UserVar);
-   
+    
+%% density interpolant: same as ice shelf run
+UserVar.DensityInterpolant = UserVar.ISGeometryInterpolants;   
+
 %% sliding law
 UserVar.InverseC = RunTable{ind,"InverseC"};
 UserVar.InverseCFill = RunTable{ind,"InverseCFill"};
