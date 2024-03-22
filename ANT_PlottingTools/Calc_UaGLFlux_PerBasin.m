@@ -17,7 +17,7 @@ end
 % GL fluxes will be defined at midpoints
 [xGLmid,yGLmid,qGL,qGLx,qGLy,Fub,Fvb,Fr,Fh,LakeNodes,GLgeo,ubGL,vbGL] = FluxAcrossGroundingLine_JDR(CtrlVar,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho,[],[],[],[],[],xGL,yGL,GLgeo);
 
-figure(111); hold on; quiver(xGLmid,yGLmid,qGLx/3e7,qGLy/3e7,'off');
+%figure(111); hold on; quiver(xGLmid,yGLmid,qGLx/3e7,qGLy/3e7,'off');
 
 %% keep n longest GL segments
 I = find(isnan(xGL)); I = [0;I(:);numel(xGL)+1];

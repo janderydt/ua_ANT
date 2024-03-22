@@ -106,15 +106,19 @@ end
 
 %% 1- Difference in flux across the GL and into the open ocean between perturbation and baseline
 % Initalize some variables for plotting
-CMtmp = crameri('vik',24);
-CM = [CMtmp(11,:);0.9*ones(1,3);CMtmp(13:24,:)];
+%CMtmp = crameri('vik',24);
+%CM = [CMtmp(11,:);0.9*ones(1,3);CMtmp(13:24,:)];
+
+CMtmp = [0 0 0.5; 0 0 1; 0 0.5 1; 0 1 1; 1 1 1; 1  1 0;1 0.5 0; 1 0 0; 0.5 0 0];
+CM = [interp1([1:9],CMtmp(:,1),linspace(1,9,24))' interp1([1:9],CMtmp(:,2),linspace(1,9,24))' interp1([1:9],CMtmp(:,3),linspace(1,9,24))'];
+CM = [CM(11,:);0.9*ones(1,3);CM(13:24,:)];
 
 cmin = -15;
 cmax = 125;
 
-H=fig('units','inches','width',130*12/72.27,'height',45*12/72.27,'fontsize',14,'font','Helvetica');
+H=fig('units','inches','width',80*12/72.27,'height',65*12/72.27,'fontsize',14,'font','Helvetica');
 
-tlo_fig = tiledlayout(1,np,"TileSpacing","compact");
+tlo_fig = tiledlayout(2,np/2,"TileSpacing","compact");
 for i = 1:np
     ax_fig(i) = nexttile(tlo_fig,i); hold on;
 end
@@ -159,8 +163,11 @@ for i=1:np
     CtrlVarInRestartFile.PlotGLs=0;
     [xGL,yGL]=PlotGroundingLines(CtrlVarInRestartFile,MUA,F.GF);%,[],[],[],'color','k');
     plot(ax_fig(i),xGL/1e3,yGL/1e3,'-k');
-    if i>1
+    if i==2 || ii==4
         yticklabels(ax_fig(i),{});
+    end
+    if i<3
+        xticklabels(ax_fig(i),{});
     end
     plot(ax_fig(i),MUA.Boundary.x/1e3,MUA.Boundary.y/1e3,'-k');
     axis(ax_fig(i),"equal"); axis(ax_fig(i),"tight");
@@ -180,9 +187,9 @@ CM(33,:)=[0.95 0.95 0.95];
 cmin = -100;
 cmax = 100;
 
-H=fig('units','inches','width',130*12/72.27,'height',45*12/72.27,'fontsize',14,'font','Helvetica');
+H=fig('units','inches','width',80*12/72.27,'height',65*12/72.27,'fontsize',14,'font','Helvetica');
 
-tlo_fig = tiledlayout(1,np,"TileSpacing","compact");
+tlo_fig = tiledlayout(2,np/2,"TileSpacing","compact");
 for i = 1:np
     ax_fig(i) = nexttile(tlo_fig,i); hold on;
 end
@@ -233,8 +240,11 @@ for i=1:np
     CtrlVarInRestartFile.PlotGLs=0;
     [xGL,yGL]=PlotGroundingLines(CtrlVarInRestartFile,baselineMUA,baselineF.GF);%,[],[],[],'color','k');
     plot(ax_fig(i),xGL/1e3,yGL/1e3,'-k');
-    if i>1
+    if i==2 || ii==4
         yticklabels(ax_fig(i),{});
+    end
+    if i<3
+        xticklabels(ax_fig(i),{});
     end
     plot(ax_fig(i),baselineMUA.Boundary.x/1e3,baselineMUA.Boundary.y/1e3,'-k');
     axis(ax_fig(i),"equal"); axis(ax_fig(i),"tight");
