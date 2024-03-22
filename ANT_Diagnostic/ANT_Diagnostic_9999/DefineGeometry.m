@@ -27,7 +27,7 @@ h = s-b;
 %% find floating nodes that are not lakes
 [GF,~,~,~]=IceSheetIceShelves(CtrlVar,MUA,GF);
 [LakeNodes,~,~,~] = LakeOrOcean3(CtrlVar,MUA,GF);
-ISnodes = find(GF.node==0 & GF.NodesDownstreamOfGroundingLines & ~LakeNodes); 
+ISnodes = find(GF.node<0.5 & GF.NodesDownstreamOfGroundingLines & ~LakeNodes); 
 
 %% now deal with floating ice
 load(UserVar.ISGeometryInterpolants,'Fs','Fb');

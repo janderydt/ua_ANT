@@ -5,13 +5,16 @@ addpath(getenv("froot_tools"));
 froot_ua = getenv("froot_ua")+"/cases/ANT/";
 
 baseline = 1814; % n=3, m=3, It1, 2000
-baseline = 1278; % n=3, m=3, It3, 2000
+baseline = 1141; % n=3, m=3, It2, 2000
+%baseline = 1278; % n=3, m=3, It3, 2000
 
 target = 1485; % n=3, m=3, It1, 2018
-target = 1800; % n=3, m=3, It3, 2018
+target = 1035; % n=3, m=3, It2, 2018
+%target = 1800; % n=3, m=3, It3, 2018
 
 perturbations = [1905 1126 1632 1097]; %n=3, m=3, It1, 2018
-perturbations = [1546 1957 1157 1970]; %n=3, m=3, It3, 2018
+perturbations = [1421 1915 1959 1655]; %n=3, m=3, It2, 2018
+%perturbations = [1546 1957 1157 1970]; %n=3, m=3, It3, 2018
 
 Table = readtable("../ANT_Diagnostic/RunTable.csv");
 
@@ -103,12 +106,13 @@ end
 
 %% 1- Difference in flux across the GL and into the open ocean between perturbation and baseline
 % Initalize some variables for plotting
-CMtmp = crameri('vik',18);
-CM = [CMtmp(1:9,:);0.9*ones(2,3);CMtmp(10:18,:)];
-cmin = -125;
+CMtmp = crameri('vik',24);
+CM = [CMtmp(11,:);0.9*ones(1,3);CMtmp(13:24,:)];
+
+cmin = -15;
 cmax = 125;
 
-H=fig("units","inches","width",130*12/72.27,"height",45*12/72.27,"fontsize",14,"font","Helvetica");
+H=fig('units','inches','width',130*12/72.27,'height',45*12/72.27,'fontsize',14,'font','Helvetica');
 
 tlo_fig = tiledlayout(1,np,"TileSpacing","compact");
 for i = 1:np
@@ -123,10 +127,13 @@ for pp = 1:np
 
         % plotting 100*(qGL(perturb)-qGL(baseline))./(qGL(target)-qGL(baseline))
         data(ii) = (Bperturb(pp).B.qtot{ii}-Bbaseline.qtot{ii});%./(Btarget.qtot{ii}-Bbaseline.qtot{ii});
+        %data(ii) = (Bperturb(pp).B.qGL_tot{ii}-Bbaseline.qGL_tot{ii});
 
         pgon = polyshape(B.x{ii}/1e3,B.y{ii}/1e3,'Simplify',false); 
         [xc,yc] = centroid(pgon); 
-        h(ii) = plot(ax_fig(pp),pgon,'FaceColor',CM(max(min(round(1+17/(cmax-cmin)*(data(ii)-cmin)),18),1),:),'FaceAlpha',1,'EdgeColor',[0.75 0.75 0.75]); 
+        histcolorindex=histogram(min(max(data(ii),cmin),cmax),linspace(cmin,cmax,size(CM,1)+1)); 
+        colorindex = find(histcolorindex.Values);
+        h(ii) = plot(ax_fig(pp),pgon,'FaceColor',CM(colorindex,:),'FaceAlpha',1,'EdgeColor',[0.75 0.75 0.75]); 
         h(ii).LineStyle = '-';
         text(ax_fig(pp),xc,yc,{B.name{ii};string(round(data(ii)))+" Gt/yr"},'vert','middle','horiz','center','fontsize',8,'color',h(ii).FaceColor*.25);
 
@@ -167,12 +174,13 @@ cb.Label.String = "qGL_{pert}+qOB_{pert}-qGL_{base}-qOB_{base} [Gt/yr]";
 
 %% 2- Difference in surface speed between perturbation and baseline
 % Initalize some variables for plotting
-CMtmp = crameri('vik',14);
-CM = [CMtmp(1:7,:);0.9*ones(2,3);CMtmp(8:14,:)];
+CMtmp = [0 0 0.5; 0 0 1; 0 0.5 1; 0 1 1; 1 1 1; 1  1 0;1 0.5 0; 1 0 0; 0.5 0 0];
+CM = [interp1([1:9],CMtmp(:,1),linspace(1,9,65))' interp1([1:9],CMtmp(:,2),linspace(1,9,65))' interp1([1:9],CMtmp(:,3),linspace(1,9,65))'];
+CM(33,:)=[0.95 0.95 0.95];
 cmin = -100;
 cmax = 100;
 
-H=fig("units","inches","width",130*12/72.27,"height",45*12/72.27,"fontsize",14,"font","Helvetica");
+H=fig('units','inches','width',130*12/72.27,'height',45*12/72.27,'fontsize',14,'font','Helvetica');
 
 tlo_fig = tiledlayout(1,np,"TileSpacing","compact");
 for i = 1:np
@@ -182,8 +190,13 @@ end
 for pp = 1:np
 
     CtrlVarInRestartFile.PlotXYscale = 1e3;
-    PlotNodalBasedQuantities_JDR(ax_fig(pp),targetMUA.connectivity,targetMUA.coordinates,Fperturb(pp).speed(targetMUA.coordinates(:,1),targetMUA.coordinates(:,2)) -...
-        Fbaseline.speed(targetMUA.coordinates(:,1),targetMUA.coordinates(:,2)),CtrlVarInRestartFile); hold on;
+    if contains("Ice Front",perturbationdata(pp).description)
+        PlotNodalBasedQuantities_JDR(ax_fig(pp),targetMUA.connectivity,targetMUA.coordinates,Fperturb(pp).speed(targetMUA.coordinates(:,1),targetMUA.coordinates(:,2)) -...
+            Fbaseline.speed(targetMUA.coordinates(:,1),targetMUA.coordinates(:,2)),CtrlVarInRestartFile); hold on;
+    else
+        PlotNodalBasedQuantities_JDR(ax_fig(pp),baselineMUA.connectivity,baselineMUA.coordinates,Fperturb(pp).speed(baselineMUA.coordinates(:,1),baselineMUA.coordinates(:,2)) -...
+            Fbaseline.speed(baselineMUA.coordinates(:,1),baselineMUA.coordinates(:,2)),CtrlVarInRestartFile); hold on;
+    end
 
     for ii=startB:numel(B.x)
 
@@ -240,7 +253,7 @@ CM = [CMtmp(1:7,:);0.9*ones(2,3);CMtmp(8:14,:)];
 cmin = -100;
 cmax = 100;
 
-H=fig("units","inches","width",55*12/72.27,"height",55*12/72.27,"fontsize",14,"font","Helvetica");
+H=fig('units','inches','width',55*12/72.27,'height',55*12/72.27,'fontsize',14,'font','Helvetica');
 
 subplot("position",[0.1 0.1 0.85 0.85]); hold on;
 
@@ -256,6 +269,8 @@ g(1)=plot(gca,xGL/1e3,yGL/1e3,'-k');
 g(2)=plot(gca,xGL/1e3,yGL/1e3,'-m');
 
 for ii=startB:numel(B.x)
+
+    data(ii) = (Btarget.qtot{ii}-Bbaseline.qtot{ii});%./(Btarget.qtot{ii}-Bbaseline.qtot{ii});
 
     plot(gca,B.x{ii}/1e3,B.y{ii}/1e3,'color',[0.75 0.75 0.75]); 
 
@@ -279,5 +294,57 @@ grid(gca,"on"); box(gca,"on");
 xlabel(gca,"psx [km]"); ylabel(gca,"psy [km]"); 
 
 cb=colorbar; 
-cb.Label.String = "Change in speed"; 
+cb.Label.String = "Change in speed [m/yr]"; 
 
+
+%% 4- Difference in surface elevation between target and baseline
+% Initalize some variables for plotting
+CMtmp = [0 0 0.5; 0 0 1; 0 0.5 1; 0 1 1; 1 1 1; 1  1 0;1 0.5 0; 1 0 0; 0.5 0 0];
+CM = [interp1([1:9],CMtmp(:,1),linspace(1,9,65))' interp1([1:9],CMtmp(:,2),linspace(1,9,65))' interp1([1:9],CMtmp(:,3),linspace(1,9,65))'];
+CM(33,:)=[0.9 0.9 0.9];
+CM = flipdim(CM,1);
+cmin = -100;
+cmax = 100;
+
+H=fig('units','inches','width',55*12/72.27,'height',55*12/72.27,'fontsize',14,'font','Helvetica');
+
+subplot("position",[0.1 0.1 0.85 0.85]); hold on;
+
+CtrlVarInRestartFile.PlotXYscale = 1e3;
+PlotNodalBasedQuantities_JDR(gca,targetMUA.connectivity,targetMUA.coordinates,Ftarget.h(targetMUA.coordinates(:,1),targetMUA.coordinates(:,2)) -...
+        Fbaseline.h(targetMUA.coordinates(:,1),targetMUA.coordinates(:,2)),CtrlVarInRestartFile); hold on;
+
+CtrlVarInRestartFile.PlotGLs=0;
+[xGL,yGL]=PlotGroundingLines(CtrlVarInRestartFile,targetMUA,targetF.GF);%,[],[],[],'color','k');
+g(1)=plot(gca,xGL/1e3,yGL/1e3,'-k');
+
+[xGL,yGL]=PlotGroundingLines(CtrlVarInRestartFile,baselineMUA,baselineF.GF);%,[],[],[],'color','k');
+g(2)=plot(gca,xGL/1e3,yGL/1e3,'-m');
+
+for ii=startB:numel(B.x)
+
+    data(ii) = (Btarget.qtot{ii}-Bbaseline.qtot{ii});
+
+    plot(gca,B.x{ii}/1e3,B.y{ii}/1e3,'color',[0.75 0.75 0.75]); 
+
+    pgon = polyshape(B.x{ii}/1e3,B.y{ii}/1e3,'Simplify',false); 
+    [xc,yc] = centroid(pgon); 
+    text(gca,xc,yc,{B.name{ii};string(round(data(ii)))+" Gt/yr"},'vert','middle','horiz','center','fontsize',8,'color',h(ii).FaceColor*.25);
+
+end
+
+plot(gca,targetMUA.Boundary.x/1e3,targetMUA.Boundary.y/1e3,'-k');
+plot(gca,baselineMUA.Boundary.x/1e3,baselineMUA.Boundary.y/1e3,'-m');
+   
+colormap(gca,CM);    
+caxis(gca,[cmin cmax]);
+
+title(gca,"Target - baseline");
+
+axis(gca,"equal"); axis(gca,"tight");
+grid(gca,"on"); box(gca,"on");
+
+xlabel(gca,"psx [km]"); ylabel(gca,"psy [km]"); 
+
+cb=colorbar; 
+cb.Label.String = "Change in surface elevation [m]"; 

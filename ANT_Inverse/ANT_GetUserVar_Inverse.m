@@ -17,10 +17,11 @@ if isempty(UserVar.Inverse.Cycle) & UserVar.Restart == 0
             sprintf('%.0f,' , iter_tmp),string(UserVar.Inverse.IterationsDone));
     error("Unexpected number of InverseIterationsDone.");
 elseif isempty(UserVar.Inverse.Cycle) & UserVar.Restart
-    %% restarting inverse cycle - no need to gather other variables
-    fprintf(UserVar.fid,"Restarting inverse cycle. Leaving ANT_GetUserVar_Inverse\n");
-    UserVar.InverseCyle = 1;
-    return;
+    %% restarting inverse cycle 
+    UserVar.InverseCycle = 1;
+    UserVar.SpinupCycle = 0;
+    Itmp = find(cumsum(UserVar.Inverse.Iterations)-UserVar.Inverse.IterationsDone>0);
+    UserVar.Inverse.Cycle = Itmp(1);
 end
 
 spinup_tmp = RunTable{ind,"SpinupYears"}{:};
