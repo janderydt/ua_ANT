@@ -166,6 +166,8 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
     WriteAdjointRestartFile(UserVar,CtrlVar,MUA,BCs,F,F.GF,l,RunInfo,InvStartValues,Priors,Meas,BCsAdjoint,InvFinalValues);
     NameOfRestartOutputFile = erase(CtrlVar.Inverse.NameOfRestartOutputFile,".mat")+"_InverseCycle"+string(UserVar.Inverse.Cycle)+".mat";
     copyfile(CtrlVar.Inverse.NameOfRestartOutputFile,NameOfRestartOutputFile);
+    NameOfRestartOutputFile = erase(CtrlVar.Inverse.NameOfRestartOutputFile,".mat")+"_It"+string(UserVar.Inverse.IterationsDone)+".mat";
+    copyfile(CtrlVar.Inverse.NameOfRestartOutputFile,NameOfRestartOutputFile);
 end
 
 if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')

@@ -4,17 +4,11 @@ addpath(getenv("froot_tools"));
 
 froot_ua = getenv("froot_ua")+"/cases/ANT/";
 
-baseline = 1814; % n=3, m=3, It1, 2000
-baseline = 1141; % n=3, m=3, It2, 2000
-%baseline = 1278; % n=3, m=3, It3, 2000
+baseline = 1814; % n=3, m=3, It2 (refined mesh), 2000
 
-target = 1485; % n=3, m=3, It1, 2018
-target = 1035; % n=3, m=3, It2, 2018
-%target = 1800; % n=3, m=3, It3, 2018
+target = 1485; % n=3, m=3, It2 (refined mesh), 2018
 
-perturbations = [1905 1126 1632 1097]; %n=3, m=3, It1, 2018
-perturbations = [1421 1915 1959 1655]; %n=3, m=3, It2, 2018
-%perturbations = [1546 1957 1157 1970]; %n=3, m=3, It3, 2018
+perturbations = [1905 1126 1632 1097]; %n=3, m=3, It2 (refined mesh), 2018
 
 Table = readtable("../ANT_Diagnostic/RunTable.csv");
 

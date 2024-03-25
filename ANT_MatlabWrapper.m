@@ -32,8 +32,6 @@ something_submitted = 0; kk=1;
 % first deal with existing jobs
 if ~isempty(Iexisting)
 
-    Inew = [];
-
     while something_submitted==0 && kk<=numel(Iexisting)
    
         % table row
@@ -80,6 +78,7 @@ if ~isempty(Iexisting)
                 fprintf(fid,"> %s: Submitted.\n",UserVar.Experiment);
                 
                 something_submitted=1;
+                Inew = [];
 
                 % run info
                 UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
@@ -92,6 +91,7 @@ if ~isempty(Iexisting)
                 while ~UserVar.Finished
 
                     something_submitted=1;
+                    Inew = [];
 
                     % read Runtable again in case any changes were made by other
                     % processes

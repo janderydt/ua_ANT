@@ -7,6 +7,9 @@ RunTable{ind,"Running"} = 1;
 RunTable{ind,'pgid'} = pgid;
 [~]=ANT_ReadWritetable(UserVar,RunTable,'write');
 
+% copy latest Ua run files from master folder to experiment folder
+copyfile("./ANT_"+UserVar.type+"_9999/*.m",UserVar.Experiment);
+
 % launch job
 cd(UserVar.Experiment);
 

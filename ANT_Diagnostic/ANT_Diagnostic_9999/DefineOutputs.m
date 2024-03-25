@@ -72,7 +72,7 @@ if contains(plots,'-save-')
         mkdir(UserVar.UaOutputDirectory) ;
     end
        
-    FileName=sprintf("./%s/ResultsFile-%s.mat",...
+    FileName=sprintf("%s/ResultsFile-%s.mat",...
             UserVar.UaOutputDirectory,string(UserVar.ExpID));
     fprintf(' Saving data in %s \n',FileName)
     save(FileName,'UserVar','CtrlVar','MUA','F');
