@@ -223,17 +223,20 @@ end
 switch char(RunTable{ind,"startMesh"}{:})
     case {'2000_meshmin5000_meshmax100000','2000_meshmin1500_meshmax100000'}
         % adjust and copy mesh files  
-        UserVar.BaseMesh.Mesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+RunTable{ind,"startMesh"}+"_extrudemesh0_variableboundaryres1";
-        UserVar.BaseMesh.BCs = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_"+RunTable{ind,"startMesh"}+"_extrudemesh0_variableboundaryres1";
-        UserVar = ANT_ApplyMeshModifications(UserVar);
+        UserVar.BaseMesh.BCs = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+RunTable{ind,"startMesh"}+"_extrudemesh0_variableboundaryres1";
+        UserVar.BaseMesh.Mesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_"+RunTable{ind,"startMesh"}+"_extrudemesh0_variableboundaryres1";
     case {'2000_2009_2014_2018_meshmin3000_meshmax100000'}
 	% adjust and copy mesh files
-	    UserVar.BaseMesh.Mesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+ RunTable{ind,"startMesh"}+"_extrudemesh1_variableboundaryres1";
-        UserVar.BaseMesh.BCs = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_"+RunTable{ind,"startMesh"}+"_extrudemesh1_variableboundaryres1";
-        UserVar = ANT_ApplyMeshModifications(UserVar);
+	    UserVar.BaseMesh.BCs = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+ RunTable{ind,"startMesh"}+"_extrudemesh1_variableboundaryres1";
+        UserVar.BaseMesh.Mesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_"+RunTable{ind,"startMesh"}+"_extrudemesh1_variableboundaryres1";
+    case {'2000_2009_2014_2018_meshmin3000_meshmax100000_refined'}
+	% adjust and copy mesh files
+	    UserVar.BaseMesh.BCs = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+ RunTable{ind,"startMesh"}+"_extrudemesh1_variableboundaryres1";
+        UserVar.BaseMesh.Mesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_"+RunTable{ind,"startMesh"}+"_extrudemesh1_variableboundaryres1";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Mesh flag in RunTable.']);
 end
+UserVar = ANT_ApplyMeshModifications(UserVar);
 
 %% sliding law
 if RunTable{ind,"startC"} ~= 0

@@ -39,18 +39,18 @@ end
 %% CALVING
 UserVar.Calv = RunTable{ind,"Calv"};
 FiletoRead = "../ANT_Inverse/ANT_Inverse_"+string(UserVar.Calv)+...
-        "/ANT_Inverse_"+string(UserVar.Calv)+"-RestartFile.mat";
-load(FiletoRead,"MUA","CtrlVarInRestartFile");
-CtrlVar = CtrlVarInRestartFile;
+        "/ANT_Inverse_"+string(UserVar.Calv)+"-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleGI"})+".mat";
 
+% new boundary
+load(FiletoRead,"MUA");
 MeshBoundaryCoordinates = [MUA.Boundary.x(:) MUA.Boundary.y(:)];
 MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates";
-InitialMeshFileName = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_InitialMesh";
-
 save(MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
-save(InitialMeshFileName,"MUA","CtrlVar");
-
 UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates";
+
+% new mesh
+InitialMeshFileName = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_InitialMesh";
+save(InitialMeshFileName,"MUA","CtrlVar");
 UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_InitialMesh";
 
 %%basemesh

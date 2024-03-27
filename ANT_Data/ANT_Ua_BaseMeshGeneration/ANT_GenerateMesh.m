@@ -1,4 +1,4 @@
-function GenerateMesh_ANT
+function ANT_GenerateMesh
 
 warning('off','all');
 
