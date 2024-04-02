@@ -108,7 +108,7 @@ if ~isempty(Iexisting)
                     %% Inverse cycle
                     if UserVar.InverseCycle
                     
-                        while UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished
+                        while (UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished)
         
                             UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
     
@@ -220,7 +220,7 @@ if ~isempty(Inew)
             %% Inverse cycle
             if UserVar.InverseCycle
             
-                while UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished
+                while (UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished)
     
                     UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
     
@@ -231,6 +231,8 @@ if ~isempty(Inew)
                     ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                     RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
                     [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
+
+                    fprintf(fid,"%S: TEST USERVAR.FINISHED: %s============================\n",UserVar.Experiment,string(UserVar.Finished));
 
                 end     
 

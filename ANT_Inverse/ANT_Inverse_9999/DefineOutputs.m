@@ -149,9 +149,10 @@ if contains(plots,'-plot-')
     %%
 end
 
+%% Deal with inverse runs
 if strcmp(CtrlVar.DefineOutputsInfostring,'Start of inverse run')
     UserVar.Inverse.Iter0 =  RunInfo.Inverse.Iterations(end);
-    fprintf(CtrlVar.fidlog,'Restarting. Number of iterations already done: %s.\n',num2str(UserVar.Inverse.Iter0));
+    fprintf(CtrlVar.fidlog,'(Re)Starting cycle %s of inverse run. Number of iterations already done: %s.\n',num2str(UserVar.Inverse.Cycle),num2str(UserVar.Inverse.Iter0));
 end
 
 if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
@@ -170,6 +171,7 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
     copyfile(CtrlVar.Inverse.NameOfRestartOutputFile,NameOfRestartOutputFile);
 end
 
+%% Deal with diagnostic runs
 if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')
     % calculate total number of years over all spinup cycles
     YearsDoneInThisRun = CtrlVar.time;
@@ -184,14 +186,15 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')
     copyfile(CtrlVar.NameOfRestartFiletoRead,NameOfRestartOutputFile);
 end
 
+%% Deal with sequence of inverse and diagnostic runs
 if contains(CtrlVar.DefineOutputsInfostring,{'Last call','End of Inverse Run'})
     years_tmp = cumsum(UserVar.Spinup.Years);
     it_tmp = cumsum(UserVar.Inverse.Iterations);
     if UserVar.Inverse.IterationsDone == it_tmp(end) && UserVar.Spinup.YearsDone == years_tmp(end)
         UserVar.Finished = 1;
-    else
-        UserVar.Finished = 0;
-    end
+        fprintf(CtrlVar.fidlog,'Simulation completed %s inverse iterations in %s cycles and %s spinup years in %s cycles. Breaking out.\n',...
+            num2str(UserVar.Inverse.IterationsDone),num2str(UserVar.Inverse.Cycle),num2str(UserVar.Spinup.YearsDone),num2str(UserVar.Spinup.Cycle));
+    end      
 end
 
 end
