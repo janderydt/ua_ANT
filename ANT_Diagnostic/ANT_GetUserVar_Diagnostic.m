@@ -50,21 +50,11 @@ UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoor
 
 % new mesh
 InitialMeshFileName = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_InitialMesh";
-save(InitialMeshFileName,"MUA","CtrlVar");
+save(InitialMeshFileName,"MUA");
 UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_InitialMesh";
 
 %%basemesh
-switch char(RunTable{ind,"BaseMesh"}{:})
-    case {'2000_meshmin5000_meshmax100000','2000_meshmin1500_meshmax100000'}
-        % adjust and copy mesh files
-        UserVar.BaseMesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+RunTable{ind,"BaseMesh"}+"_extrudemesh0_variableboundaryres1";
-    case {'2000_2009_2014_2018_meshmin3000_meshmax100000'}
-        % adjust and copy mesh files
-        UserVar.BaseMesh = "../ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_meshboundarycoordinates_"+ RunTable{ind,"BaseMesh"}+"_extrudemesh1_variableboundaryres1";
-    otherwise
-        error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Mesh flag in RunTable.']);
-end
-
+UserVar = DefineBaseMesh(UserVar,RunTable{ind,"BaseMesh"}{:});
     
 %% density interpolant: same as ice shelf run
 UserVar.DensityInterpolant = UserVar.ISGeometryInterpolants;   
