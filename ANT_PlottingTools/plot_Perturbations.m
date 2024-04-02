@@ -4,11 +4,11 @@ addpath(getenv("froot_tools"));
 
 froot_ua = getenv("froot_ua")+"/cases/ANT/";
 
-baseline = 1814; % n=3, m=3, It2 (refined mesh), 2000
+baseline = 1814; % n=3, m=3, It1 (refined mesh), 2000
 
-target = 1814; % n=3, m=3, It2 (refined mesh), 2018
+target = 1278; % n=3, m=3, It1 (refined mesh), 2018
 
-perturbations = [1905 1126 1632 1097]; %n=3, m=3, It2 (refined mesh), 2018
+perturbations = [1905 1126 1632 1097]; %n=3, m=3, It1 (refined mesh), 2018
 
 Table = readtable("../ANT_Diagnostic/RunTable.csv");
 
@@ -191,7 +191,7 @@ end
 for pp = 1:np
 
     CtrlVarInRestartFile.PlotXYscale = 1e3;
-    if contains("Ice Front",perturbationdata(pp).description)
+    if contains(perturbationdata(pp).description,"Ice Front")
         PlotNodalBasedQuantities_JDR(ax_fig(pp),targetMUA.connectivity,targetMUA.coordinates,Fperturb(pp).speed(targetMUA.coordinates(:,1),targetMUA.coordinates(:,2)) -...
             Fbaseline.speed(targetMUA.coordinates(:,1),targetMUA.coordinates(:,2)),CtrlVarInRestartFile); hold on;
     else

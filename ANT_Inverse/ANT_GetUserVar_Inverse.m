@@ -29,6 +29,10 @@ UserVar.Spinup.Years = str2double(split(spinup_tmp,"+"));
 UserVar.Spinup.YearsDone = RunTable{ind,"SpinupYearsDone"};
 UserVar.Spinup.Cycle = find([0; cumsum(UserVar.Spinup.Years)]==UserVar.Spinup.YearsDone);
 
+% Mesh
+UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
+UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_InitialMesh.mat";
+
 % Restart files
 UserVar.NameOfRestartFiletoRead = UserVar.Experiment + "-RestartFile.mat";
 
@@ -139,11 +143,6 @@ switch UserVar.Velocity
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
 end
-
-%% refined mesh from spinup
-UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
-UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_RefinedMesh.mat";
-save("./"+UserVar.Experiment+"/"+UserVar.InitialMeshFileName,"MUA")
 
 %% sliding law
 UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;

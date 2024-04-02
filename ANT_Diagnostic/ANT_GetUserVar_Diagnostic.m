@@ -54,7 +54,7 @@ save(InitialMeshFileName,"MUA");
 UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_InitialMesh";
 
 %%basemesh
-UserVar = DefineBaseMesh(UserVar,RunTable{ind,"BaseMesh"}{:});
+UserVar = ANT_DefineBaseMesh(UserVar,RunTable{ind,"BaseMesh"}{:});
     
 %% density interpolant: same as ice shelf run
 UserVar.DensityInterpolant = UserVar.ISGeometryInterpolants;   

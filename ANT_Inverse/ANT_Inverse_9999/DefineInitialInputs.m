@@ -30,18 +30,13 @@ CtrlVar.nip=6;
 CtrlVar.niph=6;    
 CtrlVar.RefineMeshOnStart=0;
 
-% read intial mesh in inverse simulation
-if UserVar.InverseCycle
-    CtrlVar.ReadInitialMesh=1;
-    CtrlVar.ReadInitialMeshFileName=UserVar.InitialMeshFileName;
-end
+% read intial mesh - this is always the same for inverse and spinup cycles
+CtrlVar.ReadInitialMesh=1;
+CtrlVar.ReadInitialMeshFileName=UserVar.InitialMeshFileName;
 
-% refine mesh around GL at first spinup cycle 
-if UserVar.SpinupCycle && UserVar.Spinup.Cycle==1    
-    CtrlVar.AdaptMesh=1;
-else
-    CtrlVar.AdaptMesh=0;
-end
+% never adapt mesh as this complicates the diagnostic perturbation
+% experiments
+CtrlVar.AdaptMesh=0;
 
 %% Boundary
 load(UserVar.MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
@@ -50,26 +45,26 @@ load(UserVar.MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
 CtrlVar.SlidingLaw = UserVar.SlidingLaw;
 
 %% Adapt Mesh options
-if UserVar.SpinupCycle
-    CtrlVar.MeshRefinementMethod='explicit:local:newest vertex bisection';
-    
-    CtrlVar.MeshSizeMax=100e3;
-    CtrlVar.MeshSize=100e3;
-    CtrlVar.MeshSizeMin=1e3;
-    
-    CtrlVar.MeshAdapt.GLrange=[5e3 CtrlVar.MeshSizeMin*2; 2e3  CtrlVar.MeshSizeMin];
-    
-    CtrlVar.RefineMeshOnStart=0;
-    CtrlVar.InfoLevelAdaptiveMeshing=1;                                            
-    CtrlVar.AdaptMeshInitial=1  ; % remesh in first iteration (Itime=1)  even if mod(Itime,CtrlVar.AdaptMeshInterval)~=0.
-    CtrlVar.AdaptMeshAndThenStop=0;    % if true, then mesh will be adapted but no further calculations performed
-                                       % useful, for example, when trying out different remeshing options (then use CtrlVar.doAdaptMeshPlots=1 to get plots)
-    CtrlVar.AdaptMeshMaxIterations=10;
-    CtrlVar.AdaptMeshUntilChangeInNumberOfElementsLessThan = 20;
-    CtrlVar.SaveAdaptMeshFileName='MeshFileAdapt';    %  file name for saving adapt mesh. If left empty, no file is written
-    CtrlVar.AdaptMeshRunStepInterval=1e20 ; % remesh whenever mod(Itime,CtrlVar.AdaptMeshInterval)==0
-    CtrlVar.doAdaptMeshPlots=1; 
-end
+% if UserVar.SpinupCycle
+%     CtrlVar.MeshRefinementMethod='explicit:local:newest vertex bisection';
+% 
+%     CtrlVar.MeshSizeMax=100e3;
+%     CtrlVar.MeshSize=100e3;
+%     CtrlVar.MeshSizeMin=1e3;
+% 
+%     CtrlVar.MeshAdapt.GLrange=[5e3 CtrlVar.MeshSizeMin*2; 2e3  CtrlVar.MeshSizeMin];
+% 
+%     CtrlVar.RefineMeshOnStart=0;
+%     CtrlVar.InfoLevelAdaptiveMeshing=1;                                            
+%     CtrlVar.AdaptMeshInitial=0  ; % remesh in first iteration (Itime=1)  even if mod(Itime,CtrlVar.AdaptMeshInterval)~=0.
+%     CtrlVar.AdaptMeshAndThenStop=0;    % if true, then mesh will be adapted but no further calculations performed
+%                                        % useful, for example, when trying out different remeshing options (then use CtrlVar.doAdaptMeshPlots=1 to get plots)
+%     CtrlVar.AdaptMeshMaxIterations=10;
+%     CtrlVar.AdaptMeshUntilChangeInNumberOfElementsLessThan = 20;
+%     CtrlVar.SaveAdaptMeshFileName='MeshFileAdapt';    %  file name for saving adapt mesh. If left empty, no file is written
+%     CtrlVar.AdaptMeshRunStepInterval=1e20 ; % remesh whenever mod(Itime,CtrlVar.AdaptMeshInterval)==0
+%     CtrlVar.doAdaptMeshPlots=1; 
+% end
 
 %% Output options
 if UserVar.InverseCycle
@@ -92,7 +87,7 @@ else
     CtrlVar.DefineOutputsDt=1;
     CtrlVar.WriteRestartFile = 1;
     CtrlVar.WriteRestartFileInterval = 100;
-    CtrlVar.NameOfRestartFiletoWrite = UserVar.NameOfRestartFiletoRead;
+    CtrlVar.NameOfRestartFiletoWrite = strrep(UserVar.NameOfRestartFiletoRead,"Inverse","Spinup");
 end
 CtrlVar.CreateOutputsEndOfRun=1;
 
