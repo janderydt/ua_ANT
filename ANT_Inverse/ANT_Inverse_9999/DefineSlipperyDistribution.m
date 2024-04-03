@@ -5,8 +5,8 @@ persistent FC;
 CFile = UserVar.NameOfFileForReadingSlipperinessEstimate;
 
 m = UserVar.SlidingCoefficient;
-q=1 ;      % only needed for Budd sliding law
-muk=0.5 ; 
+q = 1 ;      % only needed for Budd sliding law
+muk = UserVar.muk ;   % only needed for mixed Weertman/Coulomb sliding law
 
 if isempty(FC) & exist(CFile,"file")
 
@@ -36,8 +36,7 @@ if isempty(FC) & exist(CFile,"file")
 
 elseif ~exist(CFile,"file")
 
-    ub=100; tau=80 ; % units meters, year , kPa
-    C=s*0+ub/tau^m;
+    C=s*0+UserVar.priorC;
     fprintf("Used %s as constant intital value for C.\n",string(C(1)));
 
 elseif ~isempty(FC)

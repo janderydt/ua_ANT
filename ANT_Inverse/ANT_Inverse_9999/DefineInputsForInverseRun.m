@@ -164,27 +164,29 @@ end
 %% Define Priors
 Priors.B=F.B;
 
-%Priors.AGlen = InvStartValues.AGlen;
-%Priors.C = InvStartValues.C;
-ub=100; tau=80 ; % units meters, year , kPa
-Priors.C=x*0+ub/tau^InvStartValues.m(1);
-%tau=100 ; % units meters, year , kPa
-%MeasuredSpeed=sqrt(Meas.us.*Meas.us+Meas.vs.*Meas.vs);
-Priors.m=InvStartValues.m(1);
-%C0=(MeasuredSpeed+1)./(tau.^Priors.m);
-%Priors.C=C0;
-Priors.muk=InvStartValues.muk(1);
+if ~isfield(UserVar.Inverse,'priorC')
+    ub=100; tau=80 ; % units meters, year , kPa
+    Priors.C = x*0+ub/tau^InvStartValues.m(1);
+else
+    Priors.C = UserVar.Inverse.priorC;
+end
+Priors.m = InvStartValues.m(1);
+Priors.muk = InvStartValues.muk(1);
 
-Priors.AGlen = x*0 + AGlenVersusTemp(-15);
+if ~isfield(UserVar.Inverse,'priorAGlen')
+    Priors.AGlen = x*0 + AGlenVersusTemp(-15); % this is for n=3 only
+else
+    Priors.AGlen = UserVar.Inverse.priorAGlen;
+end
 Priors.n=InvStartValues.n(1);
 
 disp(['Constant prior value for C: ',num2str(Priors.C(1))]);
 disp(['Constant prior value for AGlen: ',num2str(Priors.AGlen(1))]);
 
-Priors.rho=F.rho;
-Priors.rhow=F.rhow;
-Priors.CovAGlen=CAGlen;
-Priors.CovC=CC;
+Priors.rho = F.rho;
+Priors.rhow = F.rhow;
+Priors.CovAGlen = CAGlen;
+Priors.CovC = CC;
 
 
 end

@@ -2,18 +2,24 @@ function ANT_CreateNewRunsTable(X)
 
 addpath('../');
 
-UserVar.Table = 'NewRuns.csv';
+UserVar.Table = 'NewRuns.tmp.csv';
 UserVar.type = 'Inverse';
 
-%% Fixpoint calculations, Unrefined mesh, No dh/dt, Weertman sliding
-RunTable_fixpoint = ANT_ReadWritetable(UserVar,[],'read');
+%% Unrefined mesh, No dh/dt, Weertman sliding
+RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
 for ind=1:size(X,1)
 
+    startMesh = "2000_2009_2014_2018_meshmin3000_meshmax100000";
     tau = 80; m = round(X(ind,5)*100)/100; ub = X(ind,6);
     priorC = ub/tau^m;
+    muk = 0.5;
     n = round(X(ind,7)*100)/100; eps = X(ind,8);
     priorAGlen = eps/tau^n;
+    % Start from results with large gs and m=3,
+    % n=3. The code will rescale C and AGlen depending on m and n 
+    startC = 1694;
+    startAGlen = 1694;
 
     Newrow = {0,...                         %pgid
         0,...                               %ExpID
@@ -29,8 +35,8 @@ for ind=1:size(X,1)
         0,...                               %InverseIterationsDone
         "1",...                             %SpinupYears
         0,...                               %SpinupYearsDone
-        "-logC-",...                        %InvertFor
-        "FixPoint",...                      %GradientCalc
+        "-logA-logC-",...                   %InvertFor
+        "Adjoint",...                       %GradientCalc
         round(X(ind,1)*10)/10,...           %gsC
         round(X(ind,2)*10)/10,...           %gsA
         round(X(ind,3)*10)/10,...           %gaC
@@ -38,19 +44,20 @@ for ind=1:size(X,1)
         "-uv-",...                          %Measurements
         2000,...                            %Velocity
         2000,...                            %startGeometry
-        "2000_2009_2014_2018_meshmin3000_meshmax100000",...      %startMesh
+        startMesh,...                       %startMesh
         "Weertman",...                      %SlidingLaw
         m,...                               %m
-        priorC,...                          priorC
-        0,...                               %startC
+        muk,...                             %muk
+        priorC,...                          %priorC
+        startC,...                          %startC
         n,...                               %n
         priorAGlen,...                      %priorAGlen
-        0,...                               %startAGlen
+        startAGlen,...                      %startAGlen
         ""                                  %Comments
         };
 
-    RunTable_fixpoint = [RunTable_fixpoint; Newrow];
+    RunTable = [RunTable; Newrow];
 
 end
 
-[~] = ANT_ReadWritetable(UserVar,RunTable_fixpoint,'write');
+[~] = ANT_ReadWritetable(UserVar,RunTable,'write');

@@ -48,7 +48,8 @@ UserVar.DensityInterpolant = UserVar.GeometryInterpolants;
 
 % Sliding law
 UserVar.SlidingLaw = RunTable{ind,"SlidingLaw"}{:};
-UserVar.SlidingCoefficient =  RunTable{ind,"m"};
+UserVar.SlidingCoefficient = RunTable{ind,"m"};
+UserVar.muk = RunTable{ind,"muk"};
 UserVar.NameOfFileForSavingSlipperinessEstimate="ANT_Inverse_"+string(RunTable{ind,"ExpID"})+"_C-Estimate.mat";
 
 % Rheology
@@ -146,9 +147,11 @@ end
 
 %% sliding law
 UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
+UserVar.Inverse.priorC = RunTable{ind,"priorC"};
 
 %% Glen's exponent
 UserVar.NameOfFileForReadingAGlenEstimate=UserVar.NameOfFileForSavingAGlenEstimate;
+UserVar.Inverse.priorAGlen = RunTable{ind,"priorAGlen"};
 
 end
 
@@ -233,6 +236,7 @@ if RunTable{ind,"startC"} ~= 0
 else
     UserVar.NameOfFileForReadingSlipperinessEstimate="";
 end
+UserVar.Inverse.priorC = RunTable{ind,"priorC"};
 
 
 %% Glen's exponent
@@ -246,6 +250,7 @@ if RunTable{ind,"startAglen"} ~= 0
 else
     UserVar.NameOfFileForReadingAGlenEstimate="";
 end
+UserVar.Inverse.priorAGlen = RunTable{ind,"priorAGlen"};
 
 
 end

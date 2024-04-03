@@ -2,7 +2,7 @@ function  [UserVar,rho,rhow,g]=DefineDensities(UserVar,CtrlVar,MUA,time,s,b,h,S,
     
 persistent Frho
 
-fprintf('Start loading densities \n');
+fprintf('Start loading densities...');
 
 if isempty(Frho)
 
@@ -18,6 +18,6 @@ rhow=1027;
             
 g=9.81/1000;
 
-fprintf('Done loading densities \n');
+fprintf('done.\n');
    
 end

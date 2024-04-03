@@ -9,7 +9,7 @@ end
 s=[]; b=[]; S=[]; B=[];
 alpha=0 ;
 
-fprintf('Loading geometry fields \n');
+fprintf('Loading geometry fields %s from %s...',FieldsToBeDefined,UserVar.GeometryInterpolants);
 
 x=MUA.coordinates(:,1); y=MUA.coordinates(:,2);
 
@@ -41,4 +41,6 @@ if contains(FieldsToBeDefined,'b')
     b = inpaint_nans(b,4);
 end
 
+fprintf('done.\n');
+   
 
