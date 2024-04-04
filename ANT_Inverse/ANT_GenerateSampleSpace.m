@@ -16,13 +16,13 @@ ind = 1;
 
 %% Regularization
 Input.Marginals(ind).Name = 'gsC';
-Input.Marginals(ind).Parameters = [10e3 1000e3];
-Input.Marginals(ind).Bounds = [10e3 1000e3];
+Input.Marginals(ind).Parameters = [10e3 500e3];
+Input.Marginals(ind).Bounds = [10e3 500e3];
 ind = ind + 1;
 
 Input.Marginals(ind).Name = 'gsA';
-Input.Marginals(ind).Parameters = [10e3 1000e3]; % parameters are bounds
-Input.Marginals(ind).Bounds = [10e3 1000e3];
+Input.Marginals(ind).Parameters = [10e3 500e3]; % parameters are bounds
+Input.Marginals(ind).Bounds = [10e3 500e3];
 ind = ind + 1;
 
 Input.Marginals(ind).Name = 'gaC';
@@ -55,7 +55,6 @@ ind = ind + 1;
 Input.Marginals(ind).Name = 'epsprior';
 Input.Marginals(ind).Parameters = [1 6]*1e-3;
 Input.Marginals(ind).Bounds = [1 6]*1e-3;
-
 
 myInput = uq_createInput(Input);
 

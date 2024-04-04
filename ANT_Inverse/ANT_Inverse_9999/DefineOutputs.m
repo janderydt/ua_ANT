@@ -182,8 +182,8 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')
                     'Writing restart file and breaking out.\n'],num2str(YearsDoneInThisRun),num2str(CtrlVar.TotalTime));
     end
     WriteForwardRunRestartFile(UserVar,CtrlVar,MUA,BCs,F,GF,l,RunInfo);
-    NameOfRestartOutputFile = erase(CtrlVar.NameOfRestartFiletoRead,".mat")+"_SpinupCycle"+string(UserVar.Spinup.Cycle)+".mat";
-    copyfile(CtrlVar.NameOfRestartFiletoRead,NameOfRestartOutputFile);
+    NameOfRestartOutputFile = erase(CtrlVar.NameOfRestartFiletoWrite,".mat")+"_SpinupCycle"+string(UserVar.Spinup.Cycle)+".mat";
+    copyfile(CtrlVar.NameOfRestartFiletoWrite,NameOfRestartOutputFile);
 end
 
 %% Deal with sequence of inverse and diagnostic runs

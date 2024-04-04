@@ -40,11 +40,10 @@ UserVar.NameOfRestartFiletoRead = UserVar.Experiment + "-RestartFile.mat";
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
     case {2000,2009,2014,2018}
-        UserVar.GeometryInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+        UserVar.DensityInterpolant = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
-UserVar.DensityInterpolant = UserVar.GeometryInterpolants;
 
 % Sliding law
 UserVar.SlidingLaw = RunTable{ind,"SlidingLaw"}{:};
@@ -126,12 +125,12 @@ UserVar.Inverse.logAGlen.ga = RunTable{ind,"gaA"};
 
 %% geometry interpolants from spinup
 NameOfRestartFiletoRead = ...
-    strrep(UserVar.NameOfRestartFiletoRead,".mat","_SpinupCycle"+string(UserVar.Spinup.Cycle-1)+".mat");
+    strrep(UserVar.NameOfRestartFiletoRead,".mat","_SpinupCycle"+string(UserVar.Inverse.Cycle-1)+".mat");
 load("./"+UserVar.Experiment+"/"+NameOfRestartFiletoRead,"F","MUA");
 FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
 Fb = FB; Fb.Values = F.b;
 Fs = FB; Fs.Values = F.s;
-UserVar.GeometryInterpolants = "GeometryInterpolants_fromSpinupCycle"+string(UserVar.Spinup.Cycle-1)+".mat";
+UserVar.GeometryInterpolants = "GeometryInterpolants_fromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+".mat";
 save("./"+UserVar.Experiment+"/"+UserVar.GeometryInterpolants,"FB","Fb","Fs");
 
 %% velocity interpolants

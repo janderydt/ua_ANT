@@ -87,7 +87,7 @@ else
     CtrlVar.DefineOutputsDt=1;
     CtrlVar.WriteRestartFile = 1;
     CtrlVar.WriteRestartFileInterval = 100;
-    CtrlVar.NameOfRestartFiletoWrite = strrep(UserVar.NameOfRestartFiletoRead,"Inverse","Spinup");
+    CtrlVar.NameOfRestartFiletoWrite = UserVar.NameOfRestartFiletoRead;
 end
 CtrlVar.CreateOutputsEndOfRun=1;
 

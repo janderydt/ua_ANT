@@ -6,7 +6,12 @@ CFile = UserVar.NameOfFileForReadingSlipperinessEstimate;
 
 m = UserVar.SlidingCoefficient;
 q = 1 ;      % only needed for Budd sliding law
-muk = UserVar.muk ;   % only needed for mixed Weertman/Coulomb sliding law
+
+if ~isfield(UserVar,'muk')
+    muk=0.5;
+else
+    muk = UserVar.muk ;   % only needed for mixed Weertman/Coulomb sliding law
+end
 
 if isempty(FC) & exist(CFile,"file")
 
