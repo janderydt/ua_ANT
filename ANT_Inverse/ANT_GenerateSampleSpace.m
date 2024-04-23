@@ -1,7 +1,7 @@
 function ANT_GenerateSampleSpace
 
 
-addpath(getenv("froot_matlabfunctions")+"/../UQLab_Rel2.0.0");
+addpath(genpath(getenv("froot_matlabfunctions")+"/../UQLab_Rel2.0.0"));
 
 clearvars;
 rng(1,'twister'); % set the random number generator for reproducible results
