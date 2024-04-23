@@ -14,7 +14,7 @@ UserVar.Inverse.IterationsDone = RunTable{ind,"InverseIterationsDone"};
 UserVar.Inverse.Cycle = find([0; cumsum(UserVar.Inverse.Iterations)]==UserVar.Inverse.IterationsDone);
 if isempty(UserVar.Inverse.Cycle) & UserVar.Restart == 0
     fprintf(UserVar.fid,"Expecting InverseIterationsDone to be equal to [%s] but got %s instead.\n",...
-            sprintf('%.0f,' , iter_tmp),string(UserVar.Inverse.IterationsDone));
+            string(iter_tmp),string(UserVar.Inverse.IterationsDone));
     error("Unexpected number of InverseIterationsDone.");
 elseif isempty(UserVar.Inverse.Cycle) & UserVar.Restart
     %% restarting inverse cycle 
@@ -28,6 +28,11 @@ spinup_tmp = RunTable{ind,"SpinupYears"}{:};
 UserVar.Spinup.Years = str2double(split(spinup_tmp,"+"));
 UserVar.Spinup.YearsDone = RunTable{ind,"SpinupYearsDone"};
 UserVar.Spinup.Cycle = find([0; cumsum(UserVar.Spinup.Years)]==UserVar.Spinup.YearsDone);
+
+% check stopping criteria for inverse run
+%if UserVar.InverseCycle
+%    UserVar.Inverse.MinGradNorm = RunTable{ind,"MinGradNorm"};
+%end
 
 % Mesh
 UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
@@ -49,11 +54,11 @@ end
 UserVar.SlidingLaw = RunTable{ind,"SlidingLaw"}{:};
 UserVar.SlidingCoefficient = RunTable{ind,"m"};
 UserVar.muk = RunTable{ind,"muk"};
-UserVar.NameOfFileForSavingSlipperinessEstimate="ANT_Inverse_"+string(RunTable{ind,"ExpID"})+"_C-Estimate.mat";
+UserVar.NameOfFileForSavingSlipperinessEstimate=string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+"_C-Estimate.mat";
 
 % Rheology
 UserVar.n =  RunTable{ind,"n"};
-UserVar.NameOfFileForSavingAGlenEstimate="ANT_Inverse_"+string(RunTable{ind,"ExpID"})+"_AGlen-Estimate.mat";
+UserVar.NameOfFileForSavingAGlenEstimate=string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+"_AGlen-Estimate.mat";
 
 % Outputs
 UserVar.UaOutputDirectory = './ResultsFiles';
@@ -227,10 +232,10 @@ UserVar = ANT_ApplyMeshModifications(UserVar);
 %% sliding law
 if RunTable{ind,"startC"} ~= 0
     % copy relevant files   
-    UserVar.NameOfFileForReadingSlipperinessEstimate="ANT_Inverse_"+string(RunTable{ind,"startC"})+"_C-Estimate.mat";
-    copyfile("./ANT_Inverse_"+string(RunTable{ind,"startC"})+...
+    UserVar.NameOfFileForReadingSlipperinessEstimate=string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startC"})+"_C-Estimate.mat";
+    copyfile(string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startC"})+...
             "/"+UserVar.NameOfFileForReadingSlipperinessEstimate,...
-            "./ANT_Inverse_"+string(RunTable{ind,"ExpID"})+...
+            string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+...
             "/"+UserVar.NameOfFileForReadingSlipperinessEstimate);
 else
     UserVar.NameOfFileForReadingSlipperinessEstimate="";
@@ -241,10 +246,10 @@ UserVar.Inverse.priorC = RunTable{ind,"priorC"};
 %% Glen's exponent
 if RunTable{ind,"startAglen"} ~= 0
     % copy relevant files   
-    UserVar.NameOfFileForReadingAGlenEstimate="ANT_Inverse_"+string(RunTable{ind,"startAglen"})+"_AGlen-Estimate.mat";
-    copyfile("./ANT_Inverse_"+string(RunTable{ind,"startAglen"})+...
+    UserVar.NameOfFileForReadingAGlenEstimate=string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startAglen"})+"_AGlen-Estimate.mat";
+    copyfile(string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startAglen"})+...
             "/"+UserVar.NameOfFileForReadingAGlenEstimate,...
-            "./ANT_Inverse_"+string(RunTable{ind,"ExpID"})+...
+            string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+...
             "/"+UserVar.NameOfFileForReadingAGlenEstimate);
 else
     UserVar.NameOfFileForReadingAGlenEstimate="";

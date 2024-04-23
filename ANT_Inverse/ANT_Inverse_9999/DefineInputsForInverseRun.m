@@ -43,7 +43,7 @@ yerrMeas = Fyerr(x,y);
 xerrMeas(xerrMeas==0) = 1;
 yerrMeas(yerrMeas==0) = 1;
 
-if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint')
+if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint') && contains(UserVar.Domain,'ANT')
     %% for fixpoint inversion
     % Siple Coast
     I = find(x>-600942 & x<8245 & y<-286360 & y>-800000 & ~isnan(uMeas));
@@ -166,9 +166,9 @@ Priors.B=F.B;
 
 if ~isfield(UserVar.Inverse,'priorC')
     ub=100; tau=80 ; % units meters, year , kPa
-    Priors.C = x*0+ub/tau^InvStartValues.m(1);
+    Priors.C = x*0 + ub/tau^InvStartValues.m(1);
 else
-    Priors.C = UserVar.Inverse.priorC;
+    Priors.C = x*0 + UserVar.Inverse.priorC;
 end
 Priors.m = InvStartValues.m(1);
 Priors.muk = InvStartValues.muk(1);
@@ -176,7 +176,7 @@ Priors.muk = InvStartValues.muk(1);
 if ~isfield(UserVar.Inverse,'priorAGlen')
     Priors.AGlen = x*0 + AGlenVersusTemp(-15); % this is for n=3 only
 else
-    Priors.AGlen = UserVar.Inverse.priorAGlen;
+    Priors.AGlen = x*0 + UserVar.Inverse.priorAGlen;
 end
 Priors.n=InvStartValues.n(1);
 

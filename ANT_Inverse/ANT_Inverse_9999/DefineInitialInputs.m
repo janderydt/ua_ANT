@@ -25,7 +25,7 @@ end
 
 %% Grid options
 CtrlVar.TriNodes=3;
-CtrlVar.kH=1;
+CtrlVar.kH=100;
 CtrlVar.nip=6;
 CtrlVar.niph=6;    
 CtrlVar.RefineMeshOnStart=0;

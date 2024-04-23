@@ -1,6 +1,6 @@
-function plotLcurve
+function plot_Lcurve
 
-ExpID = [1814 1278 1546 1792 1959 1655 1035 1849];
+ExpID =[1849 1546 1035 1655 1959 1814 1792 1278];
 
 cm = crameri('roma',numel(ExpID));
 

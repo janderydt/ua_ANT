@@ -14,8 +14,13 @@ yEle=Nodes2EleMean(MUA.connectivity,MUA.coordinates(:,2));
 % take care of potential nans in boundary
 if isfield(UserVar,'Geometry')
     variable = round(UserVar.Geometry);
-    BCx = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,1);
-    BCy = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,2);   
+    if isfield(MeshBoundaryCoordinates,['yr',num2str(variable)])
+        BCx = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,1);
+        BCy = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,2); 
+    else
+        BCx = MeshBoundaryCoordinates(:,1);
+        BCy = MeshBoundaryCoordinates(:,2); 
+    end
 else
     error(['ExpID ',RunTable{ind,"ExpID"},': Do not know Geometry.']);
 end
@@ -36,6 +41,9 @@ ElementsToBeDeactivated = find(sum(NodesToBeDeactivated,2)>0);
 [cn2,on2] = inpoly([xEle(:) yEle(:)],[BCx(:) BCy(:)]);
 Indtmp = find(~cn2);
 ElementsToBeDeactivated = unique([ElementsToBeDeactivated(:); Indtmp(:)]);
+
+CtrlVar.UpdateMUAafterDeactivating = 1;
+CtrlVar.QuadRules2021 = 1;
 
 MUA_tmp = DeactivateMUAelements(CtrlVar,MUA,ElementsToBeDeactivated);
 

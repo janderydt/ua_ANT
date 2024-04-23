@@ -6,6 +6,8 @@ switch mode
             opts = detectImportOptions(UserVar.Table);
             % set some variable types    
             if UserVar.type == "Inverse"
+                I=find(contains(opts.VariableNames,'Domain'));
+                opts.VariableTypes(I)={'char'};
                 I=find(contains(opts.VariableNames,'InverseIterations'));
                 opts.VariableTypes(I)={'char'};
                 I=find(contains(opts.VariableNames,'InverseIterationsDone'));

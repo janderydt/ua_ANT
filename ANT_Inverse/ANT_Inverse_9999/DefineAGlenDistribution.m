@@ -36,7 +36,7 @@ if isempty(FA) & exist(AGlenFile,"file")
 
 elseif ~exist(AGlenFile,"file")
 
-    AGlen=s*0+UserVar.priorAGlen;
+    AGlen=s*0+UserVar.Inverse.priorAGlen;
     fprintf("Used %s as constant intital value for AGlen.\n",string(AGlen(1)));
 
 elseif ~isempty(FA)

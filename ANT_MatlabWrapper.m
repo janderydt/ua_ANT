@@ -38,7 +38,8 @@ if ~isempty(Iexisting)
         ind = Iexisting(kk);
 
         % experiment name and unique ID
-        UserVar.Experiment = ['ANT_',char(type),'_',num2str(RunTable{ind,'ExpID'})];
+        UserVar.Domain = RunTable{ind,'Domain'};
+        UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(RunTable{ind,'ExpID'})];
         UserVar.ExpID = RunTable{ind,'ExpID'};
     
         % check if submitted but not running
@@ -178,14 +179,15 @@ if ~isempty(Inew)
     RunTable{ind,'pgid'} = pgid;
 
     [~]=ANT_ReadWritetable(UserVar,RunTable,'write');
-
-    % make copy of master folder for new experiment
-    copyfile(['./ANT_',char(type),'_9999/'],['./ANT_',char(type),'_',num2str(ExpID),'/']); 
-
+    
     % initialize some UserVars
     UserVar.Finished = 0;
     UserVar.Restart = 0;
-    UserVar.Experiment = ['ANT_',char(type),'_',num2str(ExpID)];
+    UserVar.Domain = RunTable{ind,'Domain'};
+    UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
+
+    % make copy of master folder for new experiment
+    copyfile(['./ANT_',char(type),'_9999/'],['./',char(UserVar.Domain),'_',char(type),'_',num2str(ExpID),'/']); 
     
     % now gather run info
     if type=="Diagnostic"

@@ -41,7 +41,7 @@ if isempty(FC) & exist(CFile,"file")
 
 elseif ~exist(CFile,"file")
 
-    C=s*0+UserVar.priorC;
+    C=s*0+UserVar.Inverse.priorC;
     fprintf("Used %s as constant intital value for C.\n",string(C(1)));
 
 elseif ~isempty(FC)
