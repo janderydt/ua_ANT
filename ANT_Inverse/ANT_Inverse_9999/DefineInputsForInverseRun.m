@@ -43,7 +43,7 @@ yerrMeas = Fyerr(x,y);
 xerrMeas(xerrMeas==0) = 1;
 yerrMeas(yerrMeas==0) = 1;
 
-if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint') && contains(UserVar.Domain,'ANT')
+if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint')
     %% for fixpoint inversion
     % Siple Coast
     I = find(x>-600942 & x<8245 & y<-286360 & y>-800000 & ~isnan(uMeas));
@@ -77,7 +77,10 @@ else
     end
 end
 
-
+if contains(UserVar.Domain,'AS_PROPHET')
+    xerrMeas(I) = 1;
+    yerrMeas(I) = 1;
+end
 
 % Because I put NaN in where there is no data, this will give NaN at location not surounded by four data points
 % I can then afterwards find the NaN and put in some data with very high errors.
