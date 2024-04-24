@@ -31,14 +31,14 @@ if ~isempty(Inan)
 end
 
 % remove elements that have 1 node or more outside the boundary
-[cn1,on1] = inpoly([MUA.coordinates(MUA.connectivity,1),MUA.coordinates(MUA.connectivity,2)],[BCx(:) BCy(:)]);
+[cn1,on1] = inpoly2([MUA.coordinates(MUA.connectivity,1),MUA.coordinates(MUA.connectivity,2)],[BCx(:) BCy(:)]);
 NodesToBeDeactivated = ~cn1;
 NodesToBeDeactivated = reshape(NodesToBeDeactivated,size(MUA.connectivity));
 ElementsToBeDeactivated = find(sum(NodesToBeDeactivated,2)>0);
 
 % then remove elements for which the center of gravity is outside the
 % boundary
-[cn2,on2] = inpoly([xEle(:) yEle(:)],[BCx(:) BCy(:)]);
+[cn2,on2] = inpoly2([xEle(:) yEle(:)],[BCx(:) BCy(:)]);
 Indtmp = find(~cn2);
 ElementsToBeDeactivated = unique([ElementsToBeDeactivated(:); Indtmp(:)]);
 
@@ -62,12 +62,12 @@ if ~isempty(Inan)
 	xB = xB(1:Inan(1)-1);
 	yB = yB(1:Inan(1)-1);
 end
-I = find(~inpoly([xEle(:) yEle(:)],[xB(:) yB(:)]));
+I = find(~inpoly2([xEle(:) yEle(:)],[xB(:) yB(:)]));
 UserVar.BaseMesh.DeactivatedElements = I;
 
 x = MUA.coordinates(:,1);
 y = MUA.coordinates(:,2);
-[In,On] = inpoly([x(:) y(:)],[xB(:) yB(:)]);
+[In,On] = inpoly2([x(:) y(:)],[xB(:) yB(:)]);
 I = [1:MUA.Nnodes]; I(unique([find(In(:)==1);find(On(:)==1)]))=[];
 UserVar.BaseMesh.DeactivatedNodes = I;
 

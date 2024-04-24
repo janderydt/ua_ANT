@@ -2,7 +2,7 @@ function ANT_CreateNewRunsTable(X)
 
 addpath('../');
 
-UserVar.Table = 'NewRuns.tmp.csv';
+UserVar.Table = 'NewRuns.csv';
 UserVar.type = 'Inverse';
 
 %% Unrefined mesh, No dh/dt, Weertman sliding
@@ -10,7 +10,7 @@ RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
 for ind=1:size(X,1)
 
-    startMesh = "2000_2009_2014_2018_meshmin3000_meshmax100000";
+    startMesh = "2000_2009_2014_2018_meshmin3000_meshmax100000_refined";
     tau = 80; m = round(X(ind,5)*100)/100; ub = X(ind,6);
     priorC = ub/tau^m;
     muk = 0.5;
@@ -21,7 +21,8 @@ for ind=1:size(X,1)
     startC = 1694;
     startAGlen = 1694;
 
-    Newrow = {0,...                         %pgid
+    Newrow = {'ANT_nsmbl',...               %Domain
+        0,...                               %pgid
         0,...                               %ExpID
         0,...                               %Submitted
         "01/01/2000 00:00:00",...           %SubmissionTime

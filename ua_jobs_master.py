@@ -1,5 +1,5 @@
 from utils import submit_batch, active_jobs, read_runinfo, save_runinfo
-import datetime
+import datetime, time
 import logging
 import pandas as pd
 import sys
@@ -29,6 +29,19 @@ if __name__ == "__main__":
             os.chdir('./ANT_Diagnostic')
         else:
             print('Runtype does not exist. Choose 1 or 2.')
+
+    # Check how many runs should be submitted
+    inputselected = 0
+
+    while inputselected == 0:
+        
+        runs_to_launch = input("Choose how many runs you would like to submit (1. One, 2. As many as capacity allows): ")
+        runs_to_launch = int(runs_to_launch)
+
+        if runs_to_launch == 1 or runs_to_launch == 2:
+            inputselected = 1
+        else:
+            print('Choose 1 or 2.')
 
     # Initialize the log file
     logging.basicConfig(filename=os.getcwd()+'/jobs_master.log', level=logging.INFO, encoding='utf-8', format='%(message)s')
@@ -74,7 +87,7 @@ if __name__ == "__main__":
     # Launching new job if capacity allows
     logging.info('> Launching new job if capacity allows')
 
-    if run_counter<=5:
+    while run_counter<=40:
     
     	# first check RunTable to see if there are any jobs that are not running,
         # but are not finished yet and did not throw any errors
@@ -85,6 +98,11 @@ if __name__ == "__main__":
             options = ""
             command = "nohup ./submit_nohup.sh &"
             pgid = submit_batch(options, command)
+            if runs_to_launch == 1:
+                run_counter=999
+            else:
+                run_counter+=1
+                time.sleep(120)
             
         else:
             
@@ -102,8 +120,14 @@ if __name__ == "__main__":
                 options = ""
                 command = "nohup ./submit_nohup.sh &"
                 pgid = submit_batch(options, command)
+                if runs_to_launch == 1:
+                    run_counter=999
+                else:
+                    run_counter+=1
+                    time.sleep(120)
+
 
             else:
             
                 logging.info('   ...No new runs in NewRuns.scv: Nothing to do.')
-
+                run_counter = 999

@@ -25,7 +25,7 @@ if isempty(FA) & exist(AGlenFile,"file")
         velfile = "../"+erase(AGlenFile,"_AGlen-Estimate.mat")+"/"+strrep(AGlenFile,"_AGlen-Estimate.mat","-RestartFile.mat");
         tmp = load(velfile,'MUA','F');
         [~,~,~,exxInt,eyyInt,exyInt] = calcStrainRatesEtaInt(CtrlVar,tmp.MUA,tmp.F.ub,tmp.F.vb,tmp.F.AGlen,tmp.F.n);
-        [exx,eyy,exy]=ProjectFintOntoNodes(MUA,exxInt,eyyInt,exyInt);
+        [exx,eyy,exy]=ProjectFintOntoNodes(tmp.MUA,exxInt,eyyInt,exyInt);
         e_old = real(sqrt(CtrlVar.EpsZero^2+exx.^2+eyy.^2+exx.*eyy+exy.^2));
         [~,e_new] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,1e-4,e_old);
         AGlen = max((max(AGlen+CtrlVar.AGlenAdjointZero,CtrlVar.AGlenmin)).^(n2/n1).*(e_new+eps).^((n1-n2)/(n1))-CtrlVar.AGlenAdjointZero,CtrlVar.AGlenAdjointZero);
