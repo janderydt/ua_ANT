@@ -119,7 +119,6 @@ Meas.vsCov=sparse(1:MUA.Nnodes,1:MUA.Nnodes,vsError.^2,MUA.Nnodes,MUA.Nnodes);
 
 clear xerrMeas yerrMeas uMeas vMeas
 
-
 fprintf('Reading start values for AGlen and C...\n');
 [UserVar,InvStartValues.C,InvStartValues.m,InvStartValues.q,InvStartValues.muk]=DefineSlipperyDistribution(UserVar,CtrlVar,MUA,CtrlVar.time,F.s,F.b,F.s-F.b,F.S,F.B,F.rho,F.rhow,GF);
 [UserVar,InvStartValues.AGlen,InvStartValues.n]=DefineAGlenDistribution(UserVar,CtrlVar,MUA,CtrlVar.time,F.s,F.b,F.s-F.b,F.S,F.B,F.rho,F.rhow,GF);
@@ -139,29 +138,29 @@ CC = []; CAGlen = [];
 
 %%  Covariance matrices of priors
 % 
-if CtrlVar.AGlenisElementBased
-    CAGlen=sparse(1:MUA.Nele,1:MUA.Nele,1,MUA.Nele,MUA.Nele);
-else
-    CAGlen=sparse(1:MUA.Nnodes,1:MUA.Nnodes,1,MUA.Nnodes,MUA.Nnodes);
-end
-
-if strcmpi(CtrlVar.Inverse.Regularize.Field,'cov')
-    
-    Err=1e-2 ; Sigma=1e3 ; DistanceCutoff=10*Sigma;
-    
-    if CtrlVar.CisElementBased
-        [CC]=SparseCovarianceDistanceMatrix(xC,yC,Err,Sigma,DistanceCutoff);
-    else
-        [CC]=SparseCovarianceDistanceMatrix(xC,yC,Err,Sigma,DistanceCutoff);
-    end
-    
-else
-    if CtrlVar.CisElementBased
-        CC=sparse(1:MUA.Nele,1:MUA.Nele,1,MUA.Nele,MUA.Nele);
-    else
-        CC=sparse(1:MUA.Nnodes,1:MUA.Nnodes,1,MUA.Nnodes,MUA.Nnodes);
-    end
-end
+% if CtrlVar.AGlenisElementBased
+%     CAGlen=sparse(1:MUA.Nele,1:MUA.Nele,1,MUA.Nele,MUA.Nele);
+% else
+%     CAGlen=sparse(1:MUA.Nnodes,1:MUA.Nnodes,1,MUA.Nnodes,MUA.Nnodes);
+% end
+% 
+% if strcmpi(CtrlVar.Inverse.Regularize.Field,'cov')
+% 
+%     Err=1e-2 ; Sigma=1e3 ; DistanceCutoff=10*Sigma;
+% 
+%     if CtrlVar.CisElementBased
+%         [CC]=SparseCovarianceDistanceMatrix(xC,yC,Err,Sigma,DistanceCutoff);
+%     else
+%         [CC]=SparseCovarianceDistanceMatrix(xC,yC,Err,Sigma,DistanceCutoff);
+%     end
+% 
+% else
+%     if CtrlVar.CisElementBased
+%         CC=sparse(1:MUA.Nele,1:MUA.Nele,1,MUA.Nele,MUA.Nele);
+%     else
+%         CC=sparse(1:MUA.Nnodes,1:MUA.Nnodes,1,MUA.Nnodes,MUA.Nnodes);
+%     end
+% end
 
 %% Define Priors
 Priors.B=F.B;
@@ -187,8 +186,7 @@ disp(['Constant prior value for AGlen: ',num2str(Priors.AGlen(1))]);
 
 Priors.rho = F.rho;
 Priors.rhow = F.rhow;
-Priors.CovAGlen = CAGlen;
-Priors.CovC = CC;
-
+% Priors.CovAGlen = CAGlen;
+% Priors.CovC = CC;
 
 end
