@@ -148,9 +148,9 @@ CtrlVar.Inverse.MatlabOptimisationHessianParameters = optimoptions('fmincon',...
         'SpecifyObjectiveGradient',true,...
         'SubproblemAlgorithm','cg');  % here the options are 'gc' and 'factorization', unclear whic
 
-CtrlVar.AGlenmin=AGlenVersusTemp(-15)/1e4;
-CtrlVar.AGlenmax=AGlenVersusTemp(-15)*1e4;
-CtrlVar.Cmin=1e-50;  CtrlVar.Cmax=1e10;                                                  
+%CtrlVar.AGlenmin=AGlenVersusTemp(-15)/1e4;
+%CtrlVar.AGlenmax=AGlenVersusTemp(-15)*1e4;
+CtrlVar.Cmin=1e-150;  CtrlVar.Cmax=1e150;                                                  
 
 %% Minimum ice thickness
 CtrlVar.ThicknessConstraints=0;
