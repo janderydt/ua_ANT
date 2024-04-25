@@ -7,6 +7,7 @@ CtrlVar.Restart=UserVar.Restart;
 if UserVar.InverseCycle
     CtrlVar.TimeDependentRun=0; 
     CtrlVar.doInverseStep=1;
+    CtrlVar.NRitmax=100;
 elseif UserVar.SpinupCycle
     CtrlVar.TimeDependentRun=1; 
     CtrlVar.doInverseStep=0;
@@ -71,9 +72,9 @@ if UserVar.InverseCycle
     CtrlVar.InfoLevelInverse=1; % Overall level of information (inverse runs). 
                                 % Note: generally good to combine with CtrlVar.InfoLevelNonLinIt=0;
                                 % CtrlVar.InfoLevel=0; to suppress information related to the forward step. 
-    CtrlVar.Inverse.InfoLevelBackTrack=1000;  % info on backtracking within inverse step
-    CtrlVar.InfoLevelNonLinIt=0;
-    CtrlVar.InfoLevel=0;
+    CtrlVar.Inverse.InfoLevelBackTrack=10;  % info on backtracking within inverse step
+    CtrlVar.InfoLevelNonLinIt=1;
+    CtrlVar.InfoLevel=1;
     CtrlVar.Inverse.WriteRestartFile=1;  % always a good idea to write a restart file. 
     CtrlVar.Inverse.NameOfRestartInputFile = UserVar.NameOfRestartFiletoRead;
     CtrlVar.Inverse.NameOfRestartOutputFile = UserVar.NameOfRestartFiletoRead;
