@@ -18,8 +18,8 @@ for ind=1:size(X,1)
     priorAGlen = eps/tau^n;
     % Start from results with large gs and m=3,
     % n=3. The code will rescale C and AGlen depending on m and n 
-    startC = 1694;
-    startAGlen = 1694;
+    startC = 0;
+    startAGlen = 0;
 
     Newrow = {'ANT_nsmbl',...               %Domain
         0,...                               %pgid
@@ -32,12 +32,12 @@ for ind=1:size(X,1)
         0,...                               %Finished
         "01/01/2000 00:00:00",...           %FinishedTime
         0,...                               %Restart
-        "10000+1000",...                    %InverseIterations
+        "15",...                    %InverseIterations
         0,...                               %InverseIterationsDone
-        "1",...                             %SpinupYears
+        "0",...                             %SpinupYears
         0,...                               %SpinupYearsDone
-        "-logA-logC-",...                   %InvertFor
-        "Adjoint",...                       %GradientCalc
+        "-logC-",...                   %InvertFor
+        "FixPoint",...                       %GradientCalc
         round(X(ind,1)*10)/10,...           %gsC
         round(X(ind,2)*10)/10,...           %gsA
         round(X(ind,3)*10)/10,...           %gaC
@@ -46,7 +46,7 @@ for ind=1:size(X,1)
         2000,...                            %Velocity
         2000,...                            %startGeometry
         startMesh,...                       %startMesh
-        "Weertman",...                      %SlidingLaw
+        "Cornford",...                      %SlidingLaw
         m,...                               %m
         muk,...                             %muk
         priorC,...                          %priorC

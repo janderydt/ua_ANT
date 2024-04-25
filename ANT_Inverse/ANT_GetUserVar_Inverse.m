@@ -45,7 +45,7 @@ UserVar.NameOfRestartFiletoRead = UserVar.Experiment + "-RestartFile.mat";
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
     case {2000,2009,2014,2018}
-        UserVar.DensityInterpolant = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+        UserVar.DensityInterpolant = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
@@ -142,9 +142,9 @@ save("./"+UserVar.Experiment+"/"+UserVar.GeometryInterpolants,"FB","Fb","Fs");
 UserVar.Velocity = RunTable{ind,"Velocity"};
 switch UserVar.Velocity
     case 2000
-        UserVar.VelocityInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat'];
     case {2009,2014,2018} 
-        UserVar.VelocityInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_',num2str(UserVar.Velocity),'-',num2str(UserVar.Velocity+1),'_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_',num2str(UserVar.Velocity),'-',num2str(UserVar.Velocity+1),'_MeaSUREs_ITSLIVE_Velocities.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
 end
@@ -174,7 +174,7 @@ UserVar.Restart = 1;
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
     case {2000,2009,2014,2018}
-        UserVar.GeometryInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+        UserVar.GeometryInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
@@ -206,7 +206,7 @@ UserVar.Inverse.logAGlen.ga = RunTable{ind,"gaA"};
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
     case {2000,2009,2014,2018}
-        UserVar.GeometryInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+        UserVar.GeometryInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
@@ -218,9 +218,9 @@ UserVar.DensityInterpolant = UserVar.GeometryInterpolants;
 UserVar.Velocity = RunTable{ind,"Velocity"};
 switch UserVar.Velocity
     case 2000
-        UserVar.VelocityInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat'];
     case {2009,2014,2018} 
-        UserVar.VelocityInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_',num2str(UserVar.Velocity),'-',num2str(UserVar.Velocity+1),'_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_',num2str(UserVar.Velocity),'-',num2str(UserVar.Velocity+1),'_MeaSUREs_ITSLIVE_Velocities.mat'];
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
 end

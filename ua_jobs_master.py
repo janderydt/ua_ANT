@@ -87,7 +87,10 @@ if __name__ == "__main__":
     # Launching new job if capacity allows
     logging.info('> Launching new job if capacity allows')
 
-    while run_counter<=40:
+    # cpu count
+    cpus = os.cpu_count()
+
+    while run_counter<=cpus/2:
     
     	# first check RunTable to see if there are any jobs that are not running,
         # but are not finished yet and did not throw any errors
