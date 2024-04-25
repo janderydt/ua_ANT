@@ -90,7 +90,7 @@ if __name__ == "__main__":
     # cpu count
     cpus = os.cpu_count()
 
-    while run_counter<=cpus/2:
+    while run_counter<=cpus/4:
     
     	# first check RunTable to see if there are any jobs that are not running,
         # but are not finished yet and did not throw any errors
