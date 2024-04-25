@@ -2,13 +2,7 @@ function [UserVar,InvStartValues,Priors,Meas,BCsAdjoint,RunInfo]=DefineInputsFor
 
 fprintf('Reading inputs for inverse run \n');
 
-persistent Fus Fvs Fxerr Fyerr
-
-if isempty(Fus)
-    
-    load(UserVar.VelocityInterpolants);
-    
-end
+load(UserVar.VelocityInterpolants);
 
 x = MUA.coordinates(:,1); y = MUA.coordinates(:,2);
 
@@ -38,6 +32,8 @@ uMeas = Fus(x,y);
 vMeas = Fvs(x,y);
 xerrMeas = Fxerr(x,y);
 yerrMeas = Fyerr(x,y);
+
+clear Fus Fvs Fxerr Fyerr
 
 % we don't want zero errors:
 xerrMeas(xerrMeas==0) = 1;
@@ -78,8 +74,8 @@ else
 end
 
 if contains(UserVar.Domain,'AS_PROPHET')
-    xerrMeas(I) = 1;
-    yerrMeas(I) = 1;
+    xerrMeas = 0*x+1;
+    yerrMeas = 0*x+1;
 end
 
 % Because I put NaN in where there is no data, this will give NaN at location not surounded by four data points
@@ -120,6 +116,9 @@ end
 
 Meas.usCov=sparse(1:MUA.Nnodes,1:MUA.Nnodes,usError.^2,MUA.Nnodes,MUA.Nnodes);
 Meas.vsCov=sparse(1:MUA.Nnodes,1:MUA.Nnodes,vsError.^2,MUA.Nnodes,MUA.Nnodes);
+
+clear xerrMeas yerrMeas uMeas vMeas
+
 
 fprintf('Reading start values for AGlen and C...\n');
 [UserVar,InvStartValues.C,InvStartValues.m,InvStartValues.q,InvStartValues.muk]=DefineSlipperyDistribution(UserVar,CtrlVar,MUA,CtrlVar.time,F.s,F.b,F.s-F.b,F.S,F.B,F.rho,F.rhow,GF);

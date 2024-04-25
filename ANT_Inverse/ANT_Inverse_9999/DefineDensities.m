@@ -15,6 +15,7 @@ else
     rho(rho<100)=100;
     rho(rho>917)=917;
     save(filename_geometryfields,"rho","-append");
+    clear Fhro;
 end
 	
 rhow=1027; 

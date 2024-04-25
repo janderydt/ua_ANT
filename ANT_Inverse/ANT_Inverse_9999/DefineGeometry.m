@@ -31,6 +31,7 @@ if contains(FieldsToBeDefined,'B')
         B = FB(x,y);
         B = inpaint_nans(B,4);
         save(filename_geometryfields,"B","-append");
+        clear FB;
     end
 end
 
@@ -42,6 +43,7 @@ if contains(FieldsToBeDefined,'s')
         s = Fs(x,y);
         s = inpaint_nans(s,4);
         save(filename_geometryfields,"s","-append");
+        clear Fs;
     end
 end
 
@@ -53,6 +55,7 @@ if contains(FieldsToBeDefined,'b')
         b = Fb(x,y);
         b = inpaint_nans(b,4);
         save(filename_geometryfields,"b","-append");
+        clear Fb;
     end
 end
 
