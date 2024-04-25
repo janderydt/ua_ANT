@@ -1,7 +1,5 @@
 function [UserVar,s,b,S,B,alpha]=DefineGeometry(UserVar,CtrlVar,MUA,time,FieldsToBeDefined)
 
-persistent FB Fs Fb;
-
 if nargin<5
     FieldsToBeDefined='sbSB';
 end
@@ -9,7 +7,15 @@ end
 s=[]; b=[]; S=[]; B=[];
 alpha=0 ;
 
-fprintf('Loading geometry fields %s from %s...',FieldsToBeDefined,UserVar.GeometryInterpolants);
+% to speed up the geometry assembly, we check if the geometry fields have
+% previously been constructed for the same mesh. If not, we read the
+% interpolants and construct a new file for this particular mesh.
+filename_geometryfields = UserVar.GeometryInterpolants;
+filename_geometryfields = erase(filename_geometryfields,"GriddedInterpolants_");
+filename_geometryfields = erase(filename_geometryfields,".mat");
+filename_geometryfields = filename_geometryfields + "_mesh_Nodes" + string(MUA.Nnodes) + "_Nele" + string(MUA.Nele) + ".mat";
+
+fprintf('Loading geometry fields %s...',FieldsToBeDefined);
 
 x=MUA.coordinates(:,1); y=MUA.coordinates(:,2);
 
@@ -18,27 +24,36 @@ if contains(FieldsToBeDefined,'S')
 end
 
 if contains(FieldsToBeDefined,'B')
-    if isempty(FB)
+    if exist(filename_geometryfields,"file")
+        load(filename_geometryfields,"B")
+    else
         load(UserVar.GeometryInterpolants,'FB');
+        B = FB(x,y);
+        B = inpaint_nans(B,4);
+        save(filename_geometryfields,"B","-append");
     end
-    B = FB(x,y);
-    B = inpaint_nans(B,4);
 end
 
 if contains(FieldsToBeDefined,'s')
-    if isempty(Fs)
+    if exist(filename_geometryfields,"file")
+        load(filename_geometryfields,"s")
+    else
         load(UserVar.GeometryInterpolants,'Fs');
+        s = Fs(x,y);
+        s = inpaint_nans(s,4);
+        save(filename_geometryfields,"s","-append");
     end
-    s = Fs(x,y);
-    s = inpaint_nans(s,4);
 end
 
 if contains(FieldsToBeDefined,'b')
-    if isempty(Fb)
+    if exist(filename_geometryfields,"file")
+        load(filename_geometryfields,"b")
+    else
         load(UserVar.GeometryInterpolants,'Fb');
+        b = Fb(x,y);
+        b = inpaint_nans(b,4);
+        save(filename_geometryfields,"b","-append");
     end
-    b = Fb(x,y);
-    b = inpaint_nans(b,4);
 end
 
 fprintf('done.\n');
