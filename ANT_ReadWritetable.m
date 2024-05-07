@@ -25,6 +25,19 @@ switch mode
             	% none to correct
 
             end
+            
+            %I=find(contains(opts.VariableNames,'SubmissionTime'));
+            %opts.VariableTypes(I)={'char'};
+            %opts = setvaropts(opts,'SubmissionTime','InputFormat','dd/MM/yyyy HH:mm:ss'); 
+
+            %I=find(contains(opts.VariableNames,'ErrorTime'));
+            %opts.VariableTypes(I)={'char'};
+            %opts = setvaropts(opts,'ErrorTime','InputFormat','dd/MM/yyyy HH:mm:ss'); 
+
+            %I=find(contains(opts.VariableNames,'FinishedTime'));
+            %opts.VariableTypes(I)={'char'};
+            %opts = setvaropts(opts,'FinishedTime','InputFormat','dd/MM/yyyy HH:mm:ss'); 
+
             % read table
             RunTable=readtable(UserVar.Table,opts); 
         else    

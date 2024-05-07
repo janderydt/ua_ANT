@@ -33,21 +33,21 @@ vMeas = Fvs(x,y);
 xerrMeas = Fxerr(x,y);
 yerrMeas = Fyerr(x,y);
 
-clear Fus Fvs Fxerr Fyerr
+clearvars Fus Fvs Fxerr Fyerr
 
 % we don't want zero errors:
-xerrMeas(xerrMeas==0) = 1;
-yerrMeas(yerrMeas==0) = 1;
+xerrMeas(xerrMeas==0) = 0.1;
+yerrMeas(yerrMeas==0) = 0.1;
 
 if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint')
     %% for fixpoint inversion
     % Siple Coast
     I = find(x>-600942 & x<8245 & y<-286360 & y>-800000 & ~isnan(uMeas));
-    xerrMeas(I) = 0.1;
-    yerrMeas(I) = 0.1;
+    xerrMeas(I) = 0.01;
+    yerrMeas(I) = 0.01;
     I = find(x>-800000 & x<-450000 & y<-700000 & y>-950000 & ~isnan(uMeas));
-    xerrMeas(I) = 0.1;
-    yerrMeas(I) = 0.1;
+    xerrMeas(I) = 0.01;
+    yerrMeas(I) = 0.01;
     % Shackleton Range
     I = find(x>-6e5 & x<-1.5e5 & y>7.5e5 & y<10.5e5);
     xerrMeas(I) = 0.1;
@@ -62,6 +62,14 @@ if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint')
     yerrMeas(I) = 0.1;
     % Pine Island
     I = find(x>-1.7e6 & x<-1.5e6 & y>-2.3e5 & y<0);
+    xerrMeas(I) = 0.1;
+    yerrMeas(I) = 0.1;
+    % Foundation Ice Stream
+    I = find(x>-7e5 & x<-5e5 & y>2e5 & y<4e5);
+    xerrMeas(I) = 0.1;
+    yerrMeas(I) = 0.1;
+    % Foundation Ice Stream
+    I = find(x>-1.6e6 & x<-1.4e6 & y>2.5e5 & y<4.5e5);
     xerrMeas(I) = 0.1;
     yerrMeas(I) = 0.1;
 else
@@ -117,7 +125,7 @@ end
 Meas.usCov=sparse(1:MUA.Nnodes,1:MUA.Nnodes,usError.^2,MUA.Nnodes,MUA.Nnodes);
 Meas.vsCov=sparse(1:MUA.Nnodes,1:MUA.Nnodes,vsError.^2,MUA.Nnodes,MUA.Nnodes);
 
-clear xerrMeas yerrMeas uMeas vMeas
+clearvars xerrMeas yerrMeas uMeas vMeas
 
 fprintf('Reading start values for AGlen and C...\n');
 [UserVar,InvStartValues.C,InvStartValues.m,InvStartValues.q,InvStartValues.muk]=DefineSlipperyDistribution(UserVar,CtrlVar,MUA,CtrlVar.time,F.s,F.b,F.s-F.b,F.S,F.B,F.rho,F.rhow,GF);

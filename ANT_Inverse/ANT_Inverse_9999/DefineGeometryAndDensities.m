@@ -35,7 +35,7 @@ else
     rho(rho<100)=100;
     rho(rho>917)=917;
     save(filename_geometryfields,"B","b","S","s","rho");
-    clear FB Fs Fb Frho
+    clearvars FB Fs Fb Frho
 end
 
 rhow=1027; 

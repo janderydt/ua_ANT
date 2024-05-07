@@ -90,8 +90,10 @@ if __name__ == "__main__":
     # cpu count
     cpus = os.cpu_count()
 
-    while run_counter<=cpus/4:
-    
+    while run_counter<=8:
+   
+        runtable = read_runinfo('RunTable.csv',runtype)
+	 
     	# first check RunTable to see if there are any jobs that are not running,
         # but are not finished yet and did not throw any errors
         ind=runtable.index[(runtable['Running']==0) & (runtable['Error']==0) & (runtable['Finished']==0)]
@@ -105,7 +107,7 @@ if __name__ == "__main__":
                 run_counter=999
             else:
                 run_counter+=1
-                time.sleep(120)
+                time.sleep(600)
             
         else:
             
@@ -127,7 +129,7 @@ if __name__ == "__main__":
                     run_counter=999
                 else:
                     run_counter+=1
-                    time.sleep(120)
+                    time.sleep(600)
 
 
             else:
