@@ -1,7 +1,7 @@
 function  BCs=DefineBoundaryConditions(UserVar,CtrlVar,MUA,BCs,time,s,b,h,S,B,ub,vb,ud,vd,GF)
 
 %%
-persistent AA BB
+persistent AA BB IndIS
 
 if isfield(UserVar,'BaseMesh')
     
@@ -31,7 +31,32 @@ if isfield(UserVar,'BaseMesh')
 
 else
 
-    fprintf("DefineBoundaryConditions did not adjust BCs.\n");
+    fprintf("DefineBoundaryConditions did not adjust BCs for velocities.\n");
+
+end
+
+if UserVar.SpinupCycle && UserVar.Spinup.Cycle > 1
+
+    %% spinup: keep ice thickness for ice shelves fixed
+    if CtrlVar.AdaptMesh==0
+
+        if isempty(IndIS)
+
+            IndIS= find(GF.node < 0.5);
+            BCs.hFixedNode=IndIS;
+            BCs.hFixedValue=h(IndIS);
+
+            fprintf("Adding fixed ice shelf thickness condition to BCs.\n");
+
+        end
+
+    else
+    
+        fprintf("Implement fixed ice shelf thickness for a changing mesh.\n");
+        error("Implement fixed ice shelf thickness for a changing mesh");
+        
+    end
+
 
 end
 

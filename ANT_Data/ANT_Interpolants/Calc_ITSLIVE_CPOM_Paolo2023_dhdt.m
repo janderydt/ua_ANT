@@ -44,13 +44,13 @@ years = floor(timeo);
 Iwindow = find(years==year(targettime));
 
 [Xo,Yo]=ndgrid(double(xo(:,1)),double(yo(1,:)));
-Fdhdto = griddedInterpolant(Xo,Yo,squeeze(dhdto(Iwindow,:,:)),'linear','none');
+dhdto = squeeze(dhdto(Iwindow,:,:));
+Fdhdto = griddedInterpolant(Xo,Yo,dhdto,'linear','none');
 Fdhdto_std = Fdhdto; Fdhdto_std.Values = squeeze(dhdto_std(Iwindow,:,:));
 %
-%R = maprefcells([X(1,1) X(end,1)],[Y(1,1) Y(1,end)],[size(X,1) size(X,2)]);
-%geotiffwrite("./GeoTiffFiles/dso_err.tif",flipdim(dso_err',1),R,'CoordRefSysCode','EPSG:3031');
+R = maprefcells([X(1,1) X(end,1)],[Y(1,1) Y(1,end)],[size(X,1) size(X,2)]);
+geotiffwrite("./GeoTiffFiles/dhdto.tif",Fdhdto(X,Y)',R,'CoordRefSysCode','EPSG:3031');
 %
-clear Fdhdto Fdhdto_std dhdto dhdto_std Xo Yo;
 %
 %
 %
@@ -83,27 +83,36 @@ dhdtp = dhp./repmat(dtp,1,size(dhp,2),size(dhp,3));
 timep = (timep_dec(1:end-1)+timep_dec(2:end))/2;
 % 3 year moving windows to be consistent with Otosaka
 dhdtp_movmean = movmean(dhdtp,3*12,1);
-timep_movmean = movmean(timep,12*3,1);
-[~,Itime] = min(abs(timep_movmean-targettime));
+%timep_movmean = movmean(timep,12*3,1);
+[~,Itime] = min(abs(timep-(year(targettime)+month(targettime)/12)));
 % interpolants
 [Xp,Yp]=ndgrid(double(xp),double(yp));
-Fdhdtp = griddedInterpolant(Xp,Yp,squeeze(dhdtp_movmean(Itime,:,:)),'linear','none');
-Fdhdtp_std = Fdhdtp; Fdhdtp_std.Values = squeeze(dhdtp_movmean_std(Itime,:,:));
+dhdtp = squeeze(dhdtp_movmean(Itime,:,:));
+Fdhdtp = griddedInterpolant(Xp,Yp,dhdtp,'linear','none');
+%Fdhdtp_std = Fdhdtp; Fdhdtp_std.Values = squeeze(dhdt_movmean_std(Itime,:,:));
 %
-clear hp hp_err dhp dhdtp dhdtp_movmean Xp Yp
+geotiffwrite("./GeoTiffFiles/dhdtp.tif",Fdhdtp(X,Y)',R,'CoordRefSysCode','EPSG:3031');
+%
+filename = "dhdt_"+string(year(targettime))+"_"+string(year(targettime)+1)+".mat";
+save(filename,"Xo","Yo","Xp","Yp","dhdto","dhdtp");
+%
+clear hp hp_err dhp dhdtp dhdtp_movmean Xp Yp dhdto dhdto_std Xo Yo
+
+
+
+return
 %
 %
 %% Combine data for floating and grounded ice 
 %
-ds = zeros(size(dsp_ref));
-ds_err = zeros(size(dsp_ref));
-ds_source = zeros(size(dsp_ref),'uint8');
+dhdt = zeros(size(X));
+dhdt_err = zeros(size(X));
+dhdt_source = zeros(size(X),'uint8');
 %
-ds_source_tmp = zeros(size(X),'uint8');
-ds_source_string = '0: no data';
+dhdt_source_tmp = zeros(size(X),'uint8');
+dhdt_source_string = '0: no data';
 % indices of missing data: 
 indo = ~isfinite(dso_ref) | ~isfinite(wo);
-indn = ~isfinite(dsn_ref) | ~isfinite(wn);
 indp = ~isfinite(dsp_ref) | ~isfinite(wp);
 % remove nans for calculation of averages
 wo(isnan(wo)) = 0; dso_tmp = dso_ref; dso_tmp(isnan(dso_tmp))=0;
@@ -119,18 +128,10 @@ ds_err_tmp(indo & indn & indp) = nan;
 % source matrix
 ds_source_tmp(~indo & indn & indp) = 1; 
 ds_source_string = [ds_source_string,', 1: data from Otosaka et al. (2023) (zenodo.org/records/8117577)'];
-ds_source_tmp(indo & ~indn & indp) = 2; 
-ds_source_string = [ds_source_string,', 2: data from Nilsson et al. (2023) (doi.org/10.5067/L3LSVDZS15ZV)'];
-ds_source_tmp(indo & indn & ~indp) = 3;
-ds_source_string = [ds_source_string,', 3: data from Paolo et al. (2023) (doi.org/10.5067/SE3XH9RXQWAM )'];
-ds_source_tmp(~indo & ~indn & indp) = 4;
-ds_source_string = [ds_source_string,', 4: Blend of data from Otosaka et al. (2023) and Paolo et al. (2023)'];
-ds_source_tmp(~indo & indn & ~indp) = 5;
-ds_source_string = [ds_source_string,', 5: Blend of data from Otosaka et al. (2023) and Nilsson et al. (2023)'];
-ds_source_tmp(indo & ~indn & ~indp) = 6;
-ds_source_string = [ds_source_string,', 6: Blend of data from Nilsson et al. (2023) and Paolo et al. (2023)'];
-ds_source_tmp(~indo & ~indn & ~indp) = 7; % 
-ds_source_string = [ds_source_string,', 7: Blend of data from Otosaka et al. (2023), Nilsson et al. (2023) and Paolo et al. (2023)'];
+ds_source_tmp(indo & indn & ~indp) = 2;
+ds_source_string = [ds_source_string,', 2: data from Paolo et al. (2023) (doi.org/10.5067/SE3XH9RXQWAM )'];
+ds_source_tmp(~indo & ~indn & indp) = 3;
+ds_source_string = [ds_source_string,', 3: Blend of data from Otosaka et al. (2023) and Paolo et al. (2023)'];
 
 ds = reshape(ds_tmp,size(X));
 ds_err = reshape(ds_err_tmp,size(X));

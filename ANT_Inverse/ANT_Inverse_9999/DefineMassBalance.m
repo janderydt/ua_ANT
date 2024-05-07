@@ -1,6 +1,6 @@
 function [UserVar,as,ab]=DefineMassBalance(UserVar,CtrlVar,MUA,F)
 
-persistent Fsmb_RACMO_climatology;
+persistent Fsmb_RACMO_climatology Fdhdt;
 
 x=MUA.coordinates(:,1);
 y=MUA.coordinates(:,2);
@@ -39,6 +39,42 @@ if UserVar.SpinupCycle
     
     I = find(LakeNodes & GF.node>0.5);
     ab(I) = 0;
+
+    %% Make adjustments for second spinup cycle: adjust surface mass
+    %% balance as -> as - dhdt and run to steady state with fixed ice shelf thickness
+    if UserVar.SpinupCycle && UserVar.Spinup.Cycle > 1
+
+        ab = 0*x; % ab can be zero because we keep ice shelf thickness fixed as boundary condition
+
+        dhdt_filename = "../../ANT_Data/ANT_Interpolants/dhdt_"+string(UserVar.Geometry)+"_"+string(UserVar.Geometry+1)+".mat";
+
+        if exist(dhdt_filename,"file")==2
+
+            if isempty(Fdhdt)
+                load(dhdt_filename);
+                % only retain floating nodes from Paolo and grounded nodes from
+                % Otosaka
+                FGFmask = scatteredInterpolant(x,y,GF.node);
+                GFo = FGFmask(Xo,Yo);
+                GFp = FGFmask(Xp,Yp);
+                Io = find(GFo > 0.5 & ~isnan(dhdto));
+                Ip = find(GFp < 0.5 & ~isnan(dhdtp));
+                xnew = [Xo(Io); Xp(Ip)]; ynew = [Yo(Io); Yp(Ip)];
+                dhdt_obs = [dhdto(Io); dhdtp(Ip)];
+                Fdhdt = scatteredInterpolant(xnew(:),ynew(:),dhdt_obs(:),'natural');
+            end
+
+        else
+
+            error(dhdt_filename+" does not exist.");
+
+        end
+
+        as = as - Fdhdt(x,y);
+        fprintf("Removed observed dhdt from as.\n");
+            
+    end
+
 
 elseif UserVar.InverseCycle
 
