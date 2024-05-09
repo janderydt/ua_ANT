@@ -2,22 +2,6 @@ function  BCs=DefineBoundaryConditions(UserVar,CtrlVar,MUA,BCs,time,s,b,h,S,B,ub
 
 %%
 persistent AA BB IndIS
-
-if ~isfield(UserVar,'BaseMesh')
-
-    if UserVar.Restart
-
-        load(UserVar.NameOfRestartFiletoRead,"UserVarInRestartFile");
-        UserVar.BaseMesh = UserVarInRestartFile.BaseMesh;
-        fprintf("Using UserVar.BaseMesh from restart file %s to define velocity boundary conditions.\n",UserVar.NameOfRestartFiletoRead);
-
-    else
-
-        error("DefineBoundaryConditions cannot define BCs for velocities. Define BaseMesh.");
-
-    end
-
-end
     
 if ~isempty(UserVar.BaseMesh.FixedBoundaryPoints)
 

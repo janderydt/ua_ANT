@@ -34,9 +34,9 @@ UserVar.Spinup.Cycle = find([0; cumsum(UserVar.Spinup.Years)]==UserVar.Spinup.Ye
 %    UserVar.Inverse.MinGradNorm = RunTable{ind,"MinGradNorm"};
 %end
 
-% Mesh
-UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
-UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_InitialMesh.mat";
+% Mesh variables
+UserVar = ANT_DefineBaseMesh(UserVar,RunTable{ind,"startMesh"}{:});
+UserVar = ANT_ApplyMeshModifications(UserVar);
 
 % Restart files
 UserVar.NameOfRestartFiletoRead = UserVar.Experiment + "-RestartFile.mat";
@@ -224,10 +224,6 @@ switch UserVar.Velocity
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
 end
-
-%% mesh
-UserVar = ANT_DefineBaseMesh(UserVar,RunTable{ind,"startMesh"}{:});
-UserVar = ANT_ApplyMeshModifications(UserVar);
 
 %% sliding law
 if RunTable{ind,"startC"} ~= 0
