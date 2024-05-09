@@ -35,6 +35,8 @@ UserVar.Spinup.Cycle = find([0; cumsum(UserVar.Spinup.Years)]==UserVar.Spinup.Ye
 %end
 
 % Mesh variables
+%% !!!!!! This script assumes that the mesh is not adapted during the spinup cycles. !!!!!!!
+%% Adapting in the mesh is not advised anyway, because it complicates the diagnostic perturbation experiments
 UserVar = ANT_DefineBaseMesh(UserVar,RunTable{ind,"startMesh"}{:});
 UserVar = ANT_ApplyMeshModifications(UserVar);
 
