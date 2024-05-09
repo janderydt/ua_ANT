@@ -22,7 +22,7 @@ if isfield(UserVar,'Geometry')
         BCy = MeshBoundaryCoordinates(:,2); 
     end
 else
-    error(['ExpID ',RunTable{ind,"ExpID"},': Do not know Geometry.']);
+    error(['ExpID ',UserVar.ExpID,': Do not know Geometry.']);
 end
 Inan = find(isnan(BCx));
 if ~isempty(Inan)

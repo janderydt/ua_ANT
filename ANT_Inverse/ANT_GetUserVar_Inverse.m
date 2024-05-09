@@ -34,12 +34,6 @@ UserVar.Spinup.Cycle = find([0; cumsum(UserVar.Spinup.Years)]==UserVar.Spinup.Ye
 %    UserVar.Inverse.MinGradNorm = RunTable{ind,"MinGradNorm"};
 %end
 
-% Mesh variables
-%% !!!!!! This script assumes that the mesh is not adapted during the spinup cycles. !!!!!!!
-%% Adapting in the mesh is not advised anyway, because it complicates the diagnostic perturbation experiments
-UserVar = ANT_DefineBaseMesh(UserVar,RunTable{ind,"startMesh"}{:});
-UserVar = ANT_ApplyMeshModifications(UserVar);
-
 % Restart files
 UserVar.NameOfRestartFiletoRead = UserVar.Experiment + "-RestartFile.mat";
 
@@ -61,6 +55,12 @@ UserVar.NameOfFileForSavingSlipperinessEstimate=string(UserVar.Domain)+"_Inverse
 % Rheology
 UserVar.n =  RunTable{ind,"n"};
 UserVar.NameOfFileForSavingAGlenEstimate=string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+"_AGlen-Estimate.mat";
+
+% Mesh variables
+%% !!!!!! This script assumes that the mesh is not adapted during the spinup cycles. !!!!!!!
+%% Adapting in the mesh is not advised anyway, because it complicates the diagnostic perturbation experiments
+UserVar = ANT_DefineBaseMesh(UserVar,RunTable{ind,"startMesh"}{:});
+UserVar = ANT_ApplyMeshModifications(UserVar);
 
 % Outputs
 UserVar.UaOutputDirectory = './ResultsFiles';
