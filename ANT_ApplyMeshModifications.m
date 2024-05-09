@@ -76,13 +76,13 @@ MUA = MUA_tmp;
 % save updated boundary and mesh for Ua
 MeshBoundaryCoordinates = [MUA.Boundary.x(:) MUA.Boundary.y(:)];
 
-MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates";
-InitialMeshFileName = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_InitialMesh";
+MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
+InitialMeshFileName = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_InitialMesh.mat";
 
 save(MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
 save(InitialMeshFileName,"MUA","CtrlVar");
 
-UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates";
-UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_InitialMesh";
+UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
+UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_InitialMesh.mat";
 
 end 

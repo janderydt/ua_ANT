@@ -11,10 +11,10 @@ RunTable = ANT_ReadWritetable(UserVar,[],'read');
 for ind=1:size(X,1)
 
     startMesh = "2000_2009_2014_2018_meshmin3000_meshmax100000_refined";
-    tau = 80; m = round(X(ind,5)*100)/100; ub = X(ind,6);
+    tau = 80; m = round(X(ind,5)*100)/100; ub = 100;%X(ind,6);
     priorC = ub/tau^m;
     muk = 0.5;
-    n = round(X(ind,7)*100)/100; eps = X(ind,8);
+    n = round(X(ind,6)*100)/100; eps = 0.0026;%X(ind,8);
     priorAGlen = eps/tau^n;
     % Start from results with large gs and m=3,
     % n=3. The code will rescale C and AGlen depending on m and n 

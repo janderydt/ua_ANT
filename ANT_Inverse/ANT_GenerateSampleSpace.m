@@ -8,7 +8,7 @@ rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
 Input.Name = 'Parameter array for inverse simulations';
-Input.Marginals = uq_Marginals(8,'Uniform',[0]);
+Input.Marginals = uq_Marginals(6,'Uniform',[0]);
 ind = 1;
 
 %% -------------------- %%
@@ -17,23 +17,23 @@ ind = 1;
 
 %% Regularization
 Input.Marginals(ind).Name = 'gsC';
-Input.Marginals(ind).Parameters = [10e3 500e3];
-Input.Marginals(ind).Bounds = [10e3 500e3];
+Input.Marginals(ind).Parameters = [50e3 500e3];
+Input.Marginals(ind).Bounds = [50e3 500e3];
 ind = ind + 1;
 
 Input.Marginals(ind).Name = 'gsA';
-Input.Marginals(ind).Parameters = [10e3 500e3]; % parameters are bounds
-Input.Marginals(ind).Bounds = [10e3 500e3];
+Input.Marginals(ind).Parameters = [50e3 500e3]; % parameters are bounds
+Input.Marginals(ind).Bounds = [50e3 500e3];
 ind = ind + 1;
 
 Input.Marginals(ind).Name = 'gaC';
-Input.Marginals(ind).Parameters = [1 200];
-Input.Marginals(ind).Bounds = [1 200];
+Input.Marginals(ind).Parameters = [1 100];
+Input.Marginals(ind).Bounds = [1 100];
 ind = ind + 1;
 
 Input.Marginals(ind).Name = 'gaA';
-Input.Marginals(ind).Parameters = [1 200]; % parameters are bounds
-Input.Marginals(ind).Bounds = [1 200];
+Input.Marginals(ind).Parameters = [1 100]; % parameters are bounds
+Input.Marginals(ind).Bounds = [1 100];
 ind = ind + 1;
 
 %% Sliding law
@@ -42,20 +42,20 @@ Input.Marginals(ind).Parameters = [2 9];
 Input.Marginals(ind).Bounds = [2 9];
 ind = ind + 1;
 
-Input.Marginals(ind).Name = 'ubprior';
-Input.Marginals(ind).Parameters = [10 200];
-Input.Marginals(ind).Bounds = [10 200];
-ind = ind + 1;
+%Input.Marginals(ind).Name = 'ubprior';
+%Input.Marginals(ind).Parameters = [100];
+%Input.Marginals(ind).Bounds = [100];
+%ind = ind + 1;
 
 %% Ice Rheology
 Input.Marginals(ind).Name = 'n';
 Input.Marginals(ind).Parameters = [2 4];
 Input.Marginals(ind).Bounds = [2 4];
-ind = ind + 1;
+%ind = ind + 1;
 
-Input.Marginals(ind).Name = 'epsprior';
-Input.Marginals(ind).Parameters = [1 6]*1e-3;
-Input.Marginals(ind).Bounds = [1 6]*1e-3;
+%Input.Marginals(ind).Name = 'epsprior';
+%Input.Marginals(ind).Parameters = [2.6]*1e-3;
+%Input.Marginals(ind).Bounds = [2.6]*1e-3;
 
 myInput = uq_createInput(Input);
 

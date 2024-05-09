@@ -7,7 +7,7 @@ CtrlVar.Restart=UserVar.Restart;
 if UserVar.InverseCycle
     CtrlVar.TimeDependentRun=0; 
     CtrlVar.doInverseStep=1;
-    CtrlVar.NRitmax=100;
+    CtrlVar.NRitmax=50;
 elseif UserVar.SpinupCycle
     CtrlVar.TimeDependentRun=1; 
     CtrlVar.doInverseStep=0;
