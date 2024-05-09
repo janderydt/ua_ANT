@@ -72,14 +72,16 @@ I = [1:MUA.Nnodes]; I(unique([find(In(:)==1);find(On(:)==1)]))=[];
 UserVar.BaseMesh.DeactivatedNodes = I;
 
 MUA = MUA_tmp;
+MUA.workers = [];
+MUA.Deriv=[]; MUA.DetJ=[]; MUA.M=[]; MUA.dm=[]; % save some space
 
 % save updated boundary and mesh for Ua
 MeshBoundaryCoordinates = [MUA.Boundary.x(:) MUA.Boundary.y(:)];
 
-MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
+MeshBoundaryCoordinatesFileName = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
 InitialMeshFileName = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_InitialMesh.mat";
 
-save(MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
+save(MeshBoundaryCoordinatesFileName,"MeshBoundaryCoordinates");
 save(InitialMeshFileName,"MUA","CtrlVar");
 
 UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";

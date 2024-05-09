@@ -25,10 +25,6 @@ if ~isempty(UserVar.BaseMesh.FixedBoundaryPoints)
         BCs.ubFixedValue=BCs.ubFixedNode*0;
         BCs.vbFixedValue=BCs.vbFixedNode*0;
 
-else
-
-    error("UserVar.BaseMesh.FixedBoundaryPoints is not defined.");
-        
 end
 
 if UserVar.SpinupCycle && UserVar.Spinup.Cycle > 1
