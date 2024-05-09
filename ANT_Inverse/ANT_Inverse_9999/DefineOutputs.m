@@ -76,7 +76,7 @@ if UserVar.SpinupCycle
         UserVar.UaOutputDirectory,CtrlVar.Experiment,string(UserVar.Spinup.Cycle),round(time));
 
     % save at y=1,10:10:100,1000:1000:end
-    if any(ismember([1,10:10:100,200:100:1000,2000:1000:100000],round(time)))
+    if any(ismember([0,1,10:10:100,200:100:1000,2000:1000:100000],round(time)))
         fprintf(' Saving data in %s \n',FileName)
         save(FileName,'UserVar','CtrlVar','MUA','F');
     end
