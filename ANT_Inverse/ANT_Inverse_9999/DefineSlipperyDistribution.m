@@ -1,4 +1,4 @@
-function [UserVar,C,m,q,muk,V0]=DefineSlipperyDistribution(UserVar,CtrlVar,MUA,time,s,b,h,S,B,rho,rhow,GF)
+function [UserVar,C,m,q,muk]=DefineSlipperyDistribution(UserVar,CtrlVar,MUA,time,s,b,h,S,B,rho,rhow,GF)
 
 persistent FC;
 
@@ -6,7 +6,7 @@ CFile = UserVar.NameOfFileForReadingSlipperinessEstimate;
 
 m = UserVar.SlidingCoefficient;
 q = 1 ;      % only needed for Budd sliding law
-V0 = [];
+%V0 = [];
 
 if ~isfield(UserVar,'muk')
     muk=0.5;
