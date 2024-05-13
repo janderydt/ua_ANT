@@ -38,8 +38,8 @@ ind = ind + 1;
 
 %% Sliding law
 Input.Marginals(ind).Name = 'm';
-Input.Marginals(ind).Parameters = [2 9];
-Input.Marginals(ind).Bounds = [2 9];
+Input.Marginals(ind).Parameters = [2 7];
+Input.Marginals(ind).Bounds = [2 7];
 ind = ind + 1;
 
 %Input.Marginals(ind).Name = 'ubprior';
@@ -49,8 +49,8 @@ ind = ind + 1;
 
 %% Ice Rheology
 Input.Marginals(ind).Name = 'n';
-Input.Marginals(ind).Parameters = [2 4];
-Input.Marginals(ind).Bounds = [2 4];
+Input.Marginals(ind).Parameters = [2.5 3.5];
+Input.Marginals(ind).Bounds = [2.5 3.5];
 %ind = ind + 1;
 
 %Input.Marginals(ind).Name = 'epsprior';

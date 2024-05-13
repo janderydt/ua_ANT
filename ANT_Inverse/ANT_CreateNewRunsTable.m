@@ -18,8 +18,8 @@ for ind=1:size(X,1)
     priorAGlen = eps/tau^n;
     % Start from results with large gs and m=3,
     % n=3. The code will rescale C and AGlen depending on m and n 
-    startC = 1111;
-    startAGlen = 0;
+    startC = 1795;
+    startAGlen = 1795;
 
     Newrow = {'ANT_nsmbl',...               %Domain
         0,...                               %pgid

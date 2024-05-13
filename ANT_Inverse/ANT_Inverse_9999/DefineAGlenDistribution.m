@@ -10,7 +10,7 @@ if isempty(FA) & exist(AGlenFile,"file")
 
     tmp = load(AGlenFile,'MUA','AGlen','n');
     CtrlVar.MapOldToNew.method = "ShapeAndScattered";
-    AGlen_outside = AGlenVersusTemp(-15);
+    AGlen_outside = AGlenVersusTemp(-15); % assuming input file uses n=3
     [~,AGlen] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,AGlen_outside,tmp.AGlen);
 
     save("AGlen_interpolated.mat","CtrlVar","MUA","AGlen");
