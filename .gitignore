@@ -9,6 +9,8 @@
 *.nc
 *.csv
 Ua
+datetime
+logging
 
 #ignore all hidden files
 .*
