@@ -1,6 +1,6 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
-#SBATCH --job-name=MultiSerialOnCompute
+#SBATCH --job-name=ANT_MultiSerial
 #SBATCH --time=0:10:0
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=2
