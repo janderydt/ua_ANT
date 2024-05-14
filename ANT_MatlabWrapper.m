@@ -36,8 +36,13 @@ end
 %% read table
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
-Iexisting = find(RunTable{:,'ExpID'}~=0);
-Inew = find(RunTable{:,'ExpID'}==0);
+if ~isempty(RunTable)
+    Iexisting = find(RunTable{:,'ExpID'}~=0);
+    Inew = find(RunTable{:,'ExpID'}==0);
+else
+    fprintf(fid,"Empty RunTable - stop job./n");
+    return
+end
 
 %% launch jobs
 % initialize some variables
