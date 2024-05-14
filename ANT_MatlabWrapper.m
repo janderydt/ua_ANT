@@ -18,12 +18,20 @@ if strfind(hostname,"C23000100")
     run /mnt/md0/Ua/setup_Ua2D.m
     UserVar.hostname = "C23000100";
     NumWorkers = 25;
+elseif strfind(hostname,"sauron")
+    run /home/wchm8/Documents/Ua/setup_Ua2D.m
+    UserVar.hostname = "sauron";
+elseif strfind(hostname,"nid") % ARCHER2
+    UserVar.hostname = "ARCHER2";
 else
     error("Hostname "+hostname+" not found.");
 end
+
 UserVar.Table = pwd+"/RunTable.csv";
 
-addpath(getenv("froot_tools"));
+if UserVar.hostname ~= "ARCHER2"
+    addpath(getenv("froot_tools"));
+end
 
 %% read table
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
