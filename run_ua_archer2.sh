@@ -41,7 +41,7 @@ do
 # units can be specified. If you do not know how much memory to specify, we
 # recommend that you specify `--mem=1500M` (1,500 MiB).
 srun --nodes=1 --ntasks=1 --ntasks-per-node=1 \
-      --exact --mem=5000M ./Ua_MCR.sh $MCR 1>>matlab_std${i}.out 2>>matlab_err${i}.out
+      --exact --mem=5000M ./Ua_MCR.sh $MCR 1>>matlab_std${i}.out 2>>matlab_err${i}.out &
 done
 
 # Wait for all subjobs to finish

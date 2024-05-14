@@ -1,5 +1,10 @@
 function ANT_MatlabWrapper(pgid,type)
 
+if nargin<2 % on ARCHER2 there won't be any input. we assume we always want to run an inverse simulation in that case
+    pgid = "nan";
+    type = "Inverse";
+end
+
 UserVar.type = type;
 
 logfile = pwd+"/jobs_master.log";
