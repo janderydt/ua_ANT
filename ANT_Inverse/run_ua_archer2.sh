@@ -42,9 +42,19 @@ do
 # recommend that you specify `--mem=1500M` (1,500 MiB).
 srun --nodes=1 --ntasks=1 --ntasks-per-node=1 \
       --exact --mem=5000M ./Ua_MCR.sh $MCR &
+OUT${i}=$?
 # wait 6 min to make sure previous job has started
 sleep 360
 done
 
 # Wait for all subjobs to finish
 wait
+
+for i in $(seq 1 2)
+do
+if [ $OUT${i} == 0 ]; then
+   echo 'job ${i} ended without errors'
+else
+   echo 'error in job ${i}'
+fi
+done

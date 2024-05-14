@@ -130,8 +130,14 @@ if ~isempty(Iexisting)
                     if UserVar.InverseCycle
                     
                         while (UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished)
+
+                            if UserVar.hostname == "ARCHER2"
+                                nit = 10;
+                            else
+                                nit = 5000;
+                            end
         
-                            UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
+                            UserVar.TargetIterations = min(nit,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
     
                             UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
@@ -139,6 +145,8 @@ if ~isempty(Iexisting)
                             RunTable=ANT_ReadWritetable(UserVar,[],'read');
                             ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                             RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
+                            RunTable{ind,"Restart"} = UserVar.Restart;
+                            RunTable{ind,"Finished"} = UserVar.Finished;
                             [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
                 
                         end   
@@ -164,6 +172,10 @@ if ~isempty(Iexisting)
                         fprintf(fid,'============================\n');
                         fprintf(UserVar.fid,"> %s: End spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
     
+                    end
+
+                    if UserVar.hostname == "ARCHER2"
+                         UserVar.Finished = 1;
                     end
         
                 end
@@ -251,7 +263,13 @@ if ~isempty(Inew)
             
                 while (UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished)
     
-                    UserVar.TargetIterations = min(5000,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
+                    if UserVar.hostname == "ARCHER"
+                        nit = 10;
+                    else
+                        nit = 5000;
+                    end
+
+                    UserVar.TargetIterations = min(nit,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
     
                     UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
@@ -259,6 +277,8 @@ if ~isempty(Inew)
                     RunTable=ANT_ReadWritetable(UserVar,[],'read');
                     ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                     RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
+                    RunTable{ind,"Restart"} = UserVar.Restart;
+                    RunTable{ind,"Finished"} = UserVar.Finished;
                     [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
 
                     fprintf(fid,"%S: TEST USERVAR.FINISHED: %s============================\n",UserVar.Experiment,string(UserVar.Finished));

@@ -5,7 +5,7 @@ RunTable=ANT_ReadWritetable(UserVar,[],'read');
 ind = find(RunTable{:,'ExpID'}==UserVar.ExpID);
 
 % add flags and timestamps to table
-if UserVar.Finished==1 && UserVar.Error==0
+if RunTable{ind,"Finished"}==1 && UserVar.Error==0
 
     RunTable{ind,"Submitted"} = 0;
     RunTable{ind,"Running"} = 0;
@@ -17,6 +17,13 @@ if UserVar.Finished==1 && UserVar.Error==0
     fprintf(UserVar.fid,string(datetime("now"))+"\n");
     fprintf(UserVar.fid,'============================\n');
     fprintf(UserVar.fid,'ExpID %s SUCCESSFULLY FINISHED.\n',string(UserVar.ExpID));    
+
+elseif RunTable{ind,"Finished"}==0 && RunTable{ind,"Restart"}==1
+
+    fprintf(UserVar.fid,'============================\n');
+    fprintf(UserVar.fid,string(datetime("now"))+"\n");
+    fprintf(UserVar.fid,'============================\n');
+    fprintf(UserVar.fid,'ExpID %s RESTART REQUIRED.\n',string(UserVar.ExpID)); 
 
 else
 
