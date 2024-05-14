@@ -207,7 +207,14 @@ if ~isempty(Inew)
     UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
 
     % make copy of master folder for new experiment
-    copyfile(['./ANT_',char(type),'_9999/'],['./',char(UserVar.Domain),'_',char(type),'_',num2str(ExpID),'/']); 
+    % if new folder already exists: rename first
+    sourcefolder = ['./ANT_',char(type),'_9999/'];
+    newfolder = ['./',char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
+    if exist(newfolder,"dir") == 7
+        movefile(newfolder,[newfolder,'_old/']);
+    else
+        copyfile(sourcefolder,[newfolder,'/']); 
+    end
     
     % now gather run info
     if type=="Diagnostic"

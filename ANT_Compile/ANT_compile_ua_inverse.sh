@@ -29,7 +29,7 @@ cp $UA_SOURCE/*.m $UA_BUILD
 cp `find $UA_SOURCE/UaUtilities/ -name "*.m"` $UA_BUILD
 cp `find $UA_SOURCE/NewestVertexBisection/ -name "*.m"` $UA_BUILD
 # Copy mesh2d files
-cp `find $UA_SOURCE/Mesh2d/ -name "*.m"` $UA_BUILD
+cp `find $UA_SOURCE/Mesh2d/ -name "*.m" ! -name 'inpoly2*'` $UA_BUILD
 # Also copy everything from updates folders
 cp -r $REPO_DIR/*.m $UA_BUILD
 cp -r $UA_WRAPPER_FILES/*.m $UA_BUILD

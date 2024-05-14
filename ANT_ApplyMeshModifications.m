@@ -31,14 +31,14 @@ if ~isempty(Inan)
 end
 
 % remove elements that have 1 node or more outside the boundary
-[cn1,on1] = inpoly2([MUA.coordinates(MUA.connectivity,1),MUA.coordinates(MUA.connectivity,2)],[BCx(:) BCy(:)]);
+[cn1,~] = inpoly2([MUA.coordinates(MUA.connectivity,1),MUA.coordinates(MUA.connectivity,2)],[BCx(:) BCy(:)]);
 NodesToBeDeactivated = ~cn1;
 NodesToBeDeactivated = reshape(NodesToBeDeactivated,size(MUA.connectivity));
 ElementsToBeDeactivated = find(sum(NodesToBeDeactivated,2)>0);
 
 % then remove elements for which the center of gravity is outside the
 % boundary
-[cn2,on2] = inpoly2([xEle(:) yEle(:)],[BCx(:) BCy(:)]);
+[cn2,~] = inpoly2([xEle(:) yEle(:)],[BCx(:) BCy(:)]);
 Indtmp = find(~cn2);
 ElementsToBeDeactivated = unique([ElementsToBeDeactivated(:); Indtmp(:)]);
 
