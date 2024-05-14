@@ -13,6 +13,8 @@ if strfind(hostname,"C23000100")
     run /mnt/md0/Ua/setup_Ua2D.m
     UserVar.hostname = "C23000100";
     NumWorkers = 25;
+else
+    error("Hostname "+hostname+" not found.");
 end
 UserVar.Table = pwd+"/RunTable.csv";
 

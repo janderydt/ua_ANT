@@ -8,6 +8,7 @@
 *.tif 
 *.nc
 *.csv
+Ua
 
 #ignore all hidden files
 .*
@@ -16,6 +17,7 @@
 __pycache__/
 
 #ignore specific case folders, only track master folder
+ANT_Compile/UA_BUILD
 ANT_Inverse/AS_PROPHET_Inverse_1*/
 ANT_Inverse/ANT_Inverse_1*/
 ANT_Inverse/ANT_Inverse_ForQing/
