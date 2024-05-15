@@ -8,6 +8,7 @@
 *.tif 
 *.nc
 *.csv
+*.tmp
 Ua
 datetime
 logging
