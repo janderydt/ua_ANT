@@ -79,7 +79,11 @@ if ~isempty(Iexisting)
         if indnsnr
             fprintf(fid,"   ...ANT_MatlabWrapper: ExpID %s has been not yet been submitted. Let's check if a " + ...
                 "restart is required...",string(RunTable{ind,'ExpID'}));
+
+            % initialze some variables
             UserVar.Finished = 0;
+            UserVar.Breakout = 0;
+
             % new run or restart?
             if RunTable{ind,'Restart'}==1
                 UserVar.Restart = 1;
@@ -109,7 +113,7 @@ if ~isempty(Iexisting)
     
             elseif type=="Inverse"
                 
-                while ~UserVar.Finished
+                while ~UserVar.Breakout
 
                     something_submitted=1;
                     Inew = [];
@@ -145,8 +149,6 @@ if ~isempty(Iexisting)
                             RunTable=ANT_ReadWritetable(UserVar,[],'read');
                             ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                             RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
-                            RunTable{ind,"Restart"} = UserVar.Restart;
-                            RunTable{ind,"Finished"} = UserVar.Finished;
                             [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
                 
                         end   
@@ -174,9 +176,6 @@ if ~isempty(Iexisting)
     
                     end
 
-                    if UserVar.hostname == "ARCHER2"
-                         UserVar.Finished = 1;
-                    end
         
                 end
 
@@ -215,6 +214,7 @@ if ~isempty(Inew)
     % initialize some UserVars
     UserVar.Finished = 0;
     UserVar.Restart = 0;
+    UserVar.Breakout = 0;
     UserVar.Domain = RunTable{ind,'Domain'};
     UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
 
@@ -244,7 +244,7 @@ if ~isempty(Inew)
 
     elseif type=="Inverse"
 
-        while ~UserVar.Finished
+        while ~UserVar.Breakout
             
             % read Runtable again in case any changes were made by other
             % processes
@@ -277,11 +277,7 @@ if ~isempty(Inew)
                     RunTable=ANT_ReadWritetable(UserVar,[],'read');
                     ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                     RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
-                    RunTable{ind,"Restart"} = UserVar.Restart;
-                    RunTable{ind,"Finished"} = UserVar.Finished;
                     [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
-
-                    fprintf(fid,"%S: TEST USERVAR.FINISHED: %s============================\n",UserVar.Experiment,string(UserVar.Finished));
 
                 end     
 

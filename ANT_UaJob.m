@@ -30,7 +30,7 @@ catch ME
     fprintf(UserVar.fid,'============================\n');
     fprintf(UserVar.fid,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
 
-    UserVar.Finished = 1;
+    UserVar.Breakout = 1;
     UserVar.Error = 1;
 
     msgString = getReport(ME,'extended'); 
@@ -38,7 +38,9 @@ catch ME
 end
 
 if UserVar.hostname == "ARCHER2"
-    UserVar.Restart = 1;
+    UserVar.Breakout = 1;
+elseif UserVar.Finished == 1
+    UserVar.Breakout = 1;
 end
         
 cd ..
