@@ -166,7 +166,7 @@ end
 %% Deal with inverse runs
 if strcmp(CtrlVar.DefineOutputsInfostring,'Start of inverse run')
     UserVar.Inverse.Iter0 =  RunInfo.Inverse.Iterations(end);
-    fprintf(CtrlVar.fidlog,'(Re)Starting cycle %s of inverse run. Number of iterations already done: %s.\n',num2str(UserVar.Inverse.Cycle),num2str(UserVar.Inverse.Iter0));
+    fprintf(CtrlVar.fidlog,'(Re)Starting cycle %s of inverse run with % iterations. Number of iterations already done: %s.\n',num2str(UserVar.Inverse.Cycle),num2str(UserVar.TargetIterations),num2str(UserVar.Inverse.Iter0));
 end
 
 if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
@@ -174,7 +174,7 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
     IterationsDoneInThisRun = RunInfo.Inverse.Iterations(end)-UserVar.Inverse.Iter0;
     UserVar.Inverse.IterationsDone = UserVar.Inverse.IterationsDone + IterationsDoneInThisRun;
 	if IterationsDoneInThisRun ~= CtrlVar.Inverse.Iterations
-    		UserVar.Finished = 1;
+    		UserVar.Breakout = 1;
     		fprintf(CtrlVar.fidlog,['Simulation did not reach expected number of iterations. Done %s instead of %s. ',...
         		'Writing restart file and breaking out.\n'],num2str(IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
     end
@@ -191,7 +191,7 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')
     YearsDoneInThisRun = CtrlVar.time;
     UserVar.Spinup.YearsDone = UserVar.Spinup.YearsDone + YearsDoneInThisRun;
     if YearsDoneInThisRun ~= CtrlVar.TotalTime
-            UserVar.Finished = 1;
+            UserVar.Breakout = 1;
             fprintf(CtrlVar.fidlog,['Simulation did not reach expected end time. Done %s years instead of %s. ',...
                     'Writing restart file and breaking out.\n'],num2str(YearsDoneInThisRun),num2str(CtrlVar.TotalTime));
     end

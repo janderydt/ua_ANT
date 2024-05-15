@@ -3,8 +3,8 @@
 #SBATCH --job-name=ANT_MultiSerial
 #SBATCH --time=0:10:0
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=2
-#SBATCH --cpus-per-task=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
 #SBATCH --distribution=block:block
 
@@ -32,8 +32,8 @@ export OMP_NUM_THREADS=1
 #    process/thread pinning may be incorrect leading to poor performance
 export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 
-# Loop over 128 subjobs pinning each to a different core
-for i in $(seq 1 2)
+# Loop over 32 subjobs pinning each to a different core
+for i in $(seq 1 )
 do
 # Launch subjob overriding job settings as required and in the background
 # Make sure to change the amount specified by the `--mem=` flag to the amount
@@ -41,8 +41,8 @@ do
 # units can be specified. If you do not know how much memory to specify, we
 # recommend that you specify `--mem=1500M` (1,500 MiB).
 srun --nodes=1 --ntasks=1 --ntasks-per-node=1 \
-      --exact --mem=5000M ./Ua_MCR.sh $MCR &
-OUT${i}=$?
+      --exact --mem=8000M --output /dev/null \
+      --error stderr${i}.out ./Ua_MCR.sh $MCR &
 # wait 6 min to make sure previous job has started
 sleep 360
 done

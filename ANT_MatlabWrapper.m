@@ -1,7 +1,7 @@
 function ANT_MatlabWrapper(pgid,type)
 
 if nargin<2 % on ARCHER2 there won't be any input. we assume we always want to run an inverse simulation in that case
-    pgid = "nan";
+    pgid = "0";
     type = "Inverse";
 end
 
@@ -100,7 +100,7 @@ if ~isempty(Iexisting)
                 fprintf(fid,'============================\n');
                 fprintf(fid,string(datetime("now"))+"\n");
                 fprintf(fid,'============================\n');
-                fprintf(fid,"> %s: Submitted.\n",UserVar.Experiment);
+                fprintf(fid,"> %s: Submitted on %s.\n",UserVar.Experiment,UserVar.hostname);
                 
                 something_submitted=1;
                 Inew = [];
