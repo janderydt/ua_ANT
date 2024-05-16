@@ -22,6 +22,7 @@ __pycache__/
 #ignore specific case folders, only track master folder
 ANT_Compile/UA_BUILD
 ANT_Inverse/AS_PROPHET_Inverse_1*/
+ANT_Inverse/ANT_Inverse_2*/
 ANT_Inverse/ANT_Inverse_1*/
 ANT_Inverse/ANT_Inverse_ForQing/
 ANT_Inverse/ANT_nsmbl*

@@ -4,6 +4,12 @@ function UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar)
 %% to Ua via the UserVar structure. The content of this function is entirely flexible, and
 %% will need to be adapted based on which parameters you need to provide to Ua at runtime.
 
+if contains(UserVar.hostname,"ARCHER2")
+    UserVar.Inverse.walltime = 30*60; %12 hours in seconds
+else
+    UserVar.Inverse.walltime = 1e10;
+end 
+
 % initialize variables: either start a new simulation with
 % an inverse cycle, or continue an existing simulation with
 % a spinup or inverse cycle

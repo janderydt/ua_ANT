@@ -166,7 +166,7 @@ end
 %% Deal with inverse runs
 if strcmp(CtrlVar.DefineOutputsInfostring,'Start of inverse run')
     UserVar.Inverse.Iter0 =  RunInfo.Inverse.Iterations(end);
-    fprintf(CtrlVar.fidlog,'(Re)Starting cycle %s of inverse run with % iterations. Number of iterations already done: %s.\n',num2str(UserVar.Inverse.Cycle),num2str(UserVar.TargetIterations),num2str(UserVar.Inverse.Iter0));
+    fprintf(CtrlVar.fidlog,'(Re)Starting cycle %s of inverse run with %s iterations. Number of iterations already done: %s.\n',num2str(UserVar.Inverse.Cycle),num2str(UserVar.TargetIterations),num2str(UserVar.Inverse.Iter0));
 end
 
 if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
@@ -174,9 +174,17 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
     IterationsDoneInThisRun = RunInfo.Inverse.Iterations(end)-UserVar.Inverse.Iter0;
     UserVar.Inverse.IterationsDone = UserVar.Inverse.IterationsDone + IterationsDoneInThisRun;
 	if IterationsDoneInThisRun ~= CtrlVar.Inverse.Iterations
-    		UserVar.Breakout = 1;
+        if RunInfo.Inverse.stoppedduetowalltime == 1
+            fprintf(CtrlVar.fidlog,['Simulation stopped due to walltime constraints. Done %s iterations instead of %s. ',...
+        		'Writing restart file and restarting.\n'],num2str(IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
+            UserVar.Restart = 1;
+        else
     		fprintf(CtrlVar.fidlog,['Simulation did not reach expected number of iterations. Done %s instead of %s. ',...
         		'Writing restart file and breaking out.\n'],num2str(IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
+        end
+        UserVar.Breakout = 1;
+    else
+        fprintf(CtrlVar.fidlog,'Simulation reached expected number of %s iterations.\n',num2str(IterationsDoneInThisRun));
     end
     WriteAdjointRestartFile(UserVar,CtrlVar,MUA,BCs,F,F.GF,l,RunInfo,InvStartValues,Priors,Meas,BCsAdjoint,InvFinalValues);
     NameOfRestartOutputFile = erase(CtrlVar.Inverse.NameOfRestartOutputFile,".mat")+"_InverseCycle"+string(UserVar.Inverse.Cycle)+".mat";

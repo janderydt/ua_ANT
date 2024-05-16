@@ -37,12 +37,8 @@ catch ME
     fprintf(UserVar.fid,"%s \n",msgString);
 end
 
-if UserVar.hostname == "ARCHER2"
+if UserVar.Finished == 1
     UserVar.Breakout = 1;
-    UserVar.Restart = 1;
-elseif UserVar.Finished == 1
-    UserVar.Breakout = 1;
-    UserVar.Restart = 0;
 end
         
 cd ..

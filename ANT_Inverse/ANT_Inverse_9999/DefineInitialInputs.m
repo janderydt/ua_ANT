@@ -121,6 +121,14 @@ if UserVar.InverseCycle
     CtrlVar.Inverse.Regularize.logAGlen.gs=UserVar.Inverse.logAGlen.gs ;
     CtrlVar.Inverse.Regularize.logC.ga=UserVar.Inverse.logC.ga;
     CtrlVar.Inverse.Regularize.logC.gs=UserVar.Inverse.logC.gs; 
+
+    setappdata(0,'FMINCONsStopFlag',false); %stopping flag is false
+    UserVar.Inverse.T = timer('startdelay',0.9*UserVar.Inverse.walltime,'timerfcn',@(src,evt)setappdata(0,'FMINCONsStopFlag',true)); %initialize timer to change value of fminconstopflag after 0.9*wallclocktime
+    t0 = tic(); 
+    start(UserVar.Inverse.T); %start the timer
+    remainingTime = round(0.9*UserVar.Inverse.walltime-toc(t0));
+    fprintf(UserVar.fid,"> Remaining time on wallclock timer: %ss. Fmincon will be stopped when this time has been exceeded.\n",num2str(remainingTime));
+
 end
 
 Hfunc=@(p,lambda) p+lambda ;  % just needs to defined here, this is then later replaced with a function that returns the Hessian estmation.

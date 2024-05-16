@@ -1,8 +1,15 @@
 function ANT_MatlabWrapper(pgid,type)
 
-if nargin<2 % on ARCHER2 there won't be any input. we assume we always want to run an inverse simulation in that case
+if nargin<2 % on ARCHER2 there are no inputs. we assume we always want to run an inverse simulation in that case
     pgid = "0";
     type = "Inverse";
+else % ensure correct format
+    if ischar(pgid)
+        pgid = str2double(pgid);
+    end
+    if ischar(type)
+        type = string(type);
+    end
 end
 
 UserVar.type = type;
@@ -29,7 +36,7 @@ end
 
 UserVar.Table = pwd+"/RunTable.csv";
 
-if UserVar.hostname ~= "ARCHER2"
+if ~contains(UserVar.hostname,"ARCHER2")
     addpath(getenv("froot_tools"));
 end
 
@@ -112,7 +119,7 @@ if ~isempty(Iexisting)
                 UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
             elseif type=="Inverse"
-                
+
                 while ~UserVar.Breakout
 
                     something_submitted=1;
@@ -133,10 +140,10 @@ if ~isempty(Iexisting)
                     %% Inverse cycle
                     if UserVar.InverseCycle
                     
-                        while (UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished)
+                        while (UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Breakout)
 
-                            if UserVar.hostname == "ARCHER2"
-                                nit = 10;
+                            if contains(UserVar.hostname,"ARCHER2")
+                                nit = 10000;
                             else
                                 nit = 5000;
                             end
@@ -150,14 +157,18 @@ if ~isempty(Iexisting)
                             RunTable=ANT_ReadWritetable(UserVar,[],'read');
                             ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                             RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
+                            RunTable{ind,"Restart"} = UserVar.Restart;
                             [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
                 
                         end   
 
+                        it_tmp = cumsum(UserVar.Inverse.Iterations);
+
                         fprintf(fid,'============================\n');
                         fprintf(fid,string(datetime("now"))+"\n");
                         fprintf(fid,'============================\n');
-                        fprintf(UserVar.fid,"> %s: End inverse cycle %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle));
+                        fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
+                        UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
     
                     %% Spinup cycle
                     elseif UserVar.SpinupCycle
@@ -168,6 +179,7 @@ if ~isempty(Iexisting)
                         RunTable=ANT_ReadWritetable(UserVar,[],'read');
                         ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                         RunTable{ind,"SpinupYearsDone"} = UserVar.Spinup.YearsDone;   
+
                         [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
 
                         fprintf(fid,'============================\n');
@@ -262,10 +274,10 @@ if ~isempty(Inew)
             %% Inverse cycle
             if UserVar.InverseCycle
             
-                while (UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Finished)
+                while (UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Breakout)
     
-                    if UserVar.hostname == "ARCHER"
-                        nit = 10;
+                    if contains(UserVar.hostname,"ARCHER2")
+                        nit = 10000;
                     else
                         nit = 5000;
                     end
@@ -278,15 +290,19 @@ if ~isempty(Inew)
                     %adjust Runtable
                     RunTable=ANT_ReadWritetable(UserVar,[],'read');
                     ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
-                    RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
+                    RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;  
+                    RunTable{ind,"Restart"} = UserVar.Restart;
                     [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
 
                 end     
 
+                it_tmp = cumsum(UserVar.Inverse.Iterations);
+
                 fprintf(fid,'============================\n');
                 fprintf(fid,string(datetime("now"))+"\n");
                 fprintf(fid,'============================\n');
-                fprintf(UserVar.fid,"> %s: End inverse cycle %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle));
+                fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
+                    UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
     
             %% Spinup cycle
             elseif UserVar.SpinupCycle
@@ -302,7 +318,7 @@ if ~isempty(Inew)
                 fprintf(fid,'============================\n');
                 fprintf(fid,string(datetime("now"))+"\n");
                 fprintf(fid,'============================\n');
-                fprintf(UserVar.fid,"> %s: End spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
+                fprintf(UserVar.fid,"> %s: Breaking out of spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
     
             end
 

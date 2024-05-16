@@ -27,7 +27,7 @@ elseif UserVar.Finished==0 && UserVar.Restart==1
     fprintf(UserVar.fid,'============================\n');
     fprintf(UserVar.fid,string(datetime("now"))+"\n");
     fprintf(UserVar.fid,'============================\n');
-    fprintf(UserVar.fid,'ExpID %s RESTART REQUIRED.\n',string(UserVar.ExpID)); 
+    fprintf(UserVar.fid,'ExpID %s RESTART REQUIRED.\n',string(UserVar.ExpID));
 
 elseif UserVar.Error==1
 

@@ -6,6 +6,7 @@
 #
 exe_name=$0
 exe_dir=$PWD
+walltime=$1
 echo "------------------------------------------"
 if [ "x$1" = "x" ]; then
   echo Usage:
