@@ -1,72 +1,115 @@
 function ANT_GenerateSampleSpace
 
-
 addpath(genpath(getenv("froot_matlabfunctions")+"/../UQLab_Rel2.0.0"));
 
 clearvars;
 rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
+type = "Fixpoint"; % options: Fixpoint or Adjoint
+
 Input.Name = 'Parameter array for inverse simulations';
-Input.Marginals = uq_Marginals(6,'Uniform',[0]);
 ind = 1;
 
 %% -------------------- %%
 %% CONTINUOUS VARIABLES %%
 %% -------------------- %%
+switch type
+    case "Adjoint"
 
-%% Regularization
-Input.Marginals(ind).Name = 'gsC';
-Input.Marginals(ind).Parameters = [50e3 500e3];
-Input.Marginals(ind).Bounds = [50e3 500e3];
-ind = ind + 1;
+        Input.Marginals = uq_Marginals(6,'Uniform',[0]);
 
-Input.Marginals(ind).Name = 'gsA';
-Input.Marginals(ind).Parameters = [50e3 500e3]; % parameters are bounds
-Input.Marginals(ind).Bounds = [50e3 500e3];
-ind = ind + 1;
+        %% Regularization
+        Input.Marginals(ind).Name = 'gsC';
+        Input.Marginals(ind).Parameters = [50e3 500e3];
+        Input.Marginals(ind).Bounds = [50e3 500e3];
+        ind = ind + 1;
+        
+        Input.Marginals(ind).Name = 'gsA';
+        Input.Marginals(ind).Parameters = [50e3 500e3]; % parameters are bounds
+        Input.Marginals(ind).Bounds = [50e3 500e3];
+        ind = ind + 1;
+        
+        Input.Marginals(ind).Name = 'gaC';
+        Input.Marginals(ind).Parameters = [1 100];
+        Input.Marginals(ind).Bounds = [1 100];
+        ind = ind + 1;
+        
+        Input.Marginals(ind).Name = 'gaA';
+        Input.Marginals(ind).Parameters = [1 100]; % parameters are bounds
+        Input.Marginals(ind).Bounds = [1 100];
+        ind = ind + 1;
+        
+        %% Sliding law
+        Input.Marginals(ind).Name = 'm';
+        Input.Marginals(ind).Parameters = [2 7];
+        Input.Marginals(ind).Bounds = [2 7];
+        ind = ind + 1;
+        
+        %Input.Marginals(ind).Name = 'ubprior';
+        %Input.Marginals(ind).Parameters = [100];
+        %Input.Marginals(ind).Bounds = [100];
+        %ind = ind + 1;
+        
+        %% Ice Rheology
+        Input.Marginals(ind).Name = 'n';
+        Input.Marginals(ind).Parameters = [2.5 3.5];
+        Input.Marginals(ind).Bounds = [2.5 3.5];
+        %ind = ind + 1;
+        
+        %Input.Marginals(ind).Name = 'epsprior';
+        %Input.Marginals(ind).Parameters = [2.6]*1e-3;
+        %Input.Marginals(ind).Bounds = [2.6]*1e-3;
+        % 
+        
 
-Input.Marginals(ind).Name = 'gaC';
-Input.Marginals(ind).Parameters = [1 100];
-Input.Marginals(ind).Bounds = [1 100];
-ind = ind + 1;
+        %% Latin hypercube
+        myInput = uq_createInput(Input);
+        uq_print(myInput);
+        
+        uq_selectInput(myInput);
+        X = uq_getSample(numel(Input.Marginals)*10,'LHS');
 
-Input.Marginals(ind).Name = 'gaA';
-Input.Marginals(ind).Parameters = [1 100]; % parameters are bounds
-Input.Marginals(ind).Bounds = [1 100];
-ind = ind + 1;
+        %uq_display(myInput);
 
-%% Sliding law
-Input.Marginals(ind).Name = 'm';
-Input.Marginals(ind).Parameters = [2 7];
-Input.Marginals(ind).Bounds = [2 7];
-ind = ind + 1;
 
-%Input.Marginals(ind).Name = 'ubprior';
-%Input.Marginals(ind).Parameters = [100];
-%Input.Marginals(ind).Bounds = [100];
-%ind = ind + 1;
+    case "Fixpoint"
 
-%% Ice Rheology
-Input.Marginals(ind).Name = 'n';
-Input.Marginals(ind).Parameters = [2.5 3.5];
-Input.Marginals(ind).Bounds = [2.5 3.5];
-%ind = ind + 1;
+        %% Regularization: does not matter here, but need to provide some numbers
+        Input.Marginals(ind).Name = 'gsC';
+        gsC = 1;
+        ind = ind + 1;
+        
+        Input.Marginals(ind).Name = 'gsA';
+        gsA = 1;
+        ind = ind + 1;
+        
+        Input.Marginals(ind).Name = 'gaC';
+        gaC = 1;
+        ind = ind + 1;
+        
+        Input.Marginals(ind).Name = 'gaA';
+        gaA = 1;
+        ind = ind + 1;
 
-%Input.Marginals(ind).Name = 'epsprior';
-%Input.Marginals(ind).Parameters = [2.6]*1e-3;
-%Input.Marginals(ind).Bounds = [2.6]*1e-3;
 
-myInput = uq_createInput(Input);
+        %% Sliding law      
+        Input.Marginals(ind).Name = 'm';
+        m = [2:7];
+        ind = ind + 1;
 
-uq_print(myInput);
+        %% Ice Rheology
+        Input.Marginals(ind).Name = 'n';
+        n = [2.5:0.5:3.5];
 
-uq_selectInput(myInput);
-X = uq_getSample(numel(Input.Marginals)*10,'LHS');
+        %% ND grid
+        [m,n]=ndgrid(m,n); ny=numel(m(:));
+        X = [gsC*ones(ny,1) gsA*ones(ny,1) gaC*ones(ny,1) gaA*ones(ny,1) m(:) n(:)];
 
-%uq_display(myInput);
+end
 
-ANT_CreateNewRunsTable(X);
+T=array2table(X,'VariableNames',{Input.Marginals(:).Name});
+ANT_CreateNewRunsTable(T,type);
 
 return
 %% ------------------ %%
