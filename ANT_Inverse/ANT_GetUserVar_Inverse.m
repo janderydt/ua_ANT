@@ -5,7 +5,7 @@ function UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar)
 %% will need to be adapted based on which parameters you need to provide to Ua at runtime.
 
 if contains(UserVar.hostname,"ARCHER2")
-    UserVar.Inverse.walltime = 30*60; %12 hours in seconds
+    UserVar.Inverse.walltime = 30*60-10*60; %12 hours in seconds and subtract 10min for delays at the start
 else
     UserVar.Inverse.walltime = 1e10;
 end 

@@ -1,9 +1,9 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
 #SBATCH --job-name=ANT_MultiSerial
-#SBATCH --time=0:30:0
+#SBATCH --time=1:00:0
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks-per-node=2
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
 #SBATCH --distribution=block:block
@@ -33,7 +33,7 @@ export OMP_NUM_THREADS=1
 export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 
 # Loop over 32 subjobs pinning each to a different core
-for i in $(seq 1 )
+for i in $(seq 1 2)
 do
 # Launch subjob overriding job settings as required and in the background
 # Make sure to change the amount specified by the `--mem=` flag to the amount
@@ -43,18 +43,13 @@ do
 srun --nodes=1 --ntasks=1 --ntasks-per-node=1 \
       --exact --mem=8000M --output /dev/null \
       --error stderr${i}.out ./Ua_MCR.sh $MCR &
-# wait 6 min to make sure previous job has started
-sleep 360
+# wait 10 min to make sure first job has started, then 1 min between successive jobs
+if [ $i == 1]; then
+sleep 600
+else
+sleep 60
+fi
 done
 
 # Wait for all subjobs to finish
 wait
-
-for i in $(seq 1 2)
-do
-if [ $OUT${i} == 0 ]; then
-   echo 'job ${i} ended without errors'
-else
-   echo 'error in job ${i}'
-fi
-done

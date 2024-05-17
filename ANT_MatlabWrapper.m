@@ -149,7 +149,7 @@ if ~isempty(Iexisting)
                             end
         
                             UserVar.TargetIterations = min(nit,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
-                            fprintf(UserVar.fid,"  Doing %s iterations.\n",string(UserVar.TargetIterations));
+                            fprintf(UserVar.fid,"> Doing %s iterations.\n",string(UserVar.TargetIterations));
     
                             UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
@@ -283,7 +283,7 @@ if ~isempty(Inew)
                     end
 
                     UserVar.TargetIterations = min(nit,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
-                    fprintf(UserVar.fid,"  Doing %s iterations.\n",string(UserVar.TargetIterations));
+                    fprintf(UserVar.fid,"> Doing %s iterations.\n",string(UserVar.TargetIterations));
     
                     UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
