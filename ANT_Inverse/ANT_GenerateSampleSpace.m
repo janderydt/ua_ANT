@@ -6,7 +6,7 @@ clearvars;
 rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
-type = "Fixpoint"; % options: Fixpoint or Adjoint
+type = "FixPoint"; % options: FixPoint or Adjoint
 
 Input.Name = 'Parameter array for inverse simulations';
 ind = 1;
@@ -73,7 +73,7 @@ switch type
         %uq_display(myInput);
 
 
-    case "Fixpoint"
+    case "FixPoint"
 
         %% Regularization: does not matter here, but need to provide some numbers
         Input.Marginals(ind).Name = 'gsC';

@@ -39,7 +39,7 @@ clearvars Fus Fvs Fxerr Fyerr
 xerrMeas(xerrMeas==0) = 0.1;
 yerrMeas(yerrMeas==0) = 0.1;
 
-if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint')
+if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint','IgnoreCase',true)
     %% for fixpoint inversion
     % Siple Coast
     I = find(x>-600942 & x<8245 & y<-286360 & y>-800000 & ~isnan(uMeas));
