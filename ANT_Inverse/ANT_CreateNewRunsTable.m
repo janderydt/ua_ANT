@@ -12,11 +12,11 @@ for ind=1:size(X,1)
 
     startMesh = "2000_2009_2014_2018_meshmin3000_meshmax100000_refined";
     
-    tau = 80; m = round(X.m(ind)*100)/100; ub = 100;%X(ind,6);
+    tau = 80; m = round(X.m(ind)*100)/100; ub = 200;%X(ind,6);
     priorC = ub/tau^m;
     muk = 0.5;
     
-    n = round(X.n(ind)*100)/100; eps = 0.0026;%X(ind,8);
+    n = round(X.n(ind)*100)/100; eps = 0.006;%X(ind,8);
     priorAGlen = eps/tau^n;
     
     % Start from results with large gs and m=3,
