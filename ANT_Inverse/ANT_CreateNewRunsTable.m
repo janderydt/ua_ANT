@@ -3,6 +3,9 @@ function ANT_CreateNewRunsTable(X,GradientCalc,SlidingLaw)
 addpath('../');
 
 UserVar.Table = "NewRuns_"+GradientCalc+".csv";
+if ~exist(UserVar.Table,"file")
+    copyfile("EmptyTable.csv",UserVar.Table);
+end
 UserVar.type = "Inverse";
 
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
