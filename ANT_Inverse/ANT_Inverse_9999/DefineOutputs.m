@@ -176,7 +176,8 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
 	if IterationsDoneInThisRun ~= CtrlVar.Inverse.Iterations
         if RunInfo.Inverse.stoppedduetowalltime == 1
             fprintf(CtrlVar.fidlog,['Simulation stopped due to walltime constraints. Done %s iterations instead of %s. ',...
-        		'Writing restart file and restarting.\n'],num2str(IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
+        		'Writing restart file.\n'],num2str(IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
+            
             UserVar.Restart = 1;
         else
     		fprintf(CtrlVar.fidlog,['Simulation did not reach expected number of iterations. Done %s instead of %s. ',...

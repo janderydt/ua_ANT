@@ -2,8 +2,8 @@ function ANT_CreateNewRunsTable(X,GradientCalc)
 
 addpath('../');
 
-UserVar.Table = 'NewRuns.csv';
-UserVar.type = 'Inverse';
+UserVar.Table = "NewRuns_"+GradientCalc+".csv";
+UserVar.type = "Inverse";
 
 %% Unrefined mesh, No dh/dt, Weertman sliding
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
