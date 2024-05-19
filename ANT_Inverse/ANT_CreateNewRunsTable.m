@@ -1,11 +1,10 @@
-function ANT_CreateNewRunsTable(X,GradientCalc)
+function ANT_CreateNewRunsTable(X,GradientCalc,SlidingLaw)
 
 addpath('../');
 
 UserVar.Table = "NewRuns_"+GradientCalc+".csv";
 UserVar.type = "Inverse";
 
-%% Unrefined mesh, No dh/dt, Weertman sliding
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
 for ind=1:size(X,1)
@@ -19,10 +18,33 @@ for ind=1:size(X,1)
     n = round(X.n(ind)*100)/100; eps = 0.006;%X(ind,8);
     priorAGlen = eps/tau^n;
     
-    % Start from results with large gs and m=3,
-    % n=3. The code will rescale C and AGlen depending on m and n 
-    startC = 0;
-    startAGlen = 0;
+    % If GradientCalc=Adjoint, find Fixpoint inversion with nearest (m,n)
+    % pair as start value. The code will rescale C and AGlen depending on m and n 
+    if GradientCalc == "Adjoint"
+        if ind == 1
+            UserVar2.type = "Inverse";
+            UserVar2.Table = "RunTable_FixPoint.csv";
+            RunTable_FixPoint = ANT_ReadWritetable(UserVar2,[],'read');
+            % scan table for ExpID, m and n
+            ExpID_FixPoint = RunTable_FixPoint{:,'ExpID'};
+            Sliding_FixPoint =  RunTable_FixPoint{:,'SlidingLaw'};
+            Ind = find(Sliding_FixPoint == SlidingLaw);
+            m_FixPoint = RunTable_FixPoint{Ind,'m'};
+            n_FixPoint = RunTable_FixPoint{Ind,'n'};
+        end
+        [~,Ind2] = min(hypot(m_FixPoint-m,n_FixPoint-n));
+        startC = ExpID_FixPoint(Ind(Ind2));
+        startAGlen = startC;
+        iterations = "10000+1000";
+        spinupyears = "1";
+        invertfor = "-logC-logA-";
+    else % no start values
+        startC = 0;
+        startAGlen = 0;
+        iterations = "20";
+        spinupyears = "0";
+        invertfor = "-logC-";
+    end
 
     Newrow = {'ANT_nsmbl',...               %Domain
         0,...                               %pgid
@@ -35,11 +57,11 @@ for ind=1:size(X,1)
         0,...                               %Finished
         "01/01/2000 00:00:00",...           %FinishedTime
         0,...                               %Restart
-        "20",...                            %InverseIterations
+        iterations,...                            %InverseIterations
         0,...                               %InverseIterationsDone
-        "0",...                             %SpinupYears
+        spinupyears,...                             %SpinupYears
         0,...                               %SpinupYearsDone
-        "-logC-",...                        %InvertFor
+        invertfor,...                        %InvertFor
         GradientCalc,...                    %GradientCalc
         round(X.gsC(ind)*10)/10,...         %gsC
         round(X.gsA(ind)*10)/10,...         %gsA
@@ -49,7 +71,7 @@ for ind=1:size(X,1)
         2000,...                            %Velocity
         2000,...                            %startGeometry
         startMesh,...                       %startMesh
-        "Weertman",...                      %SlidingLaw
+        SlidingLaw,...                      %SlidingLaw
         m,...                               %m
         muk,...                             %muk
         priorC,...                          %priorC

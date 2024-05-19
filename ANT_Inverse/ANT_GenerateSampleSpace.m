@@ -6,7 +6,8 @@ clearvars;
 rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
-type = "FixPoint"; % options: FixPoint or Adjoint
+type = "Adjoint"; % options: FixPoint or Adjoint
+sliding = "Weertman"; 
 
 Input.Name = 'Parameter array for inverse simulations';
 ind = 1;
@@ -109,7 +110,7 @@ switch type
 end
 
 T=array2table(X,'VariableNames',{Input.Marginals(:).Name});
-ANT_CreateNewRunsTable(T,type);
+ANT_CreateNewRunsTable(T,type,sliding);
 
 return
 %% ------------------ %%
