@@ -14,11 +14,11 @@ for ind=1:size(X,1)
 
     startMesh = "2000_2009_2014_2018_meshmin3000_meshmax100000_refined";
     
-    tau = 80; m = round(X.m(ind)*100)/100; ub = 200;%X(ind,6);
-    priorC = ub/tau^m;
+    taub = 40; m = round(X.m(ind)*100)/100; ub = 200;%X(ind,6);
+    priorC = ub/taub^m;
     muk = 0.5;
     
-    n = round(X.n(ind)*100)/100; eps = 0.006;%X(ind,8);
+    tau = 80; n = round(X.n(ind)*100)/100; eps = 0.0026;%X(ind,8);
     priorAGlen = eps/tau^n;
     
     % If GradientCalc=Adjoint, find Fixpoint inversion with nearest (m,n)
@@ -30,13 +30,11 @@ for ind=1:size(X,1)
             RunTable_FixPoint = ANT_ReadWritetable(UserVar2,[],'read');
             % scan table for ExpID, m and n
             ExpID_FixPoint = RunTable_FixPoint{:,'ExpID'};
-            Sliding_FixPoint =  RunTable_FixPoint{:,'SlidingLaw'};
-            Ind = find(Sliding_FixPoint == SlidingLaw);
-            m_FixPoint = RunTable_FixPoint{Ind,'m'};
-            n_FixPoint = RunTable_FixPoint{Ind,'n'};
+            m_FixPoint = RunTable_FixPoint{:,'m'};
+            n_FixPoint = RunTable_FixPoint{:,'n'};
         end
-        [~,Ind2] = min(hypot(m_FixPoint-m,n_FixPoint-n));
-        startC = ExpID_FixPoint(Ind(Ind2));
+        [~,Ind] = min(hypot(m_FixPoint-m,n_FixPoint-n));
+        startC = ExpID_FixPoint(Ind);
         startAGlen = startC;
         iterations = "10000+1000";
         spinupyears = "1";

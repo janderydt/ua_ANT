@@ -7,7 +7,7 @@ rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
 type = "FixPoint"; % options: FixPoint or Adjoint
-sliding = "Cornford"; 
+sliding = "Weertman"; 
 
 Input.Name = 'Parameter array for inverse simulations';
 ind = 1;

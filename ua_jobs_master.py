@@ -90,7 +90,7 @@ if __name__ == "__main__":
     # cpu count
     cpus = os.cpu_count()
 
-    while run_counter<=10:
+    while run_counter<=18:
    
         runtable = read_runinfo('RunTable.csv',runtype)
 	 
