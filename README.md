@@ -3,7 +3,10 @@ A wrapper to launch any number of &Uacute;a jobs on a Linux machine or the ARCHE
 The user can currently chose to run Inverse or Diagnostic simulations; Transient simulations are in development. In each case, a list of experiments needs to be provided in a csv file (RunTable.csv) in the corresponding ANT_Inverse or ANT_Diagnostic folder. The csv file contains information about model parameters and geometry for each experiment, which is passed on to &Uacute;a. An example csv file can be found in the ANT_Inverse and ANT_Diagnostic folders.
 
 ## Linux
-Launch new jobs from the top directory (/ANT) using `python ua_jobs_master.py`. 
+Launch new jobs from the top directory (/ANT) using `python ua_jobs_master.py`.
+The user will be asked whether to launch and inverse or diagnostic simulation, and how many.
 
-## ARCHER2
-Launch new jobs from within the ANT_Inverse, ... directory using `sbatch --export=ALL -A budget-code ./run_ua_archer2.sh`
+## ARCHER2 
+(Currently only available for inverse simulations)
+Launch new jobs from the ANT_Inverse folder using `sbatch --export=ALL -A budget-code ./run_ua_archer2.sh`.
+The user needs to provide a configuration file (ua_config.txt) with basic settings such as the type of experiment and requested walltime.
