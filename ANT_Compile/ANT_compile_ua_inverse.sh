@@ -36,7 +36,7 @@ cp -r $UA_WRAPPER_FILES/*.m $UA_BUILD
 cp -r $UA_CASE_UPDATES/* $UA_BUILD
 
 # Create the executable
-$MATLAB_PATH/bin/mcc -m $UA_BUILD/ANT_MatlabWrapper.m -o Ua -d $UA_BUILD
+$MATLAB_PATH/bin/mcc -m $UA_BUILD/ANT_UaWrapper.m -o Ua -d $UA_BUILD
 # Copy just the executable (not the auto-generated run script as we have a custom one) to the current directory
 cp $UA_BUILD/Ua ./
 echo 'Now copy "Ua" to the Ua executable directory on the server where you will run the model.'

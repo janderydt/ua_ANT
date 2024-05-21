@@ -1,4 +1,4 @@
-function ANT_MatlabWrapper(pgid,type)
+function ANT_UaWrapper(pgid,type)
 
 if nargin==2 
     % ensure correct format
@@ -119,7 +119,7 @@ if ~isempty(Iexisting)
     
         % something wrong?
         if indsnr
-            fprintf(fid,"   ...ANT_MatlabWrapper: ExpID %s has been submitted, but corresponding jobID has not " + ...
+            fprintf(fid,"   ...ANT_UaWrapper: ExpID %s has been submitted, but corresponding jobID has not " + ...
                 "been found. Either something went wrong, or the run has" + ...
                 "finished. Check log files for errors./n",string(RunTable{indsnr,'ExpID'}));
             error('');
@@ -127,7 +127,7 @@ if ~isempty(Iexisting)
 
         
         if indnsnr
-            fprintf(fid,"   ...ANT_MatlabWrapper: ExpID %s has been not yet been submitted. Let's check if a " + ...
+            fprintf(fid,"   ...ANT_UaWrapper: ExpID %s has been not yet been submitted. Let's check if a " + ...
                 "restart is required...",string(RunTable{ind,'ExpID'}));
 
             % initialze some variables
@@ -138,7 +138,7 @@ if ~isempty(Iexisting)
             if RunTable{ind,'Restart'}==1
                 UserVar.Restart = 1;
                 fprintf(fid,"yes.\n");
-                fprintf(fid,"   ...ANT_MatlabWrapper: Restarting ExpID %s...\n",string(RunTable{ind,'ExpID'}));
+                fprintf(fid,"   ...ANT_UaWrapper: Restarting ExpID %s...\n",string(RunTable{ind,'ExpID'}));
             else
                 UserVar.Restart = 0;
                 fprintf(fid,"no.\n");
@@ -374,7 +374,7 @@ if ~isempty(Inew)
 
 else
 
-    fprintf(fid,"   ...ANT_MatlabWrapper: Nothing to do. Try again later.\n");
+    fprintf(fid,"   ...ANT_UaWrapper: Nothing to do. Try again later.\n");
 
 end
 
