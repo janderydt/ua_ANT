@@ -13,6 +13,7 @@ copyfile("./ANT_"+UserVar.type+"_9999/*.m",UserVar.Experiment);
 % launch job
 cd(UserVar.Experiment);
 
+% start diary
 diary(UserVar.Experiment+".out")
 diary on
 

@@ -1,25 +1,27 @@
 function ANT_MatlabWrapper(pgid,type)
 
-if nargin<2 % on ARCHER2 there are no inputs. we assume we always want to run an inverse simulation in that case
-    pgid = "0";
-    type = "Inverse";
-else % ensure correct format
+if nargin==2 
+    % ensure correct format
     if ischar(pgid)
         pgid = str2double(pgid);
     end
     if ischar(type)
         type = string(type);
     end
+    walltime = 1e10; % set to some large number
+else
+    pgid=[];
+    type=[];
+    walltime=[];
 end
 
-UserVar.type = type;
-
+%% initialize log file
 logfile = pwd+"/jobs_master.log";
 fid = fopen(logfile,'a+');
 
 UserVar.fid = fid;
 
-%% setup Ua folders
+%% find host and setup matlab path
 [~,hostname]= system("hostname"); 
 if strfind(hostname,"C23000100")
     run /mnt/md0/Ua/setup_Ua2D.m
@@ -34,13 +36,54 @@ else
     error("Hostname "+hostname+" not found.");
 end
 
-UserVar.Table = pwd+"/RunTable.csv";
-
 if ~contains(UserVar.hostname,"ARCHER2")
     addpath(getenv("froot_tools"));
 end
 
-%% read table
+%% obtain run type and other inputs if not already provided
+if nargin<2 && contains(UserVar.hostname,"ARCHER2")
+    % on ARCHER2 there are no inputs. instead we read a text file with config variables
+    configfile = pwd+"/ua_config.txt";
+    if ~exist(configfile,"file")
+        error("Specify config file"+configfile+".");
+    end
+    fileID = fopen(configfile,"r"); 
+    tline = fgetl(fileID);
+    while ischar(tline)	
+        if ~isempty(tline)
+            if ~startsWith(tline(1), '#')
+                % process line
+                if contains(tline,'runtype')
+                    type = string(erase(tline,["runtype"," ","=",""""]));
+                elseif contains(tline,'pgid')
+                    pgid = str2num(erase(tline,["pgid"," ","="]));
+                elseif contains(tline,'walltime')
+                    walltime = seconds(duration(erase(tline,["walltime"," ","="])));
+                end
+            end
+        end
+        % Now read the next line.
+        tline = fgetl(fileID);
+    end
+    % All done reading all lines, so close the file.
+    fclose(fileID);
+else
+    error("Running job on "+UserVar.hostname+" so need 2 inputs: pgid and runtype");
+end
+
+%% check that all inputs are now available
+if isempty(type) || isempty(walltime) || isempty(pgid)
+    error("One of the following mandatory input variables is empty: type ("+string(type)+"), "+ ...
+    "walltime ("+string(walltime)+"), pgid ("+string(pgid)+").");
+else
+    UserVar.type = type;
+    UserVar.walltime = walltime-10*60; % subtract 10min for delays at the start; this is very common on ARCHER2
+    Uservar.pgid = pgid;
+end
+
+%% read run table
+UserVar.Table = pwd+"/RunTable"+UserVar.hostname+".csv";
+
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
 if ~isempty(RunTable)

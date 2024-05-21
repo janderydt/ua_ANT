@@ -122,11 +122,11 @@ if UserVar.InverseCycle
     CtrlVar.Inverse.Regularize.logC.ga=UserVar.Inverse.logC.ga;
     CtrlVar.Inverse.Regularize.logC.gs=UserVar.Inverse.logC.gs; 
 
-    setappdata(0,'FMINCONstopFlag',false); %stopping flag is false
-    UserVar.Inverse.T = timer('startdelay',0.9*UserVar.Inverse.walltime,'timerfcn',@(src,evt)setappdata(0,'FMINCONstopFlag',true)); %initialize timer to change value of fminconstopflag after 0.9*wallclocktime
+    setappdata(0,'FMINCONsStopFlag',false); %stopping flag is false
+    UserVar.Inverse.T = timer('startdelay',0.9*UserVar.walltime,'timerfcn',@(src,evt)setappdata(0,'FMINCONsStopFlag',true)); %initialize timer to change value of fminconstopflag after 0.9*wallclocktime
     t0 = tic(); 
     start(UserVar.Inverse.T); %start the timer
-    remainingTime = round(0.9*UserVar.Inverse.walltime-toc(t0));
+    remainingTime = round(0.9*UserVar.walltime-toc(t0));
     fprintf(UserVar.fid,"> At %s: remaining time on wallclock timer is %ss. Fmincon will be stopped when this time has been exceeded.\n",string(datetime("now")),num2str(remainingTime));
 
 end
