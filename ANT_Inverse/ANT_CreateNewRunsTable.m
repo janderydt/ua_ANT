@@ -35,7 +35,7 @@ for ind=1:size(X,1)
         end
         [~,Ind] = min(hypot(m_FixPoint-m,n_FixPoint-n));
         startC = ExpID_FixPoint(Ind);
-        startAGlen = startC;
+        startAGlen = 0;
         iterations = "10000+1000";
         spinupyears = "1";
         invertfor = "-logC-logA-";
