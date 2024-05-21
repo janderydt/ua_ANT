@@ -1,9 +1,9 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
 #SBATCH --job-name=ANT_MultiSerial
-#SBATCH --time=1:00:0
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=2
+#SBATCH --time=12:00:0
+#SBATCH --nodes=2
+#SBATCH --ntasks-per-node=32
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
 #SBATCH --distribution=block:block
@@ -32,24 +32,36 @@ export OMP_NUM_THREADS=1
 #    process/thread pinning may be incorrect leading to poor performance
 export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 
-# Loop over 32 subjobs pinning each to a different core
-for i in $(seq 1 2)
+# Get a list of the nodes assigned to this job in a format we can use.
+#   scontrol converts the condensed node IDs in the sbatch environment
+#   variable into a list of full node IDs that we can use with srun to
+#   ensure the subjobs are placed on the correct node. e.g. this converts
+#   "nid[001234,002345]" to "nid001234 nid002345"
+nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
+
+# Loop over the nodes assigned to the job
+for nodeid in $nodelist
 do
-# Launch subjob overriding job settings as required and in the background
-# Make sure to change the amount specified by the `--mem=` flag to the amount
-# of memory required. The amount of memory is given in MiB by default but other
-# units can be specified. If you do not know how much memory to specify, we
-# recommend that you specify `--mem=1500M` (1,500 MiB).
-srun --nodes=1 --ntasks=1 --ntasks-per-node=1 \
-      --exact --mem=8000M --output /dev/null \
-      --error stderr${i}.out ./Ua_MCR.sh $MCR &
-# wait 10 min to make sure first job has started, then 1 min between successive jobs
-if [ $i == 1]; then
-sleep 600
-else
-sleep 60
-fi
+    # Loop over 32 subjobs on each node pinning each to different cores
+    for i in $(seq 1 32)
+    do
+        # Launch subjob overriding job settings as required and in the background
+        # Make sure to change the amount specified by the `--mem=` flag to the amount
+        # of memory required. The amount of memory is given in MiB by default but other
+        # units can be specified. If you do not know how much memory to specify, we
+        # recommend that you specify `--mem=1500M` (1,500 MiB).
+        srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
+        --exact --mem=8000M --output /dev/null \
+        --error stderr${i}.out ./Ua_MCR.sh $MCR &
+        # wait 10 min to make sure first job has started, then 1 min between successive jobs
+        if [ $i == 1 ]; then
+        sleep 600
+        else
+        sleep 60
+        fi
+    done
 done
 
 # Wait for all subjobs to finish
 wait
+
