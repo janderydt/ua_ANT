@@ -78,11 +78,11 @@ if isempty(type) || isempty(walltime) || isempty(pgid)
 else
     UserVar.type = type;
     UserVar.walltime = walltime-10*60; % subtract 10min for delays at the start; this is very common on ARCHER2
-    Uservar.pgid = pgid;
+    UserVar.pgid = pgid;
 end
 
 %% read run table
-UserVar.Table = pwd+"/RunTable"+UserVar.hostname+".csv";
+UserVar.Table = pwd+"/RunTable_"+UserVar.hostname+".csv";
 
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
