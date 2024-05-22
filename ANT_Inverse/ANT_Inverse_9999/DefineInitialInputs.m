@@ -69,9 +69,10 @@ CtrlVar.SlidingLaw = UserVar.SlidingLaw;
 
 %% Output options
 if UserVar.InverseCycle
-    CtrlVar.InfoLevelInverse=1000; % Overall level of information (inverse runs). 
+    CtrlVar.InfoLevelInverse=10; % Overall level of information (inverse runs). 
                                 % Note: generally good to combine with CtrlVar.InfoLevelNonLinIt=0;
                                 % CtrlVar.InfoLevel=0; to suppress information related to the forward step. 
+    CtrlVar.InfoLevelBackTrack=10;                           
     CtrlVar.Inverse.InfoLevelBackTrack=10;  % info on backtracking within inverse step
     CtrlVar.InfoLevelNonLinIt=1;
     CtrlVar.InfoLevel=1;

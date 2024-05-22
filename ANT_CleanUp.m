@@ -11,7 +11,7 @@ if UserVar.Finished==1 && UserVar.Error==0
     RunTable{ind,"Running"} = 0;
     RunTable{ind,"Finished"} = 1;
     RunTable{ind,"Restart"} = 0;
-    RunTable{ind,"FinishedTime"}(:) = datestr(now);
+    RunTable{ind,"FinishedTime"}(:) = string(datetime("now"));
 
     fprintf(UserVar.fid,'============================\n');
     fprintf(UserVar.fid,string(datetime("now"))+"\n");
@@ -33,7 +33,7 @@ elseif UserVar.Error==1
 
     RunTable{ind,"Running"} = 0;
     RunTable{ind,"Error"} = 1;
-    RunTable{ind,"ErrorTime"}(:) = datestr(now);
+    RunTable{ind,"ErrorTime"}(:) = string(datetime("now"));
     
     fprintf(UserVar.fid,'============================\n');
     fprintf(UserVar.fid,string(datetime("now"))+"\n");

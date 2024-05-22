@@ -55,7 +55,7 @@ do
         --error stderr${i}.out ./Ua_MCR.sh $MCR &
         # wait 10 min to make sure first job has started, then 1 min between successive jobs
         if [ $i == 1 ]; then
-        sleep 600
+        sleep 900
         else
         sleep 60
         fi

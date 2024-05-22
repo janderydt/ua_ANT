@@ -1,5 +1,16 @@
 function RunTable = ANT_ReadWritetable(UserVar,RunTable,mode)
 
+isactive = 1;
+while isactive
+
+    pause(1);
+    isactive = isfile(UserVar.home+"/rw_active");
+
+end
+
+fid = fopen( UserVar.home+"/rw_active", 'wt' );
+fclose(fid);
+
 switch mode 
     case 'read'
         if exist(UserVar.Table,'file')
@@ -18,6 +29,7 @@ switch mode
                 opts.VariableTypes(I)={'double'};
                 I=find(contains(opts.VariableNames,'Comments'));
                 opts.VariableTypes(I)={'char'};
+                
             elseif UserVar.type == "Diagnostic"
             	% none to correct
 
@@ -46,3 +58,5 @@ switch mode
     case 'write'
         writetable(RunTable,UserVar.Table);
 end
+
+delete(UserVar.home+"/rw_active");

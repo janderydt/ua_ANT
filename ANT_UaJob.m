@@ -1,7 +1,7 @@
 function UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid)
 
 % log changes in table
-RunTable{ind,"SubmissionTime"}(:) = datestr(now); 
+RunTable{ind,"SubmissionTime"}(:) = string(datetime("now")); 
 RunTable{ind,"Submitted"} = 1;
 RunTable{ind,"Running"} = 1;
 RunTable{ind,'pgid'} = pgid;

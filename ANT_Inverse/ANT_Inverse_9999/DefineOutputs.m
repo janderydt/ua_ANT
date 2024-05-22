@@ -187,7 +187,7 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
         fprintf(CtrlVar.fidlog,'Simulation reached expected number of %s iterations.\n',num2str(IterationsDoneInThisRun));
     end
     %delete(UserVar.Inverse.T);
-    rmappdata(0,'FMINCONstopFlag');
+    %rmappdata(0,'FMINCONstopFlag');
     WriteAdjointRestartFile(UserVar,CtrlVar,MUA,BCs,F,F.GF,l,RunInfo,InvStartValues,Priors,Meas,BCsAdjoint,InvFinalValues);
     NameOfRestartOutputFile = erase(CtrlVar.Inverse.NameOfRestartOutputFile,".mat")+"_InverseCycle"+string(UserVar.Inverse.Cycle)+".mat";
     copyfile(CtrlVar.Inverse.NameOfRestartOutputFile,NameOfRestartOutputFile);

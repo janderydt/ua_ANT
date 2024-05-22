@@ -16,7 +16,9 @@ else
 end
 
 %% initialize log file
-logfile = pwd+"/jobs_master.log";
+UserVar.home = pwd;
+
+logfile = UserVar.home+"/jobs_master.log";
 fid = fopen(logfile,'a+');
 
 UserVar.fid = fid;
@@ -77,7 +79,7 @@ if isempty(type) || isempty(walltime) || isempty(pgid)
     "walltime ("+string(walltime)+"), pgid ("+string(pgid)+").");
 else
     UserVar.type = type;
-    UserVar.walltime = walltime-10*60; % subtract 10min for delays at the start; this is very common on ARCHER2
+    UserVar.walltime = walltime-15*60; % subtract 10min for delays at the start; this is very common on ARCHER2
     UserVar.pgid = pgid;
 end
 
@@ -120,8 +122,8 @@ if ~isempty(Iexisting)
         % something wrong?
         if indsnr
             fprintf(fid,"   ...ANT_UaWrapper: ExpID %s has been submitted, but corresponding jobID has not " + ...
-                "been found. Either something went wrong, or the run has" + ...
-                "finished. Check log files for errors./n",string(RunTable{indsnr,'ExpID'}));
+                "been found. Either something went wrong, or the run has " + ...
+                "finished. Check log files for errors.\n",string(RunTable{indsnr,'ExpID'}));
             error('');
         end
 
