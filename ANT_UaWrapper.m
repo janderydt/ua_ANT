@@ -261,7 +261,7 @@ if ~isempty(Inew)
     existingID = RunTable{:,"ExpID"};
     ExpID = 0;
     while ismember(ExpID,existingID) 
-        ExpID = randi([1000 1999]);
+        ExpID = randi([2000 2999]);
     end
     UserVar.ExpID = ExpID;
     RunTable{ind,"ExpID"} = ExpID;
