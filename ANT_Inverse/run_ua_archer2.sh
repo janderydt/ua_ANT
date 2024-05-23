@@ -52,7 +52,7 @@ do
         # recommend that you specify `--mem=1500M` (1,500 MiB).
         srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
         --exact --mem=8000M --output /dev/null \
-        --error stderr${i}.out ./Ua_MCR.sh $MCR &
+        --error stderr${nodeid}_${i}.out ./Ua_MCR.sh $MCR &
         # wait 10 min to make sure first job has started, then 1 min between successive jobs
         if [ $i == 1 ]; then
         sleep 900
