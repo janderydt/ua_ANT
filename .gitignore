@@ -8,7 +8,7 @@
 *.tif 
 *.nc
 *.csv
-!RunTable*.csv
+*.csv
 *.tmp
 Ua
 datetime
