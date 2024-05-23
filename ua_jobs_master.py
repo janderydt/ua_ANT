@@ -4,6 +4,7 @@ import logging
 import pandas as pd
 import sys
 import os
+import socket
 
 # Top-level function that controls Ua job submissions. This is written for Linux
 # and some elements will need to be modified for use with Windows/MacOS
@@ -54,7 +55,7 @@ if __name__ == "__main__":
     logging.info('> Reading table with run info')
 
     # Initialize the Run table, which is used to store details about each simulation
-    runtable = read_runinfo('RunTable.csv',runtype)
+    runtable = read_runinfo('RunTable_'+socket.gethostname()+'.csv',runtype)
 
     # Check that processes that are marked as running are indeed running
     logging.info('> Check that processes that are marked as running are indeed running')
@@ -80,7 +81,7 @@ if __name__ == "__main__":
                 runtable.loc[i,'ErrorTime'] = datetime.datetime.now()
                 runtable.loc[i,'pgid'] = 0 
                 runtable.loc[i,'Comments'] = runtable.loc[i,'Comments'] + "; Table indicated process is running, but could not find the pgid"
-                save_runinfo(runtable,'RunTable.csv')
+                save_runinfo(runtable,'RunTable_'+socket.gethostname()+'.csv')
 
     logging.info('   ...'+str(run_counter)+' jobs running')
 
@@ -92,7 +93,7 @@ if __name__ == "__main__":
 
     while run_counter<=18:
    
-        runtable = read_runinfo('RunTable.csv',runtype)
+        runtable = read_runinfo('RunTable_'+socket.gethostname()+'.csv',runtype)
 	 
     	# first check RunTable to see if there are any jobs that are not running,
         # but are not finished yet and did not throw any errors
@@ -119,7 +120,7 @@ if __name__ == "__main__":
                 runtable = pd.concat([runtable, newruns.iloc[[0]]], ignore_index=True, sort=False)
                 newruns = newruns.drop(labels=0)
 
-                save_runinfo(runtable, 'RunTable.csv')
+                save_runinfo(runtable, 'RunTable_'+socket.gethostname()+'.csv')
                 save_runinfo(newruns, 'NewRuns.csv')
 
                 options = ""

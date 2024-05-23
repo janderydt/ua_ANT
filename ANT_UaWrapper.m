@@ -43,34 +43,36 @@ if ~contains(UserVar.hostname,"ARCHER2")
 end
 
 %% obtain run type and other inputs if not already provided
-if nargin<2 && contains(UserVar.hostname,"ARCHER2")
-    % on ARCHER2 there are no inputs. instead we read a text file with config variables
-    configfile = pwd+"/ua_config.txt";
-    if ~exist(configfile,"file")
-        error("Specify config file"+configfile+".");
-    end
-    fileID = fopen(configfile,"r"); 
-    tline = fgetl(fileID);
-    while ischar(tline)	
-        if ~isempty(tline)
-            if ~startsWith(tline(1), '#')
-                % process line
-                if contains(tline,'runtype')
-                    type = string(erase(tline,["runtype"," ","=",""""]));
-                elseif contains(tline,'pgid')
-                    pgid = str2num(erase(tline,["pgid"," ","="]));
-                elseif contains(tline,'walltime')
-                    walltime = seconds(duration(erase(tline,["walltime"," ","="])));
+if nargin<2 
+    if contains(UserVar.hostname,"ARCHER2")
+        % on ARCHER2 there are no inputs. instead we read a text file with config variables
+        configfile = pwd+"/ua_config.txt";
+        if ~exist(configfile,"file")
+            error("Specify config file"+configfile+".");
+        end
+        fileID = fopen(configfile,"r"); 
+        tline = fgetl(fileID);
+        while ischar(tline)	
+            if ~isempty(tline)
+                if ~startsWith(tline(1), '#')
+                    % process line
+                    if contains(tline,'runtype')
+                        type = string(erase(tline,["runtype"," ","=",""""]));
+                    elseif contains(tline,'pgid')
+                        pgid = str2num(erase(tline,["pgid"," ","="]));
+                    elseif contains(tline,'walltime')
+                        walltime = seconds(duration(erase(tline,["walltime"," ","="])));
+                    end
                 end
             end
+            % Now read the next line.
+            tline = fgetl(fileID);
         end
-        % Now read the next line.
-        tline = fgetl(fileID);
+        % All done reading all lines, so close the file.
+        fclose(fileID);      
+    else
+        error("Running job on "+UserVar.hostname+" so need 2 inputs, got "+string(nargin)+" instead: pgid ("+string(pgid)+") and runtype ("+string(type)+").");
     end
-    % All done reading all lines, so close the file.
-    fclose(fileID);
-else
-    error("Running job on "+UserVar.hostname+" so need 2 inputs: pgid and runtype");
 end
 
 %% check that all inputs are now available
