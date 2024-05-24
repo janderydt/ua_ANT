@@ -96,7 +96,7 @@ UserVar.Table = pwd+"/RunTable_"+UserVar.hostname+".csv";
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
 if ~isempty(RunTable)
-    Iexisting = find(RunTable{:,'ExpID'}~=0);
+    Iexisting = find(RunTable{:,'ExpID'}~=0 && RunTable{:,'Error'}~=1);
 end
 
 %% launch jobs
@@ -197,7 +197,7 @@ if ~isempty(Iexisting)
                             end
         
                             UserVar.TargetIterations = min(nit,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
-                            fprintf(UserVar.fid,"> Doing %s iterations.\n",string(UserVar.TargetIterations));
+                            fprintf(UserVar.fid,"> Doing %s iterations or as many as walltime allows.\n",string(UserVar.TargetIterations));
     
                             UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
@@ -348,7 +348,7 @@ if ~isempty(Inew)
                     end
 
                     UserVar.TargetIterations = min(nit,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
-                    fprintf(UserVar.fid,"> Doing %s iterations.\n",string(UserVar.TargetIterations));
+                    fprintf(UserVar.fid,"> Doing %s iterations or as many as walltime allows.\n",string(UserVar.TargetIterations));
     
                     UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     

@@ -67,7 +67,7 @@ UserVar.UaOutputDirectory = './ResultsFiles';
 
 % Initialize other variables
 if UserVar.Inverse.Cycle == 1
-    %% start first inverse cycle
+    %% (re)start first inverse cycle
     UserVar.InverseCycle = 1;
     UserVar.SpinupCycle = 0;
 
