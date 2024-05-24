@@ -17,14 +17,6 @@ else
     walltime_remaining=[];
 end
 
-%% initialize log file
-UserVar.home = pwd;
-
-logfile = UserVar.home+"/jobs_master.log";
-fid = fopen(logfile,'a+');
-
-UserVar.fid = fid;
-
 %% find host and setup matlab path
 [~,hostname]= system("hostname"); 
 if strfind(hostname,"C23000100")
@@ -43,6 +35,14 @@ end
 if ~contains(UserVar.hostname,"ARCHER2")
     addpath(getenv("froot_tools"));
 end
+
+%% initialize log file
+UserVar.home = pwd;
+
+logfile = UserVar.home+"/jobs_master_"+UserVar.hostname+".log";
+fid = fopen(logfile,'a+');
+
+UserVar.fid = fid;
 
 %% obtain run type and other inputs if not already provided
 if nargin<2 
