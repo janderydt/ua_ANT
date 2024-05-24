@@ -9,7 +9,7 @@ if nargin==2
         type = string(type);
     end
     walltime = 1e10; % set to some large number
-    walltime_remaining=walltime;
+    walltime_remaining = walltime;
 else
     pgid=[];
     type=[];

@@ -52,7 +52,7 @@ else
 end
 
 %% added by JDR 16 May 2024 to stop fmincon before walltime
-StopFlag = getappdata(0,'FMINCONsStopFlag'); %get stop flag
+StopFlag = getappdata(0,'FMINCONstopFlag'); %get stop flag
 if StopFlag
   stop = true;
 end
