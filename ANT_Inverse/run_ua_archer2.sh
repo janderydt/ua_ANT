@@ -50,9 +50,9 @@ do
     do
         # update remaining walltime in config file
         timenow=`date +%s`
-	    seconds_expired=$(expr "$timenow" - "$timestart")
+	seconds_expired=$(expr "$timenow" - "$timestart")
         echo $seconds_expired 
-	    python update_walltime.py ua_config.txt ${seconds_expired}
+	python update_walltime.py ua_config.txt ${seconds_expired}
 
         # Launch subjob overriding job settings as required and in the background
         # Make sure to change the amount specified by the `--mem=` flag to the amount
