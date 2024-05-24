@@ -7,7 +7,6 @@ seconds_expired = sys.argv[2]
   
 with open(file_name, "r") as fi: # Open the file in read mode
   lines = fi.readlines()
-  print(lines)
   
 with open(file_name, "r") as fi: # Open the file in read mode
   walltime = []
@@ -23,7 +22,6 @@ kk = 0
 with open(file_name, "r") as fi: # Open the file in read mode    
   for ln in fi: 
     if ln.startswith("walltime_remaining="):
-      print(ln)
       lines[kk] = "walltime_remaining="+new_time
     else:
       kk += 1
