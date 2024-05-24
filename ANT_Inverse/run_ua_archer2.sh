@@ -39,12 +39,19 @@ export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 #   "nid[001234,002345]" to "nid001234 nid002345"
 nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 
+# start timer
+timestart=`$(date +%s)`
+
 # Loop over the nodes assigned to the job
 for nodeid in $nodelist
 do
     # Loop over 32 subjobs on each node pinning each to different cores
     for i in $(seq 1 32)
     do
+        # update remaining walltime in config file
+        timenow = `$(date +%s)`
+        seconds_expired = $timenow - $timestart
+        python update_walltime.py 'ua_config.txt' ${seconds_expired}
         # Launch subjob overriding job settings as required and in the background
         # Make sure to change the amount specified by the `--mem=` flag to the amount
         # of memory required. The amount of memory is given in MiB by default but other
@@ -52,12 +59,12 @@ do
         # recommend that you specify `--mem=1500M` (1,500 MiB).
         srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
         --exact --mem=8000M --output /dev/null \
-        --error stderr${nodeid}_${i}.out ./Ua_MCR.sh $MCR &
-        # wait 10 min to make sure first job has started, then 1 min between successive jobs
+        --error stderr_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR &
+        # wait 15 min to make sure first job has started, then 30 sec between successive jobs
         if [ $i == 1 ]; then
         sleep 900
         else
-        sleep 60
+        sleep 30
         fi
     done
 done

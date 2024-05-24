@@ -72,7 +72,7 @@ if UserVar.InverseCycle
     CtrlVar.InfoLevelInverse=10; % Overall level of information (inverse runs). 
                                 % Note: generally good to combine with CtrlVar.InfoLevelNonLinIt=0;
                                 % CtrlVar.InfoLevel=0; to suppress information related to the forward step. 
-    CtrlVar.InfoLevelBackTrack=10;                           
+    CtrlVar.InfoLevelBackTrack=10; 
     CtrlVar.Inverse.InfoLevelBackTrack=10;  % info on backtracking within inverse step
     CtrlVar.InfoLevelNonLinIt=1;
     CtrlVar.InfoLevel=1;
@@ -123,12 +123,22 @@ if UserVar.InverseCycle
     CtrlVar.Inverse.Regularize.logC.ga=UserVar.Inverse.logC.ga;
     CtrlVar.Inverse.Regularize.logC.gs=UserVar.Inverse.logC.gs; 
 
+    % these lines define a UI to keep track of the remaining walltime.
+    % if the walltime expires, the UI is set to false, which is picked
+    % up by the fmincon minimization algorithm and used as a stopping
+    % criteria to break out of the inversion. We apply a generous 60min buffer
+    % to allow fmincon to finish the current iteration
     setappdata(0,'FMINCONsStopFlag',false); %stopping flag is false
-    UserVar.Inverse.T = timer('startdelay',0.9*UserVar.walltime,'timerfcn',@(src,evt)setappdata(0,'FMINCONsStopFlag',true)); %initialize timer to change value of fminconstopflag after 0.9*wallclocktime
-    t0 = tic(); 
-    start(UserVar.Inverse.T); %start the timer
-    remainingTime = round(0.9*UserVar.walltime-toc(t0));
-    fprintf(UserVar.fid,"> At %s: remaining time on wallclock timer is %ss. Fmincon will be stopped when this time has been exceeded.\n",string(datetime("now")),num2str(remainingTime));
+    if UserVar.walltime_remaining-60*60 > 0
+        T = timer('startdelay',UserVar.walltime_remaining-60*60,'timerfcn',@(src,evt)setappdata(0,'FMINCONsStopFlag',true)); %initialize timer to change value of fminconstopflag after 0.9*wallclocktime
+        t0 = tic(); 
+        start(T); %start the timer
+        remainingTime = round(UserVar.walltime_remaining-60*60-toc(t0));
+        fprintf(UserVar.fid,"> At %s: remaining time on wallclock timer is %ss. Fmincon will be stopped when this time has been exceeded.\n",string(datetime("now")),num2str(remainingTime));
+    else
+        setappdata(0,'FMINCONsStopFlag',true);
+        fprintf(UserVar.fid,"> At %s: remaining walltime is too short to start inversion. Fmincon will be stopped after 1 iteration.\n",string(datetime("now")));
+    end
 
 end
 

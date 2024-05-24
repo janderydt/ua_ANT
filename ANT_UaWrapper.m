@@ -9,10 +9,12 @@ if nargin==2
         type = string(type);
     end
     walltime = 1e10; % set to some large number
+    walltime_remaining=walltime;
 else
     pgid=[];
     type=[];
     walltime=[];
+    walltime_remaining=[];
 end
 
 %% initialize log file
@@ -60,8 +62,10 @@ if nargin<2
                         type = string(erase(tline,["runtype"," ","=",""""]));
                     elseif contains(tline,'pgid')
                         pgid = str2num(erase(tline,["pgid"," ","="]));
-                    elseif contains(tline,'walltime')
+                    elseif contains(tline,'walltime=')
                         walltime = seconds(duration(erase(tline,["walltime"," ","="])));
+                    elseif contains(tline,'walltime_remaining=')
+                        walltime_remaining = seconds(duration(erase(tline,["walltime_remaining"," ","="])));
                     end
                 end
             end
@@ -76,12 +80,13 @@ if nargin<2
 end
 
 %% check that all inputs are now available
-if isempty(type) || isempty(walltime) || isempty(pgid)
+if isempty(type) || isempty(walltime) || isempty(pgid) || isempty(walltime_remaining)
     error("One of the following mandatory input variables is empty: type ("+string(type)+"), "+ ...
-    "walltime ("+string(walltime)+"), pgid ("+string(pgid)+").");
+    "walltime ("+string(walltime)+"), walltime_remaining ("+string(walltime_remaining)+"), pgid ("+string(pgid)+").");
 else
     UserVar.type = type;
-    UserVar.walltime = walltime-15*60; % subtract 10min for delays at the start; this is very common on ARCHER2
+    UserVar.walltime = walltime; 
+    UserVar.walltime_remaining = walltime_remaining;
     UserVar.pgid = pgid;
 end
 
@@ -92,10 +97,6 @@ RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
 if ~isempty(RunTable)
     Iexisting = find(RunTable{:,'ExpID'}~=0);
-    Inew = find(RunTable{:,'ExpID'}==0);
-else
-    fprintf(fid,"Empty RunTable - stop job./n");
-    return
 end
 
 %% launch jobs
@@ -152,10 +153,10 @@ if ~isempty(Iexisting)
             if type=="Diagnostic"
 
                 fprintf(fid,'============================\n');
-                fprintf(fid,string(datetime("now"))+"\n");
-                fprintf(fid,'============================\n');
+                fprintf(fid,string(datetime("now"))+"\n");               
                 fprintf(fid,"> %s: Submitted on %s.\n",UserVar.Experiment,UserVar.hostname);
-                
+                fprintf(fid,'============================\n');
+
                 something_submitted=1;
                 Inew = [];
 
@@ -212,10 +213,15 @@ if ~isempty(Iexisting)
                         it_tmp = cumsum(UserVar.Inverse.Iterations);
 
                         fprintf(fid,'============================\n');
-                        fprintf(fid,string(datetime("now"))+"\n");
+                        fprintf(fid,string(datetime("now"))+"\n");                     
+                        if UserVar.Restart
+                            fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s due to walltime constraints. Done %s iterations out of %s.\n",...
+                            UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
+                        else
+                            fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
+                            UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
+                        end
                         fprintf(fid,'============================\n');
-                        fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
-                        UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
     
                     %% Spinup cycle
                     elseif UserVar.SpinupCycle
@@ -230,9 +236,9 @@ if ~isempty(Iexisting)
                         [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
 
                         fprintf(fid,'============================\n');
-                        fprintf(fid,string(datetime("now"))+"\n");
-                        fprintf(fid,'============================\n');
+                        fprintf(fid,string(datetime("now"))+"\n");                        
                         fprintf(UserVar.fid,"> %s: End spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
+                        fprintf(fid,'============================\n');
     
                     end
 
@@ -252,6 +258,18 @@ if ~isempty(Iexisting)
 
     end
     
+end
+
+if something_submitted
+    return
+else
+    RunTable = ANT_ReadWritetable(UserVar,[],'read');
+    if ~isempty(RunTable)
+        Inew = find(RunTable{:,'ExpID'}==0);
+    else
+        fprintf(fid,"Empty RunTable - stop job./n");
+        return
+    end
 end
 
 % deal with new jobs if all existing jobs have been dealt with
@@ -292,9 +310,9 @@ if ~isempty(Inew)
     if type=="Diagnostic"
 
         fprintf(fid,'============================\n');
-        fprintf(fid,string(datetime("now"))+"\n");
-        fprintf(fid,'============================\n');
+        fprintf(fid,string(datetime("now"))+"\n");   
         fprintf(fid,"> %s: Submitted.\n",UserVar.Experiment);
+        fprintf(fid,'============================\n');
 
         UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
 
@@ -346,10 +364,15 @@ if ~isempty(Inew)
                 it_tmp = cumsum(UserVar.Inverse.Iterations);
 
                 fprintf(fid,'============================\n');
-                fprintf(fid,string(datetime("now"))+"\n");
-                fprintf(fid,'============================\n');
-                fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
+                fprintf(fid,string(datetime("now"))+"\n");                     
+                if UserVar.Restart
+                    fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s due to walltime constraints. Done %s iterations out of %s.\n",...
                     UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
+                else
+                    fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
+                    UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
+                end
+                fprintf(fid,'============================\n');
     
             %% Spinup cycle
             elseif UserVar.SpinupCycle
@@ -363,9 +386,9 @@ if ~isempty(Inew)
                 [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
 
                 fprintf(fid,'============================\n');
-                fprintf(fid,string(datetime("now"))+"\n");
-                fprintf(fid,'============================\n');
+                fprintf(fid,string(datetime("now"))+"\n");                
                 fprintf(UserVar.fid,"> %s: Breaking out of spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
+                fprintf(fid,'============================\n');
     
             end
 

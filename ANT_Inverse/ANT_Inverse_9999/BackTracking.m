@@ -302,7 +302,12 @@ c=b; fc=fb ; b=gamma ; fb=fgamma ;
 if CtrlVar.InfoLevelBackTrack>=1000
     fprintf('B: step # %-i. f(a)=%-10.5g \t f(b)=%-10.5g \t f(c)=%-10.5g \t f(g)=%-10.5g \t fmin=%-10.5g  \t fmin/ft=%-10.5g \t fmin/f0=%-g \n ',...
         iarm,fa,fb,fc,fgamma,fmin,fmin/target,fmin/f0)
-    fprintf('               a=%-10.5g  \t    b=%-10.5g  \t    c=%-10.5g   \t    g=%-10.5g     \t    gmin=%-10.5g \n ',a,b,c,gamma,gmin)
+    if issparse(a) || issparse(b) || issparse(c) || issparse(gamma) || issparse(gmin)
+        fprintf('Trying to print but one or more inputs are sparse: a (%s), b (%s), c (%s), gamma (%s), gmin (%s)',...
+            mat2str(issparse(a)),mat2str(issparse(b)),mat2str(issparse(c)),mat2str(issparse(gamma)),mat2str(issparse(gmin)));
+    else
+        fprintf('                a=%-10.5g  \t b=%-10.5g  \t     c=%-10.5g   \t    g=%-10.5g \t gmin=%-10.5g \n ',a,b,c,gamma,gmin);
+    end
 end
 %% check extrapolation option
 
@@ -317,7 +322,12 @@ if CtrlVar.LineSearchAllowedToUseExtrapolation
             %    fprintf('Extrapolation step # %-i. fa=%-g \t fb=%-g \t fc=%-g \t fg=%-g \t fmin=%-g \n ',Extrapolation,fa,fb,fc,fgamma,fmin)
             fprintf('E: step # %-i. f(a)=%-10.5g \t f(b)=%-10.5g \t f(c)=%-10.5g \t f(g)=%-10.5g \t fmin=%-10.5g  \t fmin/ft=%-10.5g \t fmin/f0=%-g \n ',...
                 Extrapolation-1,fa,fb,fc,fgamma,fmin,fmin/target,fmin/f0)
-            fprintf('                a=%-10.5g  \t   b=%-10.5g  \t     c=%-10.5g   \t  g=%-10.5g \t gmin=%-10.5g \n ',a,b,c,gamma,gmin)
+            if issparse(a) || issparse(b) || issparse(c) || issparse(gamma) || issparse(gmin)
+                fprintf('Trying to print but one or more inputs are sparse: a (%s), b (%s), c (%s), gamma (%s), gmin (%s)',...
+                    mat2str(issparse(a)),mat2str(issparse(b)),mat2str(issparse(c)),mat2str(issparse(gamma)),mat2str(issparse(gmin)));
+            else
+                fprintf('                a=%-10.5g  \t b=%-10.5g  \t     c=%-10.5g   \t    g=%-10.5g \t gmin=%-10.5g \n ',a,b,c,gamma,gmin);
+            end
             
         end
         
@@ -362,7 +372,12 @@ if CtrlVar.InfoLevelBackTrack>=1000 && Extrapolation>0
     %    fprintf('Extrapolation step # %-i. fa=%-g \t fb=%-g \t fc=%-g \t fg=%-g \t fmin=%-g \n ',Extrapolation,fa,fb,fc,fgamma,fmin)
     fprintf('E: step # %-i. f(a)=%-10.5g \t f(b)=%-10.5g \t f(c)=%-10.5g \t f(g)=%-10.5g \t fmin=%-10.5g  \t f(g)/ft=%-10.5g \t f(g)/f0=%-g \n ',...
         Extrapolation,fa,fb,fc,fgamma,fmin,fgamma/target,fgamma/f0)
-    fprintf('                a=%-10.5g  \t b=%-10.5g  \t     c=%-10.5g   \t    g=%-10.5g \t gmin=%-10.5g \n ',a,b,c,gamma,gmin)
+    if issparse(a) || issparse(b) || issparse(c) || issparse(gamma) || issparse(gmin)
+        fprintf('Trying to print but one or more inputs are sparse: a (%s), b (%s), c (%s), gamma (%s), gmin (%s)',...
+            mat2str(issparse(a)),mat2str(issparse(b)),mat2str(issparse(c)),mat2str(issparse(gamma)),mat2str(issparse(gmin)));
+    else
+        fprintf('                a=%-10.5g  \t b=%-10.5g  \t     c=%-10.5g   \t    g=%-10.5g \t gmin=%-10.5g \n ',a,b,c,gamma,gmin);
+    end
     
 end
 
@@ -552,8 +567,14 @@ while (fgamma>target || fLastReduction < CtrlVar.BackTrackContinueIfLastReductio
     
     if CtrlVar.InfoLevelBackTrack>=1000
         fprintf('B: step # %-i. f(a)=%-10.5g \t f(b)=%-10.5g \t f(c)=%-10.5g \t f(g)=%-10.5g \t fmin=%-10.5g  \t fmin/ft=%-10.5g \t fmin/f0=%-g \n ',...
-            iarm,fa,fb,fc,fgamma,fmin,fmin/target,fmin/f0)
-        fprintf('                a=%-10.5g  \t    b=%-10.5g  \t    c=%-10.5g  \t   g=%-10.5g \t gmin=%-10.5g \n ',a,b,c,gamma,gmin)
+            iarm,fa,fb,fc,fgamma,fmin,fmin/target,fmin/f0);
+
+        if issparse(a) || issparse(b) || issparse(c) || issparse(gamma) || issparse(gmin)
+            fprintf('Trying to print but one or more inputs are sparse: a (%s), b (%s), c (%s), gamma (%s), gmin (%s)',...
+                mat2str(issparse(a)),mat2str(issparse(b)),mat2str(issparse(c)),mat2str(issparse(gamma)),mat2str(issparse(gmin)));
+        else
+            fprintf('                a=%-10.5g  \t b=%-10.5g  \t     c=%-10.5g   \t    g=%-10.5g \t gmin=%-10.5g \n ',a,b,c,gamma,gmin);
+        end
     end
     
     
