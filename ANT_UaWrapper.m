@@ -96,7 +96,7 @@ UserVar.Table = pwd+"/RunTable_"+UserVar.hostname+".csv";
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
 if ~isempty(RunTable)
-    Iexisting = find(RunTable{:,'ExpID'}~=0 && RunTable{:,'Error'}~=1);
+    Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}~=1);
 end
 
 %% launch jobs
