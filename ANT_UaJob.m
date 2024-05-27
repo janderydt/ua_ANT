@@ -20,10 +20,10 @@ diary on
 something_submitted = 1;
 
 Inew = [];
+UserVar.Error=0;
 
 try
     UserVar = Ua2D(UserVar);   
-    UserVar.Error = 0;
     
 catch ME
     fprintf(UserVar.fid,'============================\n');
