@@ -2,6 +2,7 @@ function ANT_CreateNewRunsTable(X,GradientCalc,SlidingLaw)
 
 addpath('../');
 
+UserVar.home = pwd;
 UserVar.Table = "NewRuns_"+GradientCalc+".csv";
 if ~exist(UserVar.Table,"file")
     copyfile("EmptyTable.csv",UserVar.Table);
@@ -26,6 +27,7 @@ for ind=1:size(X,1)
     if GradientCalc == "Adjoint"
         if ind == 1
             UserVar2.type = "Inverse";
+            UserVar2.home = pwd; 
             UserVar2.Table = "RunTable_FixPoint.csv";
             RunTable_FixPoint = ANT_ReadWritetable(UserVar2,[],'read');
             % scan table for ExpID, m and n
