@@ -1,7 +1,7 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
 #SBATCH --job-name=ANT_MultiSerial
-#SBATCH --time=48:00:0
+#SBATCH --time=00:20:0
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=32
 #SBATCH --cpus-per-task=4
@@ -10,7 +10,7 @@
 
 #SBATCH --account=n02-MRW011816
 #SBATCH --partition=standard
-#SBATCH --qos=long
+#SBATCH --qos=short
 
 # Make MCR available
 MCR=$WORK/MCR_2023b/R2023b/
@@ -59,9 +59,9 @@ do
         # of memory required. The amount of memory is given in MiB by default but other
         # units can be specified. If you do not know how much memory to specify, we
         # recommend that you specify `--mem=1500M` (1,500 MiB).
-        srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
-        --exact --mem=8000M --output /dev/null \
-        --error stderr_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR &
+        #srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
+        #--exact --mem=8000M --output /dev/null \
+        #--error stderr_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR &
 
         # wait 15 min to make sure first job has started, then 60 sec between successive jobs
         if [ $i == 1 ]; then
