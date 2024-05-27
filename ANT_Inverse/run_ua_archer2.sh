@@ -1,7 +1,7 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
 #SBATCH --job-name=ANT_MultiSerial
-#SBATCH --time=00:20:0
+#SBATCH --time=12:00:0
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=32
 #SBATCH --cpus-per-task=4
@@ -10,7 +10,7 @@
 
 #SBATCH --account=n02-MRW011816
 #SBATCH --partition=standard
-#SBATCH --qos=short
+#SBATCH --qos=standard
 
 # Make MCR available
 MCR=$WORK/MCR_2023b/R2023b/
@@ -41,6 +41,9 @@ nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 
 # start timer
 timestart=`date +%s`
+
+# make temporary copy of RunTable
+cp RunTable_ARCHER2.csv RunTable_ARCHER2.csv.tmp
 
 # Loop over the nodes assigned to the job
 for nodeid in $nodelist
