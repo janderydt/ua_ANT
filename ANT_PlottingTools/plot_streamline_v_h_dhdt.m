@@ -2,17 +2,24 @@ function plot_streamline_v_h_dhdt
 
 glacier = 'PIG';
 
-RunID = "1223"; % Weertman
+%RunID = "1223"; % Weertman
 RunID = "1585"; % Cornford
 
 froot = "/mnt/md0/Ua/cases/ANT/ANT_Inverse/";
-files = ["AS_PROPHET_Inverse_"+RunID+"/AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle1.mat",...
-    "AS_PROPHET_Inverse_"+RunID+"/AS_PROPHET_Inverse_"+RunID+"-RestartFile_SpinupCycle1.mat",...
-    "AS_PROPHET_Inverse_"+RunID+"/AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle2.mat",...
-    "AS_PROPHET_Inverse_"+RunID+"/AS_PROPHET_Inverse_"+RunID+"-RestartFile_SpinupCycle2.mat",...
-    "AS_PROPHET_Inverse_"+RunID+"/AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle3.mat",...
-    "AS_PROPHET_Inverse_"+RunID+"/AS_PROPHET_Inverse_"+RunID+"-RestartFile_SpinupCycle3.mat",...
-    "AS_PROPHET_Inverse_"+RunID+"/AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle4.mat"];
+exp = "AS_PROPHET_Inverse_"+RunID+"/";
+files = ["AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle1.mat",...
+    "AS_PROPHET_Inverse_"+RunID+"-RestartFile_SpinupCycle1.mat",...
+    "AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle2.mat",...
+    "AS_PROPHET_Inverse_"+RunID+"-RestartFile_SpinupCycle2.mat",...
+    "AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle3.mat",...
+    "AS_PROPHET_Inverse_"+RunID+"-RestartFile_SpinupCycle3.mat",...
+    "AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle4.mat",...
+    "AS_PROPHET_Inverse_"+RunID+"-RestartFile_SpinupCycle4.mat",...    
+    "AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle5.mat",...
+    "AS_PROPHET_Inverse_"+RunID+"-RestartFile_SpinupCycle5.mat"];%,...
+    %"AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle6.mat",...
+    %"AS_PROPHET_Inverse_"+RunID+"-RestartFile_SpinupCycle6.mat",...
+    %"AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle7.mat"];
 
 switch glacier
     case 'PIG'
@@ -20,7 +27,7 @@ switch glacier
         ystart = -193393;
 end
 
-CM = jet(4);
+CM = jet(ceil(numel(files)/2));
 
 %% set up figure
 H=fig('units','inches','width',120*12/72.27,'height',65*12/72.27,'fontsize',14,'font','Helvetica');
@@ -34,7 +41,7 @@ ylabels=["Speed [m/yr]","Ice Thickness [m]","Change in ice thickness [m/yr]"];
 
 
 %% set up streamline data
-load(froot+files(1));
+load(froot+exp+files(1));
 x=MUA.coordinates(:,1); y=MUA.coordinates(:,2); xmin=min(x); xmax=max(x); ymin=min(y); ymax=max(y);
 [X,Y]=meshgrid([xmin:1e3:xmax],[ymin:1e3:ymax]);
 Fu=scatteredInterpolant(x,y,F.ub);
@@ -50,7 +57,7 @@ SLd=cumsum(hypot(SLx(2:end)-SLx(1:end-1),SLy(2:end)-SLy(1:end-1)));
 %% load and plot data
 for ii=1:numel(files)
 
-    load(froot+files(ii));
+    load(froot+exp+files(ii));
     x=MUA.coordinates(:,1); y=MUA.coordinates(:,2);
     Fv = scatteredInterpolant(x,y,hypot(F.ub,F.vb));
     Fh = scatteredInterpolant(x,y,F.h);
@@ -68,9 +75,11 @@ for ii=1:numel(files)
     if contains(files(ii),'InverseCycle')
         style = '--';
         width = 2;
+        legendstr(ii) = "Inverse Cycle "+erase(files(ii),["AS_PROPHET_Inverse_"+RunID+"-RestartFile_InverseCycle",".mat"]);
     else
         style = '-';
         width = 1;
+        legendstr(ii) = "Spinup Cycle "+erase(files(ii),["AS_PROPHET_Inverse_"+RunID+"-RestartFile_SpinupCycle",".mat"]);
     end
 
     g(ii) = plot(ax_fig(1),SLd/1e3,V(2:end),LineStyle=style,LineWidth=width,Color=CM(ceil(ii/2),:));
@@ -96,6 +105,7 @@ for ii=1:3
     box(ax_fig(ii),"on");
 end
 xlabel(tlo_fig,'Distance [km]');
+legend(ax_fig(1),g(:),legendstr,Location="southeast");
 
 
 

@@ -129,8 +129,8 @@ if UserVar.InverseCycle
     % criteria to break out of the inversion. We apply a generous 60min buffer
     % to allow fmincon to finish the current iteration
     UserVar.walltime_remaining = UserVar.walltime_remaining-3600;
-    setappdata(0,'FMINCONsStopFlag',false); %stopping flag is false
-    UserVar.Inverse.T = timer('startdelay',UserVar.walltime_remaining,'timerfcn',@(src,evt)setappdata(0,'FMINCONsStopFlag',true)); %initialize timer to change value of fminconstopflag after wallclocktime
+    setappdata(0,'FMINCONstopFlag',false); %stopping flag is false
+    UserVar.Inverse.T = timer('startdelay',UserVar.walltime_remaining,'timerfcn',@(src,evt)setappdata(0,'FMINCONstopFlag',true)); %initialize timer to change value of fminconstopflag after wallclocktime
     t0 = tic(); 
     start(UserVar.Inverse.T); %start the timer
     remainingTime = round(UserVar.walltime_remaining-toc(t0));
