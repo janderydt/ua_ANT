@@ -2,7 +2,7 @@
 # Slurm job options (job-name, compute nodes, job time)
 #SBATCH --job-name=ANT_MultiSerial
 #SBATCH --time=12:00:0
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --ntasks-per-node=32
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
@@ -54,7 +54,6 @@ do
         # update remaining walltime in config file
         timenow=`date +%s`
 	seconds_expired=$(expr "$timenow" - "$timestart")
-        echo $seconds_expired 
 	python update_walltime.py ua_config.txt ${seconds_expired}
 
         # Launch subjob overriding job settings as required and in the background
