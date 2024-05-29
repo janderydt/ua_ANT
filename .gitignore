@@ -2,6 +2,7 @@
 *.mat
 *.log
 *.txt
+!ua_config.txt
 *.out
 *.asv
 *.png

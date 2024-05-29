@@ -1,0 +1,19 @@
+# The runtype can be "Inverse", "Diagnostic" or "Transient"
+runtype="Inverse"  
+
+# pgid can safely be set to 9999 on ARCHER2 - this will not be used
+pgid=9999 
+
+# define ARCHER2 walltime in HH:MM:SS format
+walltime=12:00:00
+walltime_remaining=12:00:00
+
+# Specify run table 
+runtable=RunTable_ARCHER2.csv
+
+# Specify range for ExpID - this needs to be a 2 element vector with lower
+# and upper limits
+idrange=[1000 1999]
+
+
+

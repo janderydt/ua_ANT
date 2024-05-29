@@ -39,12 +39,14 @@ if nargin==2
     walltime = 1e10; % set to some large number
     walltime_remaining = walltime;
     runtable = pwd+"/RunTable_"+UserVar.hostname+".csv";
+    idrange = [1000 1999];
 else
     pgid=[];
     type=[];
     walltime=[];
     walltime_remaining=[];
     runtable=[];
+    idrange=[];
 end
 
 %% obtain run type and other inputs if not already provided
@@ -71,6 +73,8 @@ if nargin<2
                         walltime_remaining = seconds(duration(erase(tline,["walltime_remaining"," ","="])));
                     elseif contains(tline,'runtable=')
                         runtable = string(erase(tline,["runtable"," ","=",""""]));
+                    elseif contains(tline,'idrange=')
+                        idrange = str2double(string(erase(tline,["idrange"," ","=",""""])));
                     end
                 end
             end
@@ -80,7 +84,8 @@ if nargin<2
         % All done reading all lines, so close the file.
         fclose(fileID);      
     else
-        error("Running job on "+UserVar.hostname+" so need 2 inputs, got "+string(nargin)+" instead: pgid ("+string(pgid)+") and runtype ("+string(type)+").");
+        error("Running job on "+UserVar.hostname+" so need 2 inputs, got "+...
+            string(nargin)+" instead: pgid ("+string(pgid)+") and runtype ("+string(type)+").");
     end
 end
 
@@ -88,13 +93,14 @@ end
 if isempty(type) || isempty(walltime) || isempty(pgid) || isempty(walltime_remaining) || isempty(runtable)
     error("One of the following mandatory input variables is empty: type ("+string(type)+"), "+ ...
     "walltime ("+string(walltime)+"), walltime_remaining ("+string(walltime_remaining)+"), pgid ("+string(pgid)+"), ",...
-    "runtable ("+string(runtable)+").");
+    "runtable ("+string(runtable)+"), idrange ("+string(idrange)+").");
 else
     UserVar.type = type;
     UserVar.pgid = pgid;
     UserVar.walltime = walltime; 
     UserVar.walltime_remaining = walltime_remaining;
     UserVar.Table = runtable;
+    UserVar.idrange = idrange;
 end
 
 %% read run table
@@ -286,7 +292,7 @@ if ~isempty(Inew)
     existingID = RunTable{:,"ExpID"};
     ExpID = 0;
     while ismember(ExpID,existingID) 
-        ExpID = randi([2000 2999]);
+        ExpID = randi([UserVar.idrange(1) UserVar.idrange(2)]);
     end
     UserVar.ExpID = ExpID;
     RunTable{ind,"ExpID"} = ExpID;
