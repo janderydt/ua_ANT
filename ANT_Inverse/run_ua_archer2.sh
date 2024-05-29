@@ -47,6 +47,9 @@ nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 # start timer
 timestart=`date +%s`
 
+# make local copy of runtable
+python copy_runtable.py $UA_CONFIG
+
 # Loop over the nodes assigned to the job
 for nodeid in $nodelist
 do
