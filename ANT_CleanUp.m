@@ -22,7 +22,9 @@ elseif UserVar.Finished==0 && UserVar.Restart==1
 
     RunTable{ind,"Submitted"} = 0;
     RunTable{ind,"Running"} = 0;
+    RunTable{ind,"Finished"} = 0;
     RunTable{ind,"Restart"} = 1;
+    RunTable{ind,"FinishedTime"}(:) = string(datetime("now"));
 
     fprintf(UserVar.fid,'============================\n');
     fprintf(UserVar.fid,string(datetime("now"))+"\n");    
