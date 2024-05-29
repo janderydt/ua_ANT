@@ -11,6 +11,7 @@
 *.csv
 *.csv
 *.tmp
+run_ua_archer2_*.sh
 Ua
 datetime
 logging
