@@ -53,7 +53,7 @@ switch mode
             % read table
             RunTable=readtable(UserVar.Table,opts); 
         else    
-            error("Runtable does not exist"); 
+            error("Runtable "+string(UserVar.Table)+" does not exist"); 
         end
 
     case 'write'

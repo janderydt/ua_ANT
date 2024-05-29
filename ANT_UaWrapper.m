@@ -38,7 +38,7 @@ if nargin==2
     end
     walltime = 1e10; % set to some large number
     walltime_remaining = walltime;
-    runtable = pwd+"/RunTable_"+UserVar.hostname+".csv";
+    runtable = UserVar.home+"/RunTable_"+UserVar.hostname+".csv";
     idrange = [1000 1999];
 else
     pgid=[];
@@ -53,7 +53,7 @@ end
 if nargin<2 
     if contains(UserVar.hostname,"ARCHER2")
         % on ARCHER2 there are no inputs. instead we read a text file with config variables
-        configfile = pwd+"/ua_config.txt";
+        configfile = UserVar.home+"/ua_config.txt";
         if ~exist(configfile,"file")
             error("Specify config file"+configfile+".");
         end
@@ -72,7 +72,7 @@ if nargin<2
                     elseif contains(tline,'walltime_remaining=')
                         walltime_remaining = seconds(duration(erase(tline,["walltime_remaining"," ","="])));
                     elseif contains(tline,'runtable=')
-                        runtable = string(erase(tline,["runtable"," ","=",""""]));
+                        runtable = UserVar.home+string(erase(tline,["runtable"," ","=",""""]));
                     elseif contains(tline,'idrange=')
                         idrange = str2double(string(erase(tline,["idrange"," ","=",""""])));
                     end
