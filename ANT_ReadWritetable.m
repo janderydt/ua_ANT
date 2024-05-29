@@ -60,12 +60,13 @@ switch mode
 
         % only write the line that matters for this experiment, not the
         % whole table
-        % step 1. find line
-        RunTable_tmp = ANT_ReadWritetable(UserVar,[],'read');
-        ind = find(RunTable_tmp{:,'ExpID'}(:) == UserVar.ExpID);
+        % step 1. read table and find lines in both old and new tables
+        ind_new = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+        RunTable_old = ANT_ReadWritetable(UserVar,[],'read');
+        ind_old = find(RunTable_old{:,'ExpID'}(:) == UserVar.ExpID);
         % step 2. replace 1 line and write
-        RunTable_tmp(ind,:) = RunTable(ind,:);
-        writetable(RunTable_tmp,UserVar.Table);
+        RunTable_old(ind_old,:) = RunTable(ind_new,:);
+        writetable(RunTable_old,UserVar.Table);
 
 end
 
