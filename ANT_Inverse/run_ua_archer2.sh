@@ -12,6 +12,11 @@
 #SBATCH --partition=standard
 #SBATCH --qos=standard
 
+#############################################################################################
+# Run multiple instances of UA
+# sbatch --export=ALL,UA_CONFIG=<path to UA config file> -A n02-MRW011816 ./run_ua_archer2.sh 
+#############################################################################################
+
 # Make MCR available
 MCR=$WORK/MCR_2023b/R2023b/
 
@@ -42,9 +47,6 @@ nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 # start timer
 timestart=`date +%s`
 
-# make temporary copy of RunTable
-cp RunTable_ARCHER2.csv RunTable_ARCHER2.csv.tmp
-
 # Loop over the nodes assigned to the job
 for nodeid in $nodelist
 do
@@ -54,7 +56,7 @@ do
         # update remaining walltime in config file
         timenow=`date +%s`
 	seconds_expired=$(expr "$timenow" - "$timestart")
-	python update_walltime.py ua_config.txt ${seconds_expired}
+	python update_walltime.py $UA_CONFIG ${seconds_expired}
 
         # Launch subjob overriding job settings as required and in the background
         # Make sure to change the amount specified by the `--mem=` flag to the amount

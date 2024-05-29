@@ -1,22 +1,5 @@
 function ANT_UaWrapper(pgid,type)
 
-if nargin==2 
-    % ensure correct format
-    if ischar(pgid)
-        pgid = str2double(pgid);
-    end
-    if ischar(type)
-        type = string(type);
-    end
-    walltime = 1e10; % set to some large number
-    walltime_remaining = walltime;
-else
-    pgid=[];
-    type=[];
-    walltime=[];
-    walltime_remaining=[];
-end
-
 %% find host and setup matlab path
 [~,hostname]= system("hostname"); 
 if strfind(hostname,"C23000100")
@@ -44,6 +27,26 @@ fid = fopen(logfile,'a+');
 
 UserVar.fid = fid;
 
+%% deal with inputs
+if nargin==2 
+    % ensure correct format
+    if ischar(pgid)
+        pgid = str2double(pgid);
+    end
+    if ischar(type)
+        type = string(type);
+    end
+    walltime = 1e10; % set to some large number
+    walltime_remaining = walltime;
+    runtable = pwd+"/RunTable_"+UserVar.hostname+".csv";
+else
+    pgid=[];
+    type=[];
+    walltime=[];
+    walltime_remaining=[];
+    runtable=[];
+end
+
 %% obtain run type and other inputs if not already provided
 if nargin<2 
     if contains(UserVar.hostname,"ARCHER2")
@@ -66,6 +69,8 @@ if nargin<2
                         walltime = seconds(duration(erase(tline,["walltime"," ","="])));
                     elseif contains(tline,'walltime_remaining=')
                         walltime_remaining = seconds(duration(erase(tline,["walltime_remaining"," ","="])));
+                    elseif contains(tline,'runtable=')
+                        runtable = string(erase(tline,["runtable"," ","=",""""]));
                     end
                 end
             end
@@ -80,19 +85,19 @@ if nargin<2
 end
 
 %% check that all inputs are now available
-if isempty(type) || isempty(walltime) || isempty(pgid) || isempty(walltime_remaining)
+if isempty(type) || isempty(walltime) || isempty(pgid) || isempty(walltime_remaining) || isempty(runtable)
     error("One of the following mandatory input variables is empty: type ("+string(type)+"), "+ ...
-    "walltime ("+string(walltime)+"), walltime_remaining ("+string(walltime_remaining)+"), pgid ("+string(pgid)+").");
+    "walltime ("+string(walltime)+"), walltime_remaining ("+string(walltime_remaining)+"), pgid ("+string(pgid)+"), ",...
+    "runtable ("+string(runtable)+").");
 else
     UserVar.type = type;
+    UserVar.pgid = pgid;
     UserVar.walltime = walltime; 
     UserVar.walltime_remaining = walltime_remaining;
-    UserVar.pgid = pgid;
+    UserVar.Table = runtable;
 end
 
 %% read run table
-UserVar.Table = pwd+"/RunTable_"+UserVar.hostname+".csv";
-
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
 if ~isempty(RunTable)
@@ -404,4 +409,6 @@ else
     fprintf(fid,"   ...ANT_UaWrapper: Nothing to do. Try again later.\n");
 
 end
+
+quit;
 
