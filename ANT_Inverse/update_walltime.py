@@ -27,7 +27,7 @@ kk = 0
 with open(file_name, "r") as fi: # Open the file in read mode    
   for ln in fi: 
     if ln.startswith("walltime_remaining="):
-      lines[kk] = "walltime_remaining="+new_time
+      lines[kk] = "walltime_remaining="+new_time+"\n"
     else:
       kk += 1
     
