@@ -50,6 +50,9 @@ timestart=`date +%s`
 # make local copy of runtable
 python copy_runtable.py $UA_CONFIG
 
+# remove any unwanted files from previous run
+rm rw_active
+
 # Loop over the nodes assigned to the job
 for nodeid in $nodelist
 do
