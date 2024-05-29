@@ -55,8 +55,18 @@ switch mode
         else    
             error("Runtable does not exist"); 
         end
+
     case 'write'
-        writetable(RunTable,UserVar.Table);
+
+        % only write the line that matters for this experiment, not the
+        % whole table
+        % step 1. find line
+        RunTable_tmp = ANT_ReadWritetable(UserVar,[],'read');
+        ind = find(RunTable_tmp{:,'ExpID'}(:) == UserVar.ExpID);
+        % step 2. replace 1 line and write
+        RunTable_tmp(ind,:) = RunTable(ind,:);
+        writetable(RunTable_tmp,UserVar.Table);
+
 end
 
 delete(UserVar.home+"/rw_active");
