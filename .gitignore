@@ -11,6 +11,7 @@
 *.csv
 *.csv
 *.tmp
+rw_active
 run_ua_archer2_*.sh
 Ua
 datetime
