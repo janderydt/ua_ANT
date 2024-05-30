@@ -15,7 +15,7 @@ for ind=1:size(X,1)
 
     startMesh = "2000_2009_2014_2018_meshmin3000_meshmax100000_refined";
     
-    taub = 40; m = round(X.m(ind)*100)/100; ub = 200;%X(ind,6);
+    taub = 80; m = round(X.m(ind)*100)/100; ub = 100;%X(ind,6);
     priorC = ub/taub^m;
     muk = 0.5;
     

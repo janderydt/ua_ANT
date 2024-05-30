@@ -49,7 +49,7 @@ else
     idrange=[];
 end
 
-%% obtain run type and other inputs if not already provided
+%% obtain run type and other inputs if not already defined
 if nargin<2 
     if contains(UserVar.hostname,"ARCHER2")
         % on ARCHER2 there are no inputs. instead we read a text file with config variables
@@ -72,7 +72,7 @@ if nargin<2
                     elseif contains(tline,'walltime_remaining=')
                         walltime_remaining = seconds(duration(erase(tline,["walltime_remaining"," ","="])));
                     elseif contains(tline,'runtable=')
-                        runtable = UserVar.home+string(erase(tline,["runtable"," ","=",""""]));
+                        runtable = UserVar.home+"/"+string(erase(tline,["runtable"," ","=",""""]));
                     elseif contains(tline,'idrange=')
                         idrange = str2double(string(erase(tline,["idrange"," ","=",""""])));
                     end
@@ -129,17 +129,18 @@ if ~isempty(Iexisting)
         UserVar.ExpID = RunTable{ind,'ExpID'};
     
         % check if submitted but not running
-        indsnr = RunTable{ind,'Submitted'}~=0 & RunTable{ind,'Running'}==0;
+        % indsnr = RunTable{ind,'Submitted'}~=0 & RunTable{ind,'Running'}==0;
+
         % check if not submitted, not running, not finished
-        indnsnr = RunTable{ind,'Submitted'}==0 & RunTable{ind,'Running'}==0 & RunTable{ind,'Finished'}==0;
+        indnsnr = RunTable{ind,'Submitted'}==0 & RunTable{ind,'Running'}==0 & RunTable{ind,'Finished'}==0 & RunTable{ind,'Error'}~=0;
     
         % something wrong?
-        if indsnr
-            fprintf(fid,"   ...ANT_UaWrapper: ExpID %s has been submitted, but corresponding jobID has not " + ...
-                "been found. Either something went wrong, or the run has " + ...
-                "finished. Check log files for errors.\n",string(RunTable{indsnr,'ExpID'}));
-            error('');
-        end
+        % if indsnr
+        %     fprintf(fid,"   ...ANT_UaWrapper: ExpID %s has been submitted, but corresponding jobID has not " + ...
+        %         "been found. Either something went wrong, or the run has " + ...
+        %         "finished. Check log files for errors.\n",string(RunTable{indsnr,'ExpID'}));
+        %     error('');
+        % end
 
         
         if indnsnr
@@ -271,15 +272,15 @@ if ~isempty(Iexisting)
     
 end
 
-if something_submitted
-    return
+if something_submitted % something has been submitted and run has finished -> quit matlab
+    quit;
 else
     RunTable = ANT_ReadWritetable(UserVar,[],'read');
     if ~isempty(RunTable)
         Inew = find(RunTable{:,'ExpID'}==0);
     else
-        fprintf(fid,"Empty RunTable - stop job./n");
-        return
+        fprintf(fid,"Empty RunTable - stop job and quit./n");
+        quit;
     end
 end
 
@@ -413,8 +414,7 @@ if ~isempty(Inew)
 else
 
     fprintf(fid,"   ...ANT_UaWrapper: Nothing to do. Try again later.\n");
+    quit;
 
 end
-
-quit;
 
