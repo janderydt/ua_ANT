@@ -29,13 +29,21 @@ switch mode
         % only write the line that matters for this experiment, not the
         % whole table
         % step 1. read table and find lines in both old and new tables
-        ind_new = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
-        opts = setoptions(UserVar);
-	    RunTable_old = readtable(UserVar.Table,opts);
-        ind_old = find(RunTable_old{:,'ExpID'}(:) == UserVar.ExpID);
-        % step 2. replace 1 line and write
-        RunTable_old(ind_old,:) = RunTable(ind_new,:);
-        writetable(RunTable_old,UserVar.Table);
+        if isfield(UserVar,'ExpID')
+            if ~isempty(UserVar.ExpID)
+                ind_new = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+                opts = setoptions(UserVar);
+	            RunTable_old = readtable(UserVar.Table,opts);
+                ind_old = find(RunTable_old{:,'ExpID'}(:) == UserVar.ExpID);
+                % step 2. replace 1 line and write
+                RunTable_old(ind_old,:) = RunTable(ind_new,:);
+                writetable(RunTable_old,UserVar.Table);
+            else
+                writetable(RunTable,UserVar.Table);
+            end
+        else
+            writetable(RunTable,UserVar.Table);
+        end
 
 end
 
