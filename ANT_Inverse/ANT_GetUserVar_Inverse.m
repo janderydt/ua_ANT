@@ -228,13 +228,17 @@ switch UserVar.Velocity
 end
 
 %% sliding law
-if RunTable{ind,"startC"} ~= 0
+UserVar.Inverse.startC = 0;
+if RunTable{ind,"startC"} > 0
     % copy relevant files   
     UserVar.NameOfFileForReadingSlipperinessEstimate=string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startC"})+"_C-Estimate.mat";
     copyfile(string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startC"})+...
             "/"+UserVar.NameOfFileForReadingSlipperinessEstimate,...
             string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+...
             "/"+UserVar.NameOfFileForReadingSlipperinessEstimate);
+elseif RunTable{ind,"startC"} == -9999
+    UserVar.Inverse.startC = -9999;
+    UserVar.NameOfFileForReadingSlipperinessEstimate="";
 else
     UserVar.NameOfFileForReadingSlipperinessEstimate="";
 end
@@ -242,7 +246,7 @@ UserVar.Inverse.priorC = RunTable{ind,"priorC"};
 
 
 %% Glen's exponent
-if RunTable{ind,"startAglen"} ~= 0
+if RunTable{ind,"startAglen"} > 0
     % copy relevant files   
     UserVar.NameOfFileForReadingAGlenEstimate=string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startAglen"})+"_AGlen-Estimate.mat";
     copyfile(string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startAglen"})+...

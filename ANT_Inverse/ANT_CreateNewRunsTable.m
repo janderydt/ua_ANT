@@ -42,7 +42,7 @@ for ind=1:size(X,1)
         spinupyears = "1";
         invertfor = "-logC-logA-";
     else % no start values
-        startC = 0;
+        startC = -9999;
         startAGlen = 0;
         iterations = "20";
         spinupyears = "0";

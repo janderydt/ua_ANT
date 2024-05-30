@@ -44,6 +44,12 @@ if __name__ == "__main__":
         else:
             print('Choose 1 or 2.')
 
+    if runs_to_launch == 2:
+        capacity = input("What is the maximum number of jobs you would like to run at any one time? ")
+        capacity = int(capacity)
+    else:
+        capacity = 1
+
     # Initialize the log file
     logging.basicConfig(filename=os.getcwd()+'/jobs_master_'+socket.gethostname()+'.log', level=logging.INFO, encoding='utf-8', format='%(message)s')
 
@@ -91,7 +97,7 @@ if __name__ == "__main__":
     # cpu count
     cpus = os.cpu_count()
 
-    while run_counter<=18:
+    while run_counter<capacity:
    
         runtable = read_runinfo('RunTable_'+socket.gethostname()+'.csv',runtype)
 	 
@@ -104,10 +110,9 @@ if __name__ == "__main__":
             options = ""
             command = "nohup ./submit_nohup.sh &"
             pgid = submit_batch(options, command)
-            if runs_to_launch == 1:
-                run_counter=999
-            else:
-                run_counter+=1
+            run_counter+=1
+            
+            if capacity>1:
                 time.sleep(600)
             
         else:
@@ -126,12 +131,10 @@ if __name__ == "__main__":
                 options = ""
                 command = "nohup ./submit_nohup.sh &"
                 pgid = submit_batch(options, command)
-                if runs_to_launch == 1:
-                    run_counter=999
-                else:
-                    run_counter+=1
-                    time.sleep(600)
+                run_counter+=1
 
+                if capacity>1:
+                    time.sleep(600)
 
             else:
             

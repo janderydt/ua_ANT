@@ -42,8 +42,22 @@ if isempty(FC) & exist(CFile,"file")
 
 elseif ~exist(CFile,"file")
 
-    C=s*0+UserVar.Inverse.priorC;
-    fprintf("Used %s as constant intital value for C.\n",string(C(1)));
+    if UserVar.Inverse.startC == -9999
+        fprintf("Using measured velocities to calculate initial guess for C.\n");
+        tau = 80;
+        tmp = load(UserVar.VelocityInterpolants);
+        x = MUA.coordinates(:,1); y = MUA.coordinates(:,2);
+        uMeas = tmp.Fus(x,y);
+        vMeas = tmp.Fvs(x,y);
+        clear tmp;
+        ub = hypot(uMeas,vMeas);
+        ub(isnan(ub))=1;
+        C = ub/tau^m; 
+        C = max(C,CtrlVar.Cmin);
+    else
+        C=s*0+UserVar.Inverse.priorC;
+        fprintf("Used %s as constant intital value for C.\n",string(C(1)));
+    end
 
 elseif ~isempty(FC)
 
