@@ -36,7 +36,7 @@ if nargin==2
     if ischar(type)
         type = string(type);
     end
-    walltime = 1e10; % set to some large number
+    walltime = 31557600; % set to some large number
     walltime_remaining = walltime;
     runtable = UserVar.home+"/RunTable_"+UserVar.hostname+".csv";
     idrange = [1000 1999];
@@ -107,7 +107,7 @@ end
 RunTable = ANT_ReadWritetable(UserVar,[],'read');
 
 if ~isempty(RunTable)
-    Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}~=1);
+    Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}==0);
 end
 
 %% launch jobs
@@ -132,7 +132,7 @@ if ~isempty(Iexisting)
         % indsnr = RunTable{ind,'Submitted'}~=0 & RunTable{ind,'Running'}==0;
 
         % check if not submitted, not running, not finished
-        indnsnr = RunTable{ind,'Submitted'}==0 & RunTable{ind,'Running'}==0 & RunTable{ind,'Finished'}==0 & RunTable{ind,'Error'}~=0;
+        indnsnr = RunTable{ind,'Submitted'}==0 & RunTable{ind,'Running'}==0 & RunTable{ind,'Finished'}==0;
     
         % something wrong?
         % if indsnr
