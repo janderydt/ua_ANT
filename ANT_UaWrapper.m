@@ -101,7 +101,6 @@ else
     UserVar.walltime_remaining = walltime_remaining;
     UserVar.Table = runtable;
     UserVar.idrange = idrange;
-    fprintf(fid,"idrange: %d",idrange);
 end
 
 %% read run table
