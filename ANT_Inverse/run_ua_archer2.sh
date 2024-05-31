@@ -1,9 +1,9 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
-#SBATCH --job-name=ANT_MultiSerial
-#SBATCH --time=12:00:0
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=32
+#SBATCH --job-name=ANT_uaconfig1
+#SBATCH --time=24:00:00
+#SBATCH --nodes=4
+#SBATCH --ntasks-per-node=30
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
 #SBATCH --distribution=block:block
@@ -47,17 +47,17 @@ nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 # start timer
 timestart=`date +%s`
 
-# make local copy of runtable
-python copy_runtable.py $UA_CONFIG
-
 # remove any unwanted files from previous run
 rm -f rw_active
+
+# make local copy of runtable
+python copy_runtable.py $UA_CONFIG
 
 # Loop over the nodes assigned to the job
 for nodeid in $nodelist
 do
-    # Loop over 32 subjobs on each node pinning each to different cores
-    for i in $(seq 1 32)
+    # Loop over 30 subjobs on each node pinning each to different cores
+    for i in $(seq 1 30)
     do
         # update remaining walltime in config file
         timenow=`date +%s`
@@ -73,12 +73,18 @@ do
         --exact --mem=8000M --output /dev/null \
         --error stderr_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR &
 
-        # wait 15 min to make sure first job has started, then 60 sec between successive jobs
-        if [ $i == 1 ]; then
-        sleep 900
-        else
-        sleep 60
-        fi
+        # pause until ua job has been submitted
+        submitted=0
+        while [ $submitted -eq 0 ]
+	do 
+	    if [ -e ua_submitted ] ; then
+                submitted=1
+		rm -f ua_submitted
+	    else
+ 		sleep 1
+
+            fi
+        done
     done
 done
 
