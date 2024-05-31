@@ -74,7 +74,7 @@ if nargin<2
                     elseif contains(tline,'runtable=')
                         runtable = UserVar.home+"/"+string(erase(tline,["runtable"," ","=",""""]));
                     elseif contains(tline,'idrange=')
-                        idrange = str2double(string(erase(tline,["idrange"," ","=",""""])));
+                        idrange = str2double(split(string(erase(tline,["idrange"," ","=","""","[","]"])),":"));
                     end
                 end
             end
@@ -101,6 +101,7 @@ else
     UserVar.walltime_remaining = walltime_remaining;
     UserVar.Table = runtable;
     UserVar.idrange = idrange;
+    fprintf(fid,"idrange: %d",idrange);
 end
 
 %% read run table
