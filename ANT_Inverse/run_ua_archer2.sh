@@ -51,7 +51,7 @@ timestart=`date +%s`
 python copy_runtable.py $UA_CONFIG
 
 # remove any unwanted files from previous run
-rm rw_active
+rm -f rw_active
 
 # Loop over the nodes assigned to the job
 for nodeid in $nodelist

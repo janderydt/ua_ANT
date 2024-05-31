@@ -5,8 +5,8 @@ runtype="Inverse"
 pgid=9999 
 
 # define ARCHER2 walltime in HH:MM:SS format
-walltime=12:00:00
-walltime_remaining=12:00:00
+walltime=24:00:00
+walltime_remaining=24:00:00
 
 # Specify run table 
 runtable=RunTable_ARCHER2_1.csv
