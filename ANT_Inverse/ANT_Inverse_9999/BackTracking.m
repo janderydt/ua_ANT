@@ -603,7 +603,12 @@ while (fgamma>target || fLastReduction < CtrlVar.BackTrackContinueIfLastReductio
     
     if b<BacktrackingGammaMin
         if CtrlVar.InfoLevelBackTrack>=1000
-            fprintf(' exiting backtracking because step size (%g) less than minimum allowed step size CtrlVar.BacktrackingGammaMin=%g.\n',b,BacktrackingGammaMin)
+            if issparse(b)
+                fprintf('Trying to print but one or more inputs are sparse: b (%s)',...
+                mat2str(issparse(b)));
+            else
+                fprintf(' exiting backtracking because step size (%g) less than minimum allowed step size CtrlVar.BacktrackingGammaMin=%g.\n',b,BacktrackingGammaMin)
+            end           
         end
         break
     end

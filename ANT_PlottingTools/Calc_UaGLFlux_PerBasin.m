@@ -1,5 +1,14 @@
 function [B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,GF,B,CtrlVar)
 
+%% INPUTS: MUA, F, GF, B, CtrlVar
+%% B is a structure with basin information. One way to construct B is to use 
+%% basin outlines from IMBIE (routines from C Greene):
+
+%% 
+%% filename = 'basins_IMBIE_v2.mat'; 
+%% B = load(filename);
+%% B = RemoveSmallIceRisesAndIslands(B);
+
 % GL flux
 GLgeo=GLgeometry(MUA.connectivity,MUA.coordinates,GF,CtrlVar);
 xa=GLgeo(:,3) ;  xb=GLgeo(:,4) ; ya=GLgeo(:,5) ;  yb=GLgeo(:,6) ;
