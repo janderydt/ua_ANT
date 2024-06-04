@@ -70,7 +70,7 @@ do
         # units can be specified. If you do not know how much memory to specify, we
         # recommend that you specify `--mem=1500M` (1,500 MiB).
         srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
-        --exact --mem=8000M --output /dev/null \
+        --exact --mem=1500M --output /dev/null \
         --error stderr_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR &
 
         # pause until ua job has been submitted
