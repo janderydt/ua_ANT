@@ -34,12 +34,14 @@ for ii=1:numel(I)
         % number of iterations done
         niter(ii) = UserVarInRestartFile.Inverse.IterationsDone;
         % Obtain Ua fluxes across the grounding line (qGL) into floating areas
-        [B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
-        qGL(ii) = 0;
-        for jj=1:numel(GL)
-            qGL(ii) = qGL(ii)+sum(GL(jj).qGL);
-        end
-    else
+        %[B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
+        % qGL(ii) = 0;
+        % for jj=1:numel(GL)
+        %     qGL(ii) = qGL(ii)+sum(GL(jj).qGL);
+        % end            
+        GL=FluxAcrossGroundingLine(CtrlVarInRestartFile,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
+        qGL(ii) = sum(GL);
+     else
         table_ind = I(ii);
         m(ii) = RunTable{table_ind,"m"};
         n(ii) = RunTable{table_ind,"n"};
@@ -54,14 +56,23 @@ for ii=1:numel(I)
     fprintf("Done %s out of %s.\n",string(ii),string(numel(I)));
 end
 
-plotdata = qGL;
+
+save("scatterdata.mat","m","n","gaA","gaC","gsA","gsC","niter","qGL");
+
+qGL(niter<100)=nan;
+
+plotdata = niter; % convert to Gt/yr
 dummydata = nan*plotdata;
-marker_size = 16;
+marker_size = 25;
 
 %% Plotting
 H=fig('units','inches','width',120*12/72.27,'height',80*12/72.27,'fontsize',14,'font','Helvetica');
 
 colormap('jet');
+cmin = 0;
+cmax = 1000;
+plotdata(plotdata<cmin)=cmin; 
+plotdata(plotdata>cmax)=cmax; 
 
 tlo_fig = tiledlayout(6,6,"TileSpacing","compact");
 for i = 1:36
@@ -70,7 +81,7 @@ end
 
 ind = 1;
 % row 1: m
-scatter(ax_fig(ind),m,m,marker_size,dummydata,'filled'); ylabel(ax_fig(ind),"m"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
+scatter(ax_fig(ind),m,m,marker_size,plotdata,'filled'); ylabel(ax_fig(ind),"m"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
 ind = ind+1;
 scatter(ax_fig(ind),n,m,marker_size,plotdata,'filled'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
@@ -162,9 +173,9 @@ end
 
 cb=colorbar;
 cb.Layout.Tile='east';
-clim([min(plotdata) max(plotdata)]);
-%cb.Label.String = "Iterations";
-cb.Label.String = "Grounding line flux [Gt/yr]";
+clim([cmin cmax]);
+cb.Label.String = "Iterations";
+%cb.Label.String = "Grounding line flux [Gt/yr]";
 
 
 

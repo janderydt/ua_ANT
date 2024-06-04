@@ -12,10 +12,8 @@ if UserVar.Finished==1 && UserVar.Error==0
     RunTable{ind,"Finished"} = 1;
     RunTable{ind,"Restart"} = 0;
     RunTable{ind,"FinishedTime"}(:) = string(datetime("now"));
-
-    fprintf(UserVar.fid,'============================\n');
-    fprintf(UserVar.fid,string(datetime("now"))+"\n");    
-    fprintf(UserVar.fid,'ExpID %s SUCCESSFULLY FINISHED.\n',string(UserVar.ExpID));    
+ 
+    fprintf(UserVar.fid,'> ANT_CleanUp: ExpID %s SUCCESSFULLY FINISHED.\n',string(UserVar.ExpID));    
     fprintf(UserVar.fid,'============================\n');
 
 elseif UserVar.Finished==0 && UserVar.Restart==1
@@ -25,10 +23,8 @@ elseif UserVar.Finished==0 && UserVar.Restart==1
     RunTable{ind,"Finished"} = 0;
     RunTable{ind,"Restart"} = 1;
     RunTable{ind,"FinishedTime"}(:) = string(datetime("now"));
-
-    fprintf(UserVar.fid,'============================\n');
-    fprintf(UserVar.fid,string(datetime("now"))+"\n");    
-    fprintf(UserVar.fid,'ExpID %s RESTART REQUIRED.\n',string(UserVar.ExpID));
+   
+    fprintf(UserVar.fid,'> ANT_CleanUp: ExpID %s RESTART REQUIRED.\n',string(UserVar.ExpID));
     fprintf(UserVar.fid,'============================\n');
 
 elseif UserVar.Error==1
@@ -36,10 +32,8 @@ elseif UserVar.Error==1
     RunTable{ind,"Running"} = 0;
     RunTable{ind,"Error"} = 1;
     RunTable{ind,"ErrorTime"}(:) = string(datetime("now"));
-    
-    fprintf(UserVar.fid,'============================\n');
-    fprintf(UserVar.fid,string(datetime("now"))+"\n");    
-    fprintf(UserVar.fid,'ExpID %s ABORTED AND DID NOT FINISH.\n',string(UserVar.ExpID));    
+   
+    fprintf(UserVar.fid,'> ANT_CleanUp: ExpID %s ABORTED AND DID NOT FINISH.\n',string(UserVar.ExpID));    
     fprintf(UserVar.fid,'============================\n');
 
 else

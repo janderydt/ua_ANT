@@ -144,7 +144,10 @@ if ~isempty(Iexisting)
 
         
         if indnsnr
-            fprintf(fid,"   ...ANT_UaWrapper: ExpID %s has been not yet been submitted. Let's check if a " + ...
+
+            fprintf(fid,'============================\n');
+            fprintf(fid,string(datetime("now"))+"\n");    
+            fprintf(fid,"> ANT_UaWrapper: ExpID %s has been not yet been submitted. Let's check if a " + ...
                 "restart is required...",string(RunTable{ind,'ExpID'}));
 
             % initialze some variables
@@ -155,7 +158,7 @@ if ~isempty(Iexisting)
             if RunTable{ind,'Restart'}==1
                 UserVar.Restart = 1;
                 fprintf(fid,"yes.\n");
-                fprintf(fid,"   ...ANT_UaWrapper: Restarting ExpID %s...\n",string(RunTable{ind,'ExpID'}));
+                fprintf(fid,"> ANT_UaWrapper: Restarting ExpID %s...\n",string(RunTable{ind,'ExpID'}));
             else
                 UserVar.Restart = 0;
                 fprintf(fid,"no.\n");
@@ -163,11 +166,6 @@ if ~isempty(Iexisting)
 
             % now gather run info and launch job
             if type=="Diagnostic"
-
-                fprintf(fid,'============================\n');
-                fprintf(fid,string(datetime("now"))+"\n");               
-                fprintf(fid,"> %s: Submitted on %s.\n",UserVar.Experiment,UserVar.hostname);
-                fprintf(fid,'============================\n');
 
                 something_submitted=1;
                 Inew = [];
@@ -209,7 +207,7 @@ if ~isempty(Iexisting)
                             end
         
                             UserVar.TargetIterations = min(nit,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
-                            fprintf(UserVar.fid,"> Doing %s iterations or as many as walltime allows.\n",string(UserVar.TargetIterations));
+                            fprintf(UserVar.fid,"> ANT_UaWrapper: Doing %s iterations or as many as walltime allows.\n",string(UserVar.TargetIterations));
     
                             UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
@@ -227,13 +225,12 @@ if ~isempty(Iexisting)
                         fprintf(fid,'============================\n');
                         fprintf(fid,string(datetime("now"))+"\n");                     
                         if UserVar.Restart
-                            fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s due to walltime constraints. Done %s iterations out of %s.\n",...
+                            fprintf(UserVar.fid,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s due to walltime constraints. Done %s iterations out of %s.\n",...
                             UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
                         else
-                            fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
+                            fprintf(UserVar.fid,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
                             UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
                         end
-                        fprintf(fid,'============================\n');
     
                     %% Spinup cycle
                     elseif UserVar.SpinupCycle
@@ -249,8 +246,7 @@ if ~isempty(Iexisting)
 
                         fprintf(fid,'============================\n');
                         fprintf(fid,string(datetime("now"))+"\n");                        
-                        fprintf(UserVar.fid,"> %s: End spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
-                        fprintf(fid,'============================\n');
+                        fprintf(UserVar.fid,"> ANT_UaWrapper: %s: End spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
     
                     end
 
@@ -317,14 +313,12 @@ if ~isempty(Inew)
     else
         copyfile(sourcefolder,[newfolder,'/']); 
     end
+
+    fprintf(fid,'============================\n');
+    fprintf(fid,string(datetime("now"))+"\n");    
     
     % now gather run info
     if type=="Diagnostic"
-
-        fprintf(fid,'============================\n');
-        fprintf(fid,string(datetime("now"))+"\n");   
-        fprintf(fid,"> %s: Submitted.\n",UserVar.Experiment);
-        fprintf(fid,'============================\n');
 
         UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
 
@@ -360,7 +354,7 @@ if ~isempty(Inew)
                     end
 
                     UserVar.TargetIterations = min(nit,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
-                    fprintf(UserVar.fid,"> Doing %s iterations or as many as walltime allows.\n",string(UserVar.TargetIterations));
+                    fprintf(UserVar.fid,"> ANT_UaWrapper: Doing %s iterations or as many as walltime allows.\n",string(UserVar.TargetIterations));
     
                     UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
@@ -378,13 +372,12 @@ if ~isempty(Inew)
                 fprintf(fid,'============================\n');
                 fprintf(fid,string(datetime("now"))+"\n");                     
                 if UserVar.Restart
-                    fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s due to walltime constraints. Done %s iterations out of %s.\n",...
+                    fprintf(UserVar.fid,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s due to walltime constraints. Done %s iterations out of %s.\n",...
                     UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
                 else
-                    fprintf(UserVar.fid,"> %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
+                    fprintf(UserVar.fid,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
                     UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
                 end
-                fprintf(fid,'============================\n');
     
             %% Spinup cycle
             elseif UserVar.SpinupCycle
@@ -399,8 +392,7 @@ if ~isempty(Inew)
 
                 fprintf(fid,'============================\n');
                 fprintf(fid,string(datetime("now"))+"\n");                
-                fprintf(UserVar.fid,"> %s: Breaking out of spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
-                fprintf(fid,'============================\n');
+                fprintf(UserVar.fid,"> ANT_UaWrapper: %s: Breaking out of spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
     
             end
 

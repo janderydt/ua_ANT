@@ -71,8 +71,6 @@ if UserVar.Inverse.Cycle == 1
     UserVar.InverseCycle = 1;
     UserVar.SpinupCycle = 0;
 
-    fprintf(UserVar.fid,'============================\n');
-    fprintf(UserVar.fid,string(datetime("now"))+"\n");    
     fprintf(UserVar.fid,"> %s: Start inverse cycle %s on %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle),UserVar.hostname);
 
     UserVar = ANT_GetUserVar_FirstInverseRun(RunTable,ind,UserVar);
@@ -82,9 +80,7 @@ else
         %% start new inverse cycle
         UserVar.InverseCycle = 1;
         UserVar.SpinupCycle = 0;
-
-        fprintf(UserVar.fid,'============================\n');
-        fprintf(UserVar.fid,string(datetime("now"))+"\n");      
+      
         fprintf(UserVar.fid,"> %s: Start inverse cycle %s on %s.\n",UserVar.Experiment,string(UserVar.Inverse.Cycle),UserVar.hostname);
 
         UserVar = ANT_GetUserVar_InverseAfterSpinup(RunTable,ind,UserVar);
@@ -93,9 +89,7 @@ else
         %% start spinup cycle
         UserVar.SpinupCycle = 1;
         UserVar.InverseCycle = 0;
-
-        fprintf(UserVar.fid,'============================\n');
-        fprintf(UserVar.fid,string(datetime("now"))+"\n");        
+       
         fprintf(UserVar.fid,"> %s: Start spinup cycle %s on %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle),UserVar.hostname);
 
         UserVar = ANT_GetUserVar_Spinup(RunTable,ind,UserVar);
