@@ -81,7 +81,7 @@ do
                 submitted=1
 		rm -f ua_submitted
 	    else
- 		sleep 1
+ 		sleep 5
 
             fi
         done

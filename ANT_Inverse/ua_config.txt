@@ -6,7 +6,7 @@ pgid=9999
 
 # define ARCHER2 walltime in HH:MM:SS format
 walltime=24:00:00
-walltime_remaining=23:45:10
+walltime_remaining=23:59:59
 
 # Specify run table 
 runtable=RunTable_ARCHER2_1.csv
