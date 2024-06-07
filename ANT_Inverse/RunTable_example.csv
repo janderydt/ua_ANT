@@ -1,0 +1,2 @@
+Domain,pgid,ExpID,Submitted,SubmissionTime,Running,Error,ErrorTime,Finished,FinishedTime,Restart,InverseIterations,InverseIterationsDone,SpinupYears,SpinupYearsDone,InvertFor,GradientCalc,gsC,gsA,gaC,gaA,Measurements,Velocity,startGeometry,startMesh,SlidingLaw,m,muk,priorC,startC,n,priorAGlen,startAglen,Comments
+ANT,0,0,0,01-Jan-2000 00:00:00,0,0,01-Jan-2000 00:00:00,0,01-Jan-2000 00:00:00,0,1000+1000,0,1,0,-logC-logA-,Adjoint,100000,100000,1,1,-uv-,2000,2000,2000_2009_2014_2018_meshmin3000_meshmax100000_refined,Weertman,3,0.5,2E-04,1278,3,1E-08,0,
