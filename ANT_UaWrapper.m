@@ -29,6 +29,9 @@ UserVar.fid = fid;
 
 %% deal with inputs
 
+fprintf(fid,"input args: %s/n",string(nargin));
+fprintf(fid,"input: %s/n",string(ua_config));
+
 if nargin==3
     % ensure correct format
     ua_config = string(ua_config);
@@ -89,21 +92,6 @@ else
     walltime_remaining = walltime;
     runtable = UserVar.home+"/RunTable_"+UserVar.hostname+".csv";
     idrange = [1000 1999];
-end
-
-if isempty(pgid) || isempty(type)
-    % 
-
-    else
-        
-
-
-end
-
-%% obtain run type and other inputs if not already defined
-if nargin<2 
-    
-    end
 end
 
 %% check that all inputs are now available
