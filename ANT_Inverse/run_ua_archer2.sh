@@ -1,6 +1,6 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
-#SBATCH --job-name=ANT_uaconfig1
+#SBATCH --job-name=ANT_uaconfig
 #SBATCH --time=24:00:00
 #SBATCH --nodes=4
 #SBATCH --ntasks-per-node=30
@@ -70,7 +70,7 @@ do
         # units can be specified. If you do not know how much memory to specify, we
         # recommend that you specify `--mem=1500M` (1,500 MiB).
         srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
-        --exact --mem-per-cpu=1500M --output /dev/null \
+        --exact --mem-per-cpu=1500M --output stdout_node${nodeid}_jobs${i}.out \
         --error stderr_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR $UA_CONFIG &
 
         # pause until ua job has been submitted
