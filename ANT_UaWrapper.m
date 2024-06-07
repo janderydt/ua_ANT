@@ -29,9 +29,6 @@ UserVar.fid = fid;
 
 %% deal with inputs
 
-fprintf(fid,"input args: %s/n",string(nargin));
-fprintf(fid,"input: %s/n",string(ua_config));
-
 if nargin==3
     % ensure correct format
     ua_config = string(ua_config);
