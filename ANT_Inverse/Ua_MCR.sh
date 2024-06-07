@@ -6,7 +6,7 @@
 #
 exe_name=$0
 exe_dir=$PWD
-walltime=$1
+config_file="$2"
 echo "------------------------------------------"
 if [ "x$1" = "x" ]; then
   echo Usage:
@@ -25,7 +25,7 @@ else
   test -e /usr/bin/ldd &&  ldd --version |  grep -q "(GNU libc) 2\.17"  \
             && export LD_PRELOAD="${MCRROOT}/bin/glnxa64/glibc-2.17_shim.so"
   shift 1
-  args=
+  args=$config_file
   while [ $# -gt 0 ]; do
       token=$1
       args="${args} \"${token}\"" 

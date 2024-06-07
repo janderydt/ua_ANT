@@ -70,8 +70,8 @@ do
         # units can be specified. If you do not know how much memory to specify, we
         # recommend that you specify `--mem=1500M` (1,500 MiB).
         srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
-        --exact --mem=1500M --output /dev/null \
-        --error stderr_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR &
+        --exact --mem-per-cpu=1500M --output /dev/null \
+        --error stderr_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR $UA_CONFIG &
 
         # pause until ua job has been submitted
         submitted=0
@@ -80,8 +80,9 @@ do
 	    if [ -e ua_submitted ] ; then
                 submitted=1
 		rm -f ua_submitted
+	        sleep 5 
 	    else
- 		sleep 5
+ 		sleep 1
 
             fi
         done

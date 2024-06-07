@@ -6,11 +6,11 @@ pgid=9999
 
 # define ARCHER2 walltime in HH:MM:SS format
 walltime=24:00:00
-walltime_remaining=23:59:59
+walltime_remaining=24:00:00
 
 # Specify run table 
-runtable=RunTable_ARCHER2_1.csv
+runtable=RunTable_ARCHER2_2.csv
 
 # Specify range for ExpID - this needs to be a 2 element vector with lower
 # and upper limits, seperated by a colon
-idrange=[2000:2999]
+idrange=[3000:3999]
