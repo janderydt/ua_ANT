@@ -1,4 +1,4 @@
-function ANT_UaWrapper(pgid,type)
+function ANT_UaWrapper(ua_config,pgid,type)
 
 %% find host and setup matlab path
 [~,hostname]= system("hostname"); 
@@ -28,64 +28,81 @@ fid = fopen(logfile,'a+');
 UserVar.fid = fid;
 
 %% deal with inputs
-if nargin==2 
+
+if nargin==3
     % ensure correct format
+    ua_config = string(ua_config);
     if ischar(pgid)
         pgid = str2double(pgid);
     end
     if ischar(type)
         type = string(type);
     end
+elseif nargin==1
+    ua_config = string(ua_config);
+    pgid=[];
+    type=[];
+else
+    error("You need to either provide a config file or pgid and type. Instead got none.");
+end
+    
+if ~isempty(ua_config)
+    %% read inputs from config file
+    configfile = UserVar.home+"/"+ua_config;
+    if ~exist(configfile,"file")
+        error("Config file "+configfile+" does not exist.");
+    end
+    fileID = fopen(configfile,"r"); 
+    tline = fgetl(fileID);
+    while ischar(tline)	
+        if ~isempty(tline)
+            if ~startsWith(tline(1), '#')
+                % process lines / type and pgid should not be overwritten
+                % by information from the config file
+                if contains(tline,'runtype')
+                    if isempty(type)
+                        type = string(erase(tline,["runtype"," ","=",""""]));
+                    end
+                elseif contains(tline,'pgid')
+                    if isempty(pgid)
+                        pgid = str2num(erase(tline,["pgid"," ","="]));
+                    end
+                elseif contains(tline,'walltime=')
+                    walltime = seconds(duration(erase(tline,["walltime"," ","="])));
+                elseif contains(tline,'walltime_remaining=')
+                    walltime_remaining = seconds(duration(erase(tline,["walltime_remaining"," ","="])));
+                elseif contains(tline,'runtable=')
+                    runtable = UserVar.home+"/"+string(erase(tline,["runtable"," ","=",""""]));
+                elseif contains(tline,'idrange=')
+                    idrange = str2double(split(string(erase(tline,["idrange"," ","=","""","[","]"])),":"));
+                end
+            end
+        end
+        % Now read the next line.
+        tline = fgetl(fileID);
+    end
+    % All done reading all lines, so close the file.
+    fclose(fileID);
+else
+    %% No config file specified, define default values
     walltime = 31557600; % set to some large number
     walltime_remaining = walltime;
     runtable = UserVar.home+"/RunTable_"+UserVar.hostname+".csv";
     idrange = [1000 1999];
-else
-    pgid=[];
-    type=[];
-    walltime=[];
-    walltime_remaining=[];
-    runtable=[];
-    idrange=[];
+end
+
+if isempty(pgid) || isempty(type)
+    % 
+
+    else
+        
+
+
 end
 
 %% obtain run type and other inputs if not already defined
 if nargin<2 
-    if contains(UserVar.hostname,"ARCHER2")
-        % on ARCHER2 there are no inputs. instead we read a text file with config variables
-        configfile = UserVar.home+"/ua_config.txt";
-        if ~exist(configfile,"file")
-            error("Specify config file"+configfile+".");
-        end
-        fileID = fopen(configfile,"r"); 
-        tline = fgetl(fileID);
-        while ischar(tline)	
-            if ~isempty(tline)
-                if ~startsWith(tline(1), '#')
-                    % process line
-                    if contains(tline,'runtype')
-                        type = string(erase(tline,["runtype"," ","=",""""]));
-                    elseif contains(tline,'pgid')
-                        pgid = str2num(erase(tline,["pgid"," ","="]));
-                    elseif contains(tline,'walltime=')
-                        walltime = seconds(duration(erase(tline,["walltime"," ","="])));
-                    elseif contains(tline,'walltime_remaining=')
-                        walltime_remaining = seconds(duration(erase(tline,["walltime_remaining"," ","="])));
-                    elseif contains(tline,'runtable=')
-                        runtable = UserVar.home+"/"+string(erase(tline,["runtable"," ","=",""""]));
-                    elseif contains(tline,'idrange=')
-                        idrange = str2double(split(string(erase(tline,["idrange"," ","=","""","[","]"])),":"));
-                    end
-                end
-            end
-            % Now read the next line.
-            tline = fgetl(fileID);
-        end
-        % All done reading all lines, so close the file.
-        fclose(fileID);      
-    else
-        error("Running job on "+UserVar.hostname+" so need 2 inputs, got "+...
-            string(nargin)+" instead: pgid ("+string(pgid)+") and runtype ("+string(type)+").");
+    
     end
 end
 
