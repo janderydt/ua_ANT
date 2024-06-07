@@ -9,8 +9,8 @@ walltime=24:00:00
 walltime_remaining=24:00:00
 
 # Specify run table 
-runtable=RunTable_ARCHER2_2.csv
+runtable=RunTable_ARCHER2.csv
 
 # Specify range for ExpID - this needs to be a 2 element vector with lower
 # and upper limits, seperated by a colon
-idrange=[3000:3999]
+idrange=[1000:1999]
