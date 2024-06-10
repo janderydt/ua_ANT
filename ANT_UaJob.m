@@ -1,14 +1,25 @@
 function UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid)
 
-% log changes in table
+%% copy latest Ua run files from master folder to experiment folder
+copyfile("./ANT_"+UserVar.type+"_9999/*.m",UserVar.Experiment);
+
+%% check if experiment runtable exists, otherwise, create a new one
+if ~isfile(UserVar.runtable_exp)
+    copyfile("./ANT_Inverse_9999/RunTable_ANT_Inverse_9999.csv",UserVar.runtable_exp);
+end
+
+%% log changes in experiment table
+% modify content of global table
 RunTable{ind,"SubmissionTime"}(:) = string(datetime("now")); 
 RunTable{ind,"Submitted"} = 1;
 RunTable{ind,"Running"} = 1;
 RunTable{ind,'pgid'} = pgid;
-[~]=ANT_ReadWritetable(UserVar,RunTable,'write');
 
-% copy latest Ua run files from master folder to experiment folder
-copyfile("./ANT_"+UserVar.type+"_9999/*.m",UserVar.Experiment);
+% extract relevant row from global table
+RunTable_exp = RunTable(ind,:);
+
+% write to experiment runtable
+[~]=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable_exp,'write');
 
 % launch job
 cd(UserVar.Experiment);

@@ -101,12 +101,12 @@ else
     UserVar.pgid = pgid;
     UserVar.walltime = walltime; 
     UserVar.walltime_remaining = walltime_remaining;
-    UserVar.Table = runtable;
+    UserVar.runtable_combined = runtable;
     UserVar.idrange = idrange;
 end
 
 %% read run table
-RunTable = ANT_ReadWritetable(UserVar,[],'read');
+RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_combined,[],'read');
 
 if ~isempty(RunTable)
     Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}==0);
@@ -155,6 +155,7 @@ if ~isempty(Iexisting)
             % initialze some variables
             UserVar.Finished = 0;
             UserVar.Breakout = 0;
+            UserVar.runtable_exp = UserVar.home + "/" + UserVar.Experiment + "/RunTable_" + UserVar.Experiment + ".csv";
 
             % new run or restart?
             if RunTable{ind,'Restart'}==1
@@ -187,7 +188,7 @@ if ~isempty(Iexisting)
 
                     % read Runtable again in case any changes were made by other
                     % processes
-                    RunTable=ANT_ReadWritetable(UserVar,[],'read');
+                    RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_combined,[],'read');
                     ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
      
                     % initialize User variables
@@ -213,12 +214,12 @@ if ~isempty(Iexisting)
     
                             UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
-                            %adjust Runtable
-                            RunTable=ANT_ReadWritetable(UserVar,[],'read');
+                            %adjust Individual Runtable
+                            RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read');
                             ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                             RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;   
                             RunTable{ind,"Restart"} = UserVar.Restart;
-                            [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
+                            [~] = ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable,'write');
                 
                         end   
 
@@ -240,11 +241,11 @@ if ~isempty(Iexisting)
                         UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
                         %adjust Runtable
-                        RunTable=ANT_ReadWritetable(UserVar,[],'read');
+                        RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read');
                         ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                         RunTable{ind,"SpinupYearsDone"} = UserVar.Spinup.YearsDone;   
 
-                        [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
+                        [~] = ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable,'write');
 
                         fprintf(fid,'============================\n');
                         fprintf(fid,string(datetime("now"))+"\n");                        
@@ -273,7 +274,7 @@ end
 if something_submitted % something has been submitted and run has finished -> quit matlab
     quit;
 else
-    RunTable = ANT_ReadWritetable(UserVar,[],'read');
+    RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_combined,[],'read');
     if ~isempty(RunTable)
         Inew = find(RunTable{:,'ExpID'}==0);
     else
@@ -297,7 +298,7 @@ if ~isempty(Inew)
     RunTable{ind,"ExpID"} = ExpID;
     RunTable{ind,'pgid'} = pgid;
 
-    [~]=ANT_ReadWritetable(UserVar,RunTable,'write');
+    [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_combined,RunTable,'write');
     
     % initialize some UserVars
     UserVar.Finished = 0;
@@ -305,6 +306,7 @@ if ~isempty(Inew)
     UserVar.Breakout = 0;
     UserVar.Domain = RunTable{ind,'Domain'};
     UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
+    UserVar.runtable_exp = UserVar.home + "/" + UserVar.Experiment + "/RunTable_" + UserVar.Experiment + ".csv";
 
     % make copy of master folder for new experiment
     % if new folder already exists: rename first
@@ -315,6 +317,8 @@ if ~isempty(Inew)
     else
         copyfile(sourcefolder,[newfolder,'/']); 
     end
+    % rename RunTable file
+    movefile(newfolder+"/RunTable_ANT_Inverse_9999.csv",UserVar.runtable_exp);
 
     fprintf(fid,'============================\n');
     fprintf(fid,string(datetime("now"))+"\n");    
@@ -334,7 +338,7 @@ if ~isempty(Inew)
             
             % read Runtable again in case any changes were made by other
             % processes
-            RunTable=ANT_ReadWritetable(UserVar,[],'read');
+            RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_combined,[],'read');
             ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                
             % initialize User variables
@@ -361,11 +365,11 @@ if ~isempty(Inew)
                     UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
                     %adjust Runtable
-                    RunTable=ANT_ReadWritetable(UserVar,[],'read');
+                    RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read');
                     ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                     RunTable{ind,"InverseIterationsDone"} = UserVar.Inverse.IterationsDone;  
                     RunTable{ind,"Restart"} = UserVar.Restart;
-                    [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
+                    [~] = ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable,'write');
 
                 end     
 
@@ -387,10 +391,10 @@ if ~isempty(Inew)
                 UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
 
                 %adjust Runtable
-                RunTable=ANT_ReadWritetable(UserVar,[],'read');
+                RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read');
                 ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                 RunTable{ind,"SpinupYearsDone"} = UserVar.Spinup.YearsDone;   
-                [~] = ANT_ReadWritetable(UserVar,RunTable,'write');
+                [~] = ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable,'write');
 
                 fprintf(fid,'============================\n');
                 fprintf(fid,string(datetime("now"))+"\n");                

@@ -1,5 +1,7 @@
 function plot_scatterdata
 
+variable_to_plot = 'qGL'; %options: qGL, niter
+
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
 UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_1.csv";
@@ -8,7 +10,7 @@ UserVar.idrange = [2000,2999];
 addpath("/mnt/md0/Ua/cases/ANT/");
 
 %% read run table
-RunTable = ANT_ReadWritetable(UserVar,[],'read');
+RunTable = ANT_ReadWritetable(UserVar,UserVar.Table,[],'read');
 
 %% load basins
 filename = 'basins_IMBIE_v2.mat'; 
@@ -56,23 +58,34 @@ for ii=1:numel(I)
     fprintf("Done %s out of %s.\n",string(ii),string(numel(I)));
 end
 
-
 save("scatterdata.mat","m","n","gaA","gaC","gsA","gsC","niter","qGL");
 
 qGL(niter<100)=nan;
+qGL = qGL/1e12; % convert to Gt/yr
 
-plotdata = niter; % convert to Gt/yr
-dummydata = nan*plotdata;
-marker_size = 25;
 
 %% Plotting
 H=fig('units','inches','width',120*12/72.27,'height',80*12/72.27,'fontsize',14,'font','Helvetica');
 
-colormap('jet');
-cmin = 0;
-cmax = 1000;
+switch variable_to_plot
+    case 'qGL'
+        plotdata = qGL;        
+        cmin = 1000;
+        cmax = 3000;
+    case 'niter' 
+        plotdata = niter;        
+        cmin = 0;
+        cmax = max(niter(:));
+end
+
+dummydata = nan*plotdata;
+
 plotdata(plotdata<cmin)=cmin; 
 plotdata(plotdata>cmax)=cmax; 
+
+colormap('jet');
+marker_size = 25;
+
 
 tlo_fig = tiledlayout(6,6,"TileSpacing","compact");
 for i = 1:36
@@ -174,8 +187,8 @@ end
 cb=colorbar;
 cb.Layout.Tile='east';
 clim([cmin cmax]);
-cb.Label.String = "Iterations";
-%cb.Label.String = "Grounding line flux [Gt/yr]";
+%cb.Label.String = "Iterations";
+cb.Label.String = "Grounding line flux [Gt/yr]";
 
 
 

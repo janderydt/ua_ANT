@@ -1,8 +1,10 @@
 function ANT_CleanUp(UserVar)
 
+%% This function only writes to experiment run tables
+
 % read table
-RunTable=ANT_ReadWritetable(UserVar,[],'read'); 
-ind = find(RunTable{:,'ExpID'}==UserVar.ExpID);
+RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read'); 
+ind = find(RunTable{:,'ExpID'}==UserVar.ExpID); % all going well, this index should always be 1
 
 % add flags and timestamps to table
 if UserVar.Finished==1 && UserVar.Error==0
@@ -44,4 +46,4 @@ end
 
 RunTable{ind,"pgid"} = 0;
 
-[~]=ANT_ReadWritetable(UserVar,RunTable,'write');
+[~]=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable,'write');
