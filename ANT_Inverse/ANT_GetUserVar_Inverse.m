@@ -41,7 +41,7 @@ UserVar.NameOfRestartFiletoRead = UserVar.Experiment + "-RestartFile.mat";
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
     case {2000,2009,2014,2018}
-        UserVar.DensityInterpolant = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+        UserVar.DensityInterpolant = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.Geometry)+"_EXTRUDED.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
@@ -124,20 +124,20 @@ UserVar.Inverse.logAGlen.ga = RunTable{ind,"gaA"};
 %% geometry interpolants from spinup
 NameOfRestartFiletoRead = ...
     strrep(UserVar.NameOfRestartFiletoRead,".mat","_SpinupCycle"+string(UserVar.Inverse.Cycle-1)+".mat");
-load("./"+UserVar.Experiment+"/"+NameOfRestartFiletoRead,"F","MUA");
+load(UserVar.casefolder+"/"+UserVar.Experiment+"/"+NameOfRestartFiletoRead,"F","MUA");
 FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
 Fb = FB; Fb.Values = F.b;
 Fs = FB; Fs.Values = F.s;
 UserVar.GeometryInterpolants = "GeometryInterpolants_fromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+".mat";
-save("./"+UserVar.Experiment+"/"+UserVar.GeometryInterpolants,"FB","Fb","Fs");
+save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.GeometryInterpolants,"FB","Fb","Fs");
 
 %% velocity interpolants
 UserVar.Velocity = RunTable{ind,"Velocity"};
 switch UserVar.Velocity
     case 2000
-        UserVar.VelocityInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat";
     case {2009,2014,2018} 
-        UserVar.VelocityInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_',num2str(UserVar.Velocity),'-',num2str(UserVar.Velocity+1),'_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_"+num2str(UserVar.Velocity)+"-"+num2str(UserVar.Velocity+1)+"_MeaSUREs_ITSLIVE_Velocities.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
 end
@@ -167,13 +167,13 @@ UserVar.Restart = 1;
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
     case {2000,2009,2014,2018}
-        UserVar.GeometryInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+        UserVar.GeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.Geometry)+"_EXTRUDED.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
 
 %% mesh boundary
-UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
+UserVar.MeshBoundaryCoordinatesFile = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
 
 %% sliding law
 UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
@@ -199,7 +199,7 @@ UserVar.Inverse.logAGlen.ga = RunTable{ind,"gaA"};
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
     case {2000,2009,2014,2018}
-        UserVar.GeometryInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.Geometry),'_EXTRUDED.mat'];
+        UserVar.GeometryInterpolants = UserVar.datafolder+"ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.Geometry)+"_EXTRUDED.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
 end
@@ -211,9 +211,9 @@ UserVar.DensityInterpolant = UserVar.GeometryInterpolants;
 UserVar.Velocity = RunTable{ind,"Velocity"};
 switch UserVar.Velocity
     case 2000
-        UserVar.VelocityInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat";
     case {2009,2014,2018} 
-        UserVar.VelocityInterpolants = [pwd,'/../ANT_Data/ANT_Interpolants/GriddedInterpolants_',num2str(UserVar.Velocity),'-',num2str(UserVar.Velocity+1),'_MeaSUREs_ITSLIVE_Velocities.mat'];
+        UserVar.VelocityInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_"+num2str(UserVar.Velocity)+"-"+num2str(UserVar.Velocity+1)+"_MeaSUREs_ITSLIVE_Velocities.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
 end
@@ -223,9 +223,9 @@ UserVar.Inverse.startC = 0;
 if RunTable{ind,"startC"} > 0
     % copy relevant files   
     UserVar.NameOfFileForReadingSlipperinessEstimate=string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startC"})+"_C-Estimate.mat";
-    copyfile(string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startC"})+...
+    copyfile(UserVar.casefolder+"/"+string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startC"})+...
             "/"+UserVar.NameOfFileForReadingSlipperinessEstimate,...
-            string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+...
+            UserVar.casefolder+"/"+string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+...
             "/"+UserVar.NameOfFileForReadingSlipperinessEstimate);
 elseif RunTable{ind,"startC"} == -9999
     UserVar.Inverse.startC = -9999;
@@ -240,9 +240,9 @@ UserVar.Inverse.priorC = RunTable{ind,"priorC"};
 if RunTable{ind,"startAglen"} > 0
     % copy relevant files   
     UserVar.NameOfFileForReadingAGlenEstimate=string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startAglen"})+"_AGlen-Estimate.mat";
-    copyfile(string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startAglen"})+...
+    copyfile(UserVar.casefolder+"/"+string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startAglen"})+...
             "/"+UserVar.NameOfFileForReadingAGlenEstimate,...
-            string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+...
+            UserVar.casefolder+"/"+string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+...
             "/"+UserVar.NameOfFileForReadingAGlenEstimate);
 else
     UserVar.NameOfFileForReadingAGlenEstimate="";

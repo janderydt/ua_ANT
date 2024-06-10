@@ -20,7 +20,7 @@ if ~contains(UserVar.hostname,"ARCHER2")
 end
 
 %% initialize log file
-UserVar.home = pwd;
+UserVar.home = pwd+"/";
 
 logfile = UserVar.home+"/jobs_master_"+UserVar.hostname+".log";
 fid = fopen(logfile,'a+');
@@ -101,12 +101,12 @@ else
     UserVar.pgid = pgid;
     UserVar.walltime = walltime; 
     UserVar.walltime_remaining = walltime_remaining;
-    UserVar.runtable_combined = runtable;
+    UserVar.runtable_global = runtable;
     UserVar.idrange = idrange;
 end
 
 %% read run table
-RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_combined,[],'read');
+RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
 
 if ~isempty(RunTable)
     Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}==0);
@@ -114,6 +114,8 @@ end
 
 %% launch jobs
 % initialize some variables
+UserVar.casefolder = UserVar.home + "/cases/";
+UserVar.datafolder = UserVar.home + "/../ANT_Data/";
 UserVar.Restart = 0;
 something_submitted = 0; kk=1;
 
@@ -155,7 +157,7 @@ if ~isempty(Iexisting)
             % initialze some variables
             UserVar.Finished = 0;
             UserVar.Breakout = 0;
-            UserVar.runtable_exp = UserVar.home + "/" + UserVar.Experiment + "/RunTable_" + UserVar.Experiment + ".csv";
+            UserVar.runtable_exp = UserVar.casefolder + "/" + UserVar.Experiment + "/RunTable_" + UserVar.Experiment + ".csv";
 
             % new run or restart?
             if RunTable{ind,'Restart'}==1
@@ -188,7 +190,7 @@ if ~isempty(Iexisting)
 
                     % read Runtable again in case any changes were made by other
                     % processes
-                    RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_combined,[],'read');
+                    RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
                     ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
      
                     % initialize User variables
@@ -274,7 +276,7 @@ end
 if something_submitted % something has been submitted and run has finished -> quit matlab
     quit;
 else
-    RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_combined,[],'read');
+    RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
     if ~isempty(RunTable)
         Inew = find(RunTable{:,'ExpID'}==0);
     else
@@ -298,7 +300,7 @@ if ~isempty(Inew)
     RunTable{ind,"ExpID"} = ExpID;
     RunTable{ind,'pgid'} = pgid;
 
-    [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_combined,RunTable,'write');
+    [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_global,RunTable,'write');
     
     % initialize some UserVars
     UserVar.Finished = 0;
@@ -306,12 +308,12 @@ if ~isempty(Inew)
     UserVar.Breakout = 0;
     UserVar.Domain = RunTable{ind,'Domain'};
     UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
-    UserVar.runtable_exp = UserVar.home + "/" + UserVar.Experiment + "/RunTable_" + UserVar.Experiment + ".csv";
+    UserVar.runtable_exp = UserVar.casefolder + "/" + UserVar.Experiment + "/RunTable_" + UserVar.Experiment + ".csv";
 
     % make copy of master folder for new experiment
     % if new folder already exists: rename first
     sourcefolder = ['./ANT_',char(type),'_9999/'];
-    newfolder = ['./',char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
+    newfolder = [char(UserVar.casefolder),'./',char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
     if exist(newfolder,"dir") == 7
         movefile(newfolder,[newfolder,'_old/']);
     else
@@ -338,7 +340,7 @@ if ~isempty(Inew)
             
             % read Runtable again in case any changes were made by other
             % processes
-            RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_combined,[],'read');
+            RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
             ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                
             % initialize User variables

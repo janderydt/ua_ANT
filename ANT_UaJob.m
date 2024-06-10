@@ -1,7 +1,7 @@
 function UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid)
 
 %% copy latest Ua run files from master folder to experiment folder
-copyfile("./ANT_"+UserVar.type+"_9999/*.m",UserVar.Experiment);
+copyfile("./ANT_"+UserVar.type+"_9999/*.m",UserVar.casefolder+"/"+UserVar.Experiment);
 
 %% check if experiment runtable exists, otherwise, create a new one
 if ~isfile(UserVar.runtable_exp)
@@ -22,7 +22,7 @@ RunTable_exp = RunTable(ind,:);
 [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable_exp,'write');
 
 % launch job
-cd(UserVar.Experiment);
+cd(UserVar.casefolder+"/"+UserVar.Experiment);
 
 % start diary
 diary(UserVar.Experiment+".out")

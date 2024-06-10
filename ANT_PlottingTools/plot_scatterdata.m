@@ -1,6 +1,6 @@
 function plot_scatterdata
 
-variable_to_plot = 'qGL'; %options: qGL, niter
+variable_to_plot = 'misfit'; %options: qGL, niter, misfit
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
@@ -26,7 +26,7 @@ for ii=1:numel(I)
     folder = UserVar.home+"ANT_"+UserVar.type+"/ANT_nsmbl_Inverse_"+ExpID(I(ii));
     restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(I(ii))+"-RestartFile.mat";
     if exist(restartfile,"file")
-        load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA");
+        load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");
         m(ii) = F.m(1);
         n(ii) = F.n(1);
         gaA(ii) = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.ga;
@@ -43,6 +43,7 @@ for ii=1:numel(I)
         % end            
         GL=FluxAcrossGroundingLine(CtrlVarInRestartFile,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
         qGL(ii) = sum(GL);
+        I(ii) = InvFinalValues.I; % calculated as 
      else
         table_ind = I(ii);
         m(ii) = RunTable{table_ind,"m"};
@@ -52,7 +53,8 @@ for ii=1:numel(I)
         gsA(ii) = RunTable{table_ind,"gsA"};
         gsC(ii) = RunTable{table_ind,"gsC"};
         niter(ii) = 0;
-        qGL(ii) = 0;
+        qGL(ii) = nan;
+        I(ii) = nan;
     end
     
     fprintf("Done %s out of %s.\n",string(ii),string(numel(I)));
@@ -76,6 +78,10 @@ switch variable_to_plot
         plotdata = niter;        
         cmin = 0;
         cmax = max(niter(:));
+    case 'misfit'
+        plotdata = I;
+        cmin = 0;
+        cmax = 1000;
 end
 
 dummydata = nan*plotdata;
