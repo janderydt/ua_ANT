@@ -1,0 +1,1 @@
+Domain,pgid,ExpID,Submitted,SubmissionTime,Running,Error,ErrorTime,Finished,FinishedTime,Restart,InverseIterations,InverseIterationsDone,SpinupYears,SpinupYearsDone,InvertFor,GradientCalc,gsC,gsA,gaC,gaA,Measurements,Velocity,startGeometry,startMesh,SlidingLaw,m,muk,priorC,startC,n,priorAGlen,startAglen,Comments

@@ -78,8 +78,8 @@ MUA.Deriv=[]; MUA.DetJ=[]; MUA.M=[]; MUA.dm=[]; % save some space
 % save updated boundary and mesh for Ua
 MeshBoundaryCoordinates = [MUA.Boundary.x(:) MUA.Boundary.y(:)];
 
-MeshBoundaryCoordinatesFileName = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
-InitialMeshFileName = "./"+UserVar.Experiment+"/"+UserVar.Experiment+"_InitialMesh.mat";
+MeshBoundaryCoordinatesFileName = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
+InitialMeshFileName = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+"_InitialMesh.mat";
 
 save(MeshBoundaryCoordinatesFileName,"MeshBoundaryCoordinates");
 save(InitialMeshFileName,"MUA","CtrlVar");

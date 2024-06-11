@@ -23,7 +23,7 @@ I = find(ExpID>=UserVar.idrange(1) & ExpID<=UserVar.idrange(2));
 
 %% Gather data
 for ii=1:numel(I)
-    folder = UserVar.home+"ANT_"+UserVar.type+"/ANT_nsmbl_Inverse_"+ExpID(I(ii));
+    folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/ANT_nsmbl_Inverse_"+ExpID(I(ii));
     restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(I(ii))+"-RestartFile.mat";
     if exist(restartfile,"file")
         load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");
@@ -35,7 +35,7 @@ for ii=1:numel(I)
         gsC(ii) = CtrlVarInRestartFile.Inverse.Regularize.logC.gs;
         % number of iterations done
         niter(ii) = UserVarInRestartFile.Inverse.IterationsDone;
-        fprintf("ExpID %s: done %s iterations.\n",string(UserVarInRestartFile.ExpID),string(niter(ii)));
+        fprintf("(%s/%s) ExpID %s: done %s iterations.\n",string(ii),string(numel(I)),string(UserVarInRestartFile.ExpID),string(niter(ii)));
         % Obtain Ua fluxes across the grounding line (qGL) into floating areas
         %[B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
         % qGL(ii) = 0;
@@ -61,7 +61,7 @@ for ii=1:numel(I)
     %fprintf("Done %s out of %s.\n",string(ii),string(numel(I)));
 end
 
-save("scatterdata.mat","m","n","gaA","gaC","gsA","gsC","niter","qGL");
+save("scatterdata.mat","m","n","gaA","gaC","gsA","gsC","niter","qGL","I");
 
 qGL(niter<100)=nan;
 qGL = qGL/1e12; % convert to Gt/yr
@@ -75,14 +75,17 @@ switch variable_to_plot
         plotdata = qGL;        
         cmin = 1000;
         cmax = 3000;
+        cbLabel = "Grounding line flux [Gt/yr]";
     case 'niter' 
         plotdata = niter;        
         cmin = 0;
         cmax = max(niter(:));
+        cbLabel = "Number of iterations";
     case 'misfit'
         plotdata = I;
         cmin = 0;
         cmax = 1000;
+        cbLabel = "Misfit";
 end
 
 dummydata = nan*plotdata;
@@ -91,7 +94,7 @@ plotdata(plotdata<cmin)=cmin;
 plotdata(plotdata>cmax)=cmax; 
 
 colormap('jet');
-marker_size = 25;
+marker_size = 1+100*niter/(max(niter)-min(niter));
 
 
 tlo_fig = tiledlayout(6,6,"TileSpacing","compact");
@@ -195,7 +198,7 @@ cb=colorbar;
 cb.Layout.Tile='east';
 clim([cmin cmax]);
 %cb.Label.String = "Iterations";
-cb.Label.String = "Grounding line flux [Gt/yr]";
+cb.Label.String = cbLabel;
 
 
 

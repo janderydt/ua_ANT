@@ -10,6 +10,7 @@
 *.nc
 *.csv
 !RunTable_example.csv
+!RunTable_ANT_Inverse_9999.csv
 *.tmp
 rw_active
 run_ua_archer2_*.sh
