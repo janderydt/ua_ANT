@@ -35,6 +35,7 @@ for ii=1:numel(I)
         gsC(ii) = CtrlVarInRestartFile.Inverse.Regularize.logC.gs;
         % number of iterations done
         niter(ii) = UserVarInRestartFile.Inverse.IterationsDone;
+        fprintf("ExpID %s: done %s iterations.\n",string(UserVarInRestartFile.ExpID),string(niter(ii)));
         % Obtain Ua fluxes across the grounding line (qGL) into floating areas
         %[B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
         % qGL(ii) = 0;
@@ -57,7 +58,7 @@ for ii=1:numel(I)
         I(ii) = nan;
     end
     
-    fprintf("Done %s out of %s.\n",string(ii),string(numel(I)));
+    %fprintf("Done %s out of %s.\n",string(ii),string(numel(I)));
 end
 
 save("scatterdata.mat","m","n","gaA","gaC","gsA","gsC","niter","qGL");

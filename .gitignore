@@ -25,6 +25,7 @@ __pycache__/
 __init__.py
 
 #ignore specific case folders, only track master folder
+ANT_Inverse/cases/
 ANT_Inverse_tmp/
 ANT_Compile/UA_BUILD
 ANT_Inverse/AS_PROPHET_Inverse_1*/
