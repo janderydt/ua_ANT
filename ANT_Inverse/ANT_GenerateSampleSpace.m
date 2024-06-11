@@ -22,13 +22,13 @@ switch type
 
         %% Regularization
         Input.Marginals(ind).Name = 'gsC';
-        Input.Marginals(ind).Parameters = [50e3 500e3];
+        Input.Marginals(ind).Parameters = [50e3 1000e3];
         Input.Marginals(ind).Bounds = [50e3 500e3];
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gsA';
-        Input.Marginals(ind).Parameters = [50e3 500e3]; % parameters are bounds
-        Input.Marginals(ind).Bounds = [50e3 500e3];
+        Input.Marginals(ind).Parameters = [50e3 1000e3]; % parameters are bounds
+        Input.Marginals(ind).Bounds = [50e3 1000e3];
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gaC';
@@ -37,14 +37,14 @@ switch type
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gaA';
-        Input.Marginals(ind).Parameters = [1 100]; % parameters are bounds
+        Input.Marginals(ind).Parameters = [1 200]; % parameters are bounds
         Input.Marginals(ind).Bounds = [1 100];
         ind = ind + 1;
         
         %% Sliding law
         Input.Marginals(ind).Name = 'm';
-        Input.Marginals(ind).Parameters = [2 7];
-        Input.Marginals(ind).Bounds = [2 7];
+        Input.Marginals(ind).Parameters = [2 9];
+        Input.Marginals(ind).Bounds = [2 9];
         ind = ind + 1;
         
         %Input.Marginals(ind).Name = 'ubprior';
@@ -54,8 +54,8 @@ switch type
         
         %% Ice Rheology
         Input.Marginals(ind).Name = 'n';
-        Input.Marginals(ind).Parameters = [2.5 3.5];
-        Input.Marginals(ind).Bounds = [2.5 3.5];
+        Input.Marginals(ind).Parameters = [2 4];
+        Input.Marginals(ind).Bounds = [2 4];
         %ind = ind + 1;
         
         %Input.Marginals(ind).Name = 'epsprior';

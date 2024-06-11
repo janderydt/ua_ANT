@@ -8,12 +8,14 @@ if ~isfile(UserVar.runtable_exp)
     copyfile("./ANT_Inverse_9999/RunTable_ANT_Inverse_9999.csv",UserVar.runtable_exp);
 end
 
-%% log changes in experiment table
-% modify content of global table
+%% log changes in tables
 RunTable{ind,"SubmissionTime"}(:) = string(datetime("now")); 
 RunTable{ind,"Submitted"} = 1;
 RunTable{ind,"Running"} = 1;
 RunTable{ind,'pgid'} = pgid;
+
+% log changes in global table
+[~]=ANT_ReadWritetable(UserVar,UserVar.runtable_global,RunTable,'write');
 
 % extract relevant row from global table
 RunTable_exp = RunTable(ind,:);
@@ -34,6 +36,7 @@ Inew = [];
 UserVar.Error=0;
 
 try
+    
     fid = fopen( UserVar.home+"/ua_submitted", 'wt' );
     fclose(fid);
 
