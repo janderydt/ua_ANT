@@ -22,6 +22,7 @@ logging
 
 #ignore python dir
 __pycache__/
+__init__.py
 
 #ignore specific case folders, only track master folder
 ANT_Inverse_tmp/
