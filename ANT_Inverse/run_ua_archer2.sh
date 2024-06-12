@@ -95,5 +95,5 @@ wait
 # Update global RunTable
 python update_runtable.py $UA_CONFIG
 
-# Relaunch script (this is a really bad way of doing this, but it works)
+# Relaunch script (this is not a great way of doing this, but it works)
 python -c "import os; import sys; SCRIPT_DIR=os.path.dirname(os.path.abspath('$UA_CONFIG')); sys.path.append(os.path.dirname(SCRIPT_DIR)); from utils import submit_job; submit_job(budget_code='$SBATCH_ACCOUNT',sbatch_script='./run_ua_archer2.sh',input_var=['UA_CONFIG=$UA_CONFIG'])"
