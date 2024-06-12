@@ -84,12 +84,12 @@ def submit_batch (options,command):
 # options: Options object
 # input_var: a list of variable definitions to pass with --export=, eg 'UA_CONFIG=<path>'
 # afterok: a list of SBATCH job IDs of previously submitted jobs. If it is defined, this job will stay on hold until the given jobs successfully complete.
-def submit_job (options, sbatch_script, input_var=None, afterok=None):
+def submit_job (budget_code, sbatch_script, input_var=None, afterok=None):
 
     # Construct sbatch call line by line.
     command = 'sbatch'
     # Specify budget
-    command += ' -A ' + options.budget_code
+    command += ' -A ' + budget_code
     if input_var is not None:
         # Add variable definitions
         command += ' --export=ALL,'
@@ -101,15 +101,9 @@ def submit_job (options, sbatch_script, input_var=None, afterok=None):
     command += ' ' + sbatch_script
     
     # Call the command and capture the output
-    sbatch_id = subprocess.check_output(command, shell=True, text=True)
-    # Now extract the digits from the SBATCH job ID and return as a string
-    try:
-        return str(extract_first_int(sbatch_id))
-    except(ValueError):
-        print('Error (submit_job): job did not submit properly')
-        print('Error message from sbatch was:')
-        print(sbatch_id)
-        sys.exit()
+    print(command)
+#    sbatch_id = subprocess.check_output(command, shell=True, text=True)
+#    print(sbatch_id)
 
 def active_jobs (command):
 
