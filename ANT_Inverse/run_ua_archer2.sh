@@ -92,3 +92,9 @@ done
 # Wait for all subjobs to finish
 wait
 
+# Update global RunTable
+python update_runtable.py $UA_CONFIG
+
+# Relaunch script
+# TO DO
+

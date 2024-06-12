@@ -31,15 +31,14 @@ data_global = read_runinfo(runtable_global,runtype)
 for i in range(data_global.shape[0]):
    ExpID = data_global['ExpID'].values[i]
    if float(idrange[0]) <= ExpID <=float(idrange[1]):
-       expfolder = os.getcwd()+'/cases/'+table['Domain'].values[i]+'_'+runtype.strip().strip("\"")+'_'+str(ExpID)+'/'
+       expfolder = os.getcwd()+'/cases/'+data_global['Domain'].values[i]+'_'+runtype.strip().strip("\"")+'_'+str(ExpID)+'/'
        exptable = 'RunTable_'+data_global['Domain'].values[i]+'_'+runtype.strip().strip("\"")+'_'+str(ExpID)+'.csv'
        if os.path.isfile(expfolder+exptable):
           print('Reading data from '+exptable)
           data_exp = read_runinfo(expfolder+exptable,runtype)
-          data_global[i]=data_exp[0]
-          print(runtable)
+          data_global.loc[i]=data_exp.loc[0]
        else:
           print('Cannot find '+exptable+', no changes to global run table.')
 
 # save updated global runtable
-#save_runinfo(data_global, runtable_global)
+save_runinfo(data_global, runtable_global)

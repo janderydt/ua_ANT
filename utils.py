@@ -45,6 +45,14 @@ def read_runinfo (table,runtype):
 
     return data
 
+# Convert a list of strings to a single string with elements separated by the given separator character.
+def list_with_separator (A, sep):
+    s = ''
+    for elm in A:
+        s += elm + sep
+    # Remove the last character
+    return s[:-1]  
+
 def save_runinfo (df,file_name):
 
     # Save Run Table
@@ -53,6 +61,7 @@ def save_runinfo (df,file_name):
 
     log.info('   ...Successfully saved '+file_name)
 
+# Submit batch script on local machine
 def submit_batch (options,command):
 
     # Execute new batch command
@@ -70,6 +79,37 @@ def submit_batch (options,command):
         log.info('   ...Submitted new job with pgid '+str(pgid))
         return pgid
 
+# Submit the given SBATCH script on ARCHER2 and return the PBS job ID.
+# Optional keyword arguments:
+# options: Options object
+# input_var: a list of variable definitions to pass with --export=, eg 'UA_CONFIG=<path>'
+# afterok: a list of SBATCH job IDs of previously submitted jobs. If it is defined, this job will stay on hold until the given jobs successfully complete.
+def submit_job (options, sbatch_script, input_var=None, afterok=None):
+
+    # Construct sbatch call line by line.
+    command = 'sbatch'
+    # Specify budget
+    command += ' -A ' + options.budget_code
+    if input_var is not None:
+        # Add variable definitions
+        command += ' --export=ALL,'
+        command += list_with_separator(input_var,',')
+    if afterok is not None:
+        command += ' -W depend=afterok:'
+        command += list_with_separator(afterok,':')
+    # Specify script
+    command += ' ' + sbatch_script
+    
+    # Call the command and capture the output
+    sbatch_id = subprocess.check_output(command, shell=True, text=True)
+    # Now extract the digits from the SBATCH job ID and return as a string
+    try:
+        return str(extract_first_int(sbatch_id))
+    except(ValueError):
+        print('Error (submit_job): job did not submit properly')
+        print('Error message from sbatch was:')
+        print(sbatch_id)
+        sys.exit()
 
 def active_jobs (command):
 
