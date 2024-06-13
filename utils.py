@@ -101,9 +101,7 @@ def submit_job (budget_code, sbatch_script, input_var=None, afterok=None):
     command += ' ' + sbatch_script
     
     # Call the command and capture the output
-    print(command)
-#    sbatch_id = subprocess.check_output(command, shell=True, text=True)
-#    print(sbatch_id)
+    sbatch_id = subprocess.check_output(command, shell=True, text=True)
 
 def active_jobs (command):
 

@@ -8,14 +8,17 @@
 #SBATCH --hint=nomultithread
 #SBATCH --distribution=block:block
 
-#SBATCH --account=n02-MRW011816
 #SBATCH --partition=standard
 #SBATCH --qos=standard
 
-#############################################################################################
+#######################################################################################################
 # Run multiple instances of UA
-# sbatch --export=ALL,UA_CONFIG=<path to UA config file> -A n02-MRW011816 ./run_ua_archer2.sh 
-#############################################################################################
+# sbatch --export=ALL,UA_CONFIG=<path to UA config file>,ACC=n02-xxxxx -A n02-xxxxx ./run_ua_archer2.sh 
+#######################################################################################################
+
+# Add top directory to python path (this makes the utils.py file visible to this script)
+CASEDIR=$WORK/ua/cases/ANT
+export PYTHONPATH=$PWD:$CASEDIR:$PYTHONPATH
 
 # Make MCR available
 MCR=$WORK/MCR_2023b/R2023b/
@@ -95,5 +98,6 @@ wait
 # Update global RunTable
 python update_runtable.py $UA_CONFIG
 
-# Relaunch script (this is not a great way of doing this, but it works)
-python -c "import os; import sys; SCRIPT_DIR=os.path.dirname(os.path.abspath('$UA_CONFIG')); sys.path.append(os.path.dirname(SCRIPT_DIR)); from utils import submit_job; submit_job(budget_code='$SBATCH_ACCOUNT',sbatch_script='./run_ua_archer2.sh',input_var=['UA_CONFIG=$UA_CONFIG'])"
+# Relaunch script
+THISSCRIPT=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/Command=/{print $2}')
+python -c "from utils import submit_job; submit_job(budget_code='$ACC',sbatch_script='$THISSCRIPT',input_var=['UA_CONFIG=$UA_CONFIG','ACC=$ACC'])"
