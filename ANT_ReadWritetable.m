@@ -24,7 +24,9 @@ switch mode
     case 'write'
       
         if isfield(UserVar,'ExpID')
+
             if ~isempty(UserVar.ExpID)
+
                 % check if table already exists
                 if ~isfile(TableToReadOrWrite) % if not, simply write
 
@@ -69,6 +71,10 @@ switch mode
                 writetable(NewTable,TableToReadOrWrite);
 
             end
+
+        else
+
+            writetable(NewTable,TableToReadOrWrite);
 
         end
 

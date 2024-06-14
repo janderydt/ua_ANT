@@ -23,7 +23,7 @@ switch type
         %% Regularization
         Input.Marginals(ind).Name = 'gsC';
         Input.Marginals(ind).Parameters = [50e3 1000e3];
-        Input.Marginals(ind).Bounds = [50e3 500e3];
+        Input.Marginals(ind).Bounds = [50e3 1000e3];
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gsA';
@@ -38,7 +38,7 @@ switch type
         
         Input.Marginals(ind).Name = 'gaA';
         Input.Marginals(ind).Parameters = [1 200]; % parameters are bounds
-        Input.Marginals(ind).Bounds = [1 100];
+        Input.Marginals(ind).Bounds = [1 200];
         ind = ind + 1;
         
         %% Sliding law
@@ -69,7 +69,7 @@ switch type
         uq_print(myInput);
         
         uq_selectInput(myInput);
-        X = uq_getSample(numel(Input.Marginals)*10,'LHS');
+        X = uq_getSample(numel(Input.Marginals)*30,'LHS');
 
         %uq_display(myInput);
 

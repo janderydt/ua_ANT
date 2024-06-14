@@ -9,7 +9,7 @@ if ~exist(UserVar.Table,"file")
 end
 UserVar.type = "Inverse";
 
-RunTable = ANT_ReadWritetable(UserVar,[],'read');
+RunTable = ANT_ReadWritetable(UserVar,UserVar.Table,[],'read');
 
 for ind=1:size(X,1)
 
@@ -28,8 +28,8 @@ for ind=1:size(X,1)
         if ind == 1
             UserVar2.type = "Inverse";
             UserVar2.home = pwd; 
-            UserVar2.Table = "RunTable_FixPoint.csv";
-            RunTable_FixPoint = ANT_ReadWritetable(UserVar2,[],'read');
+            UserVar2.Table = "RunTable_sauron_FixPoint.csv";
+            RunTable_FixPoint = ANT_ReadWritetable(UserVar2,UserVar2.Table,[],'read');
             % scan table for ExpID, m and n
             ExpID_FixPoint = RunTable_FixPoint{:,'ExpID'};
             m_FixPoint = RunTable_FixPoint{:,'m'};
@@ -88,5 +88,5 @@ for ind=1:size(X,1)
     RunTable = [RunTable; Newrow];
 
 end
-
-[~] = ANT_ReadWritetable(UserVar,RunTable,'write');
+RunTable
+[~] = ANT_ReadWritetable(UserVar,UserVar.Table,RunTable,'write');

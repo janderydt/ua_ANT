@@ -29,7 +29,16 @@ UserVar.fid = fid;
 
 %% deal with inputs
 
-if nargin==3
+if nargin==1
+    ua_config = string(ua_config);
+    pgid=[];
+    type=[];
+elseif nargin==2
+    ua_config = string(ua_config);
+    if ischar(pgid)
+        pgid = str2double(pgid);
+    end    
+elseif nargin==3
     % ensure correct format
     ua_config = string(ua_config);
     if ischar(pgid)
@@ -38,10 +47,6 @@ if nargin==3
     if ischar(type)
         type = string(type);
     end
-elseif nargin==1
-    ua_config = string(ua_config);
-    pgid=[];
-    type=[];
 else
     error("You need to either provide a config file or pgid and type. Instead got none.");
 end
@@ -88,7 +93,7 @@ else
     walltime = 31557600; % set to some large number
     walltime_remaining = walltime;
     runtable = UserVar.home+"/RunTable_"+UserVar.hostname+".csv";
-    idrange = [1000 1999];
+    idrange = [0 999];
 end
 
 %% check that all inputs are now available
@@ -114,6 +119,7 @@ end
 
 %% launch jobs
 % initialize some variables
+UserVar.configfile = ua_config;
 UserVar.casefolder = UserVar.home + "/cases/";
 UserVar.datafolder = UserVar.home + "/../ANT_Data/";
 UserVar.Restart = 0;

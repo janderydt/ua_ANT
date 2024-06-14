@@ -17,6 +17,7 @@ run_ua_archer2_*.sh
 Ua
 datetime
 logging
+ua_submitted
 
 #ignore all hidden files
 .*

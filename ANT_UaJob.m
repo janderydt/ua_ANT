@@ -37,7 +37,7 @@ UserVar.Error=0;
 
 try
     
-    fid = fopen( UserVar.home+"/ua_submitted", 'wt' );
+    fid = fopen( UserVar.home+"/"+string(UserVar.pgid)+"_ua_submitted", 'wt' );
     fclose(fid);
 
     UserVar = Ua2D(UserVar);   

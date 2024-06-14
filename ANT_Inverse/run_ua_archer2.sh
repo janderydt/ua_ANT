@@ -50,9 +50,6 @@ nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 # start timer
 timestart=`date +%s`
 
-# remove any unwanted files from previous run
-rm -f rw_active
-
 # make local copy of runtable
 python copy_runtable.py $UA_CONFIG
 
@@ -76,13 +73,16 @@ do
         --exact --mem-per-cpu=1500M --output /dev/null \
         --error stderr_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR $UA_CONFIG &
 
+        JOBID=$SLURM_JOB_ID
+        echo $JOBID
+
         # pause until ua job has been submitted
         submitted=0
         while [ $submitted -eq 0 ]
 	do 
-	    if [ -e ua_submitted ] ; then
+	    if [ -e ${JOBID}_ua_submitted ] ; then
                 submitted=1
-		rm -f ua_submitted
+		rm -f ${JOBID}_ua_submitted
 	        sleep 5 
 	    else
  		sleep 1
