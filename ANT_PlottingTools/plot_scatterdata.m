@@ -4,8 +4,8 @@ variable_to_plot = 'misfit'; %options: qGL, niter, misfit
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_1.csv";
-UserVar.idrange = [2000,2999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_2.csv";
+UserVar.idrange = [3000,3999];
 
 addpath("/mnt/md0/Ua/cases/ANT/");
 

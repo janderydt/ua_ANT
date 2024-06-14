@@ -38,6 +38,7 @@ elseif nargin==2
     if ischar(pgid)
         pgid = str2double(pgid);
     end    
+    type=[];
 elseif nargin==3
     % ensure correct format
     ua_config = string(ua_config);
