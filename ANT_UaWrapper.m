@@ -420,6 +420,8 @@ if ~isempty(Inew)
 
 else
 
+    fid = fopen( UserVar.home+"/"+string(UserVar.pgid)+"_job_submitted", 'wt' );
+    fclose(fid);
     fprintf(fid,"   ...ANT_UaWrapper: Nothing to do. Try again later.\n");
     quit;
 

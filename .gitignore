@@ -8,7 +8,7 @@
 *.png
 *.tif 
 *.nc
-*.csv
+*.csv*
 !RunTable_example.csv
 !RunTable_ANT_Inverse_9999.csv
 *.tmp

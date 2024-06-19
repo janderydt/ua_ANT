@@ -1,6 +1,6 @@
 function plot_scatterdata
 
-variable_to_plot = 'misfit'; %options: qGL, niter, misfit
+variable_to_plot = 'qGL'; %options: qGL, niter, misfit
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";

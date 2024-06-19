@@ -80,9 +80,9 @@ do
         submitted=0
         while [ $submitted -eq 0 ]
 	do 
-	    if [ -e ${JOBID}_ua_submitted ] ; then
+	    if [ -e ${JOBID}_job_submitted ] ; then
                 submitted=1
-		rm -f ${JOBID}_ua_submitted
+		rm -f ${JOBID}_job_submitted
 	        sleep 5 
 	    else
  		sleep 1
