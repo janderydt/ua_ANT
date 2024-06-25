@@ -106,7 +106,7 @@ currenttime=`date +%Y%m%d-%H%M%S`
 timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
 EJ=$(sacct -j ${JOBID}  --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
 exit=$(sacct -j ${JOBID}  --format=Exitcode 2>&1 | sed -n 3p) # exit code
-
+ex
 # Write information to jobs_master_ARCHER2.log
 echo ------------------------------------------------------ >> jobs_master_ARCHER2.log
 echo "$currenttime": ENDING "$0", JobID: "$JOBID", Exit code: "$exit" >> jobs_master_ARCHER2.log
