@@ -178,24 +178,22 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
             fprintf(CtrlVar.fidlog,['Simulation stopped due to walltime constraints. Done %s iterations instead of %s. ',...
         		'Writing restart file.\n'],num2str(IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));         
             UserVar.Restart = 1;
-            UserVar.Finished = 0;
             UserVar.Error = 0;            
         else
     		fprintf(CtrlVar.fidlog,['Simulation did not reach expected number of iterations. Done %s instead of %s. ',...
         		'Writing restart file and breaking out.\n'],num2str(IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
             UserVar.Restart = 0;
-            UserVar.Finished = 0;
             UserVar.Error = 1;
-
         end     
-        UserVar.Breakout = 1;
+        
     else
         fprintf(CtrlVar.fidlog,'Simulation reached expected number of %s iterations.\n',num2str(IterationsDoneInThisRun));
+        UserVar.Restart = 0;
         UserVar.Error = 0;
     end
-    
-    %delete(UserVar.Inverse.T);
-    %rmappdata(0,'FMINCONstopFlag');
+    UserVar.Finished = 0;
+    UserVar.Breakout = 1;
+
     WriteAdjointRestartFile(UserVar,CtrlVar,MUA,BCs,F,F.GF,l,RunInfo,InvStartValues,Priors,Meas,BCsAdjoint,InvFinalValues);
     NameOfRestartOutputFile = erase(CtrlVar.Inverse.NameOfRestartOutputFile,".mat")+"_InverseCycle"+string(UserVar.Inverse.Cycle)+".mat";
     copyfile(CtrlVar.Inverse.NameOfRestartOutputFile,NameOfRestartOutputFile);

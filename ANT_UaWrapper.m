@@ -19,16 +19,9 @@ if ~contains(UserVar.hostname,"ARCHER2")
     addpath(getenv("froot_tools"));
 end
 
-%% initialize log file
 UserVar.home = pwd+"/";
 
-logfile = UserVar.home+"/jobs_master_"+UserVar.hostname+".log";
-fid = fopen(logfile,'a+');
-
-UserVar.fid = fid;
-
 %% deal with inputs
-
 if nargin==1
     ua_config = string(ua_config);
     pgid=[];
@@ -94,7 +87,7 @@ else
     walltime = 31557600; % set to some large number
     walltime_remaining = walltime;
     runtable = UserVar.home+"/RunTable_"+UserVar.hostname+".csv";
-    idrange = [0 999];
+    idrange = [1 999];
 end
 
 %% check that all inputs are now available
@@ -110,6 +103,11 @@ else
     UserVar.runtable_global = runtable;
     UserVar.idrange = idrange;
 end
+
+%% initialize global log file
+logfile = UserVar.home+"/jobs_master_"+UserVar.hostname+".log";
+fid = fopen(logfile,'a+');
+UserVar.fid_masterlog = fid;
 
 %% read run table
 RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
@@ -138,27 +136,20 @@ if ~isempty(Iexisting)
         UserVar.Domain = RunTable{ind,'Domain'};
         UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(RunTable{ind,'ExpID'})];
         UserVar.ExpID = RunTable{ind,'ExpID'};
-    
-        % check if submitted but not running
-        % indsnr = RunTable{ind,'Submitted'}~=0 & RunTable{ind,'Running'}==0;
+
+        % initialize experiment log file
+        logfile = UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+string(UserVar.Experiment)+".log";
+        fid = fopen(logfile,'a+');
+        UserVar.fid_experimentlog = fid;
 
         % check if not submitted, not running, not finished
         indnsnr = RunTable{ind,'Submitted'}==0 & RunTable{ind,'Running'}==0 & RunTable{ind,'Finished'}==0;
-    
-        % something wrong?
-        % if indsnr
-        %     fprintf(fid,"   ...ANT_UaWrapper: ExpID %s has been submitted, but corresponding jobID has not " + ...
-        %         "been found. Either something went wrong, or the run has " + ...
-        %         "finished. Check log files for errors.\n",string(RunTable{indsnr,'ExpID'}));
-        %     error('');
-        % end
-
         
         if indnsnr
 
-            fprintf(fid,'============================\n');
-            fprintf(fid,string(datetime("now"))+"\n");    
-            fprintf(fid,"> ANT_UaWrapper: ExpID %s has been not yet been submitted. Let's check if a " + ...
+            fprintf(UserVar.fid_experimentlog,'============================\n');
+            fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");    
+            fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: ExpID %s has been not yet been submitted. Let's check if a " + ...
                 "restart is required...",string(RunTable{ind,'ExpID'}));
 
             % initialze some variables
@@ -169,11 +160,11 @@ if ~isempty(Iexisting)
             % new run or restart?
             if RunTable{ind,'Restart'}==1
                 UserVar.Restart = 1;
-                fprintf(fid,"yes.\n");
-                fprintf(fid,"> ANT_UaWrapper: Restarting ExpID %s...\n",string(RunTable{ind,'ExpID'}));
+                fprintf(UserVar.fid_experimentlog,"yes.\n");
+                fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: Restarting ExpID %s...\n",string(RunTable{ind,'ExpID'}));
             else
                 UserVar.Restart = 0;
-                fprintf(fid,"no.\n");
+                fprintf(UserVar.fid_experimentlog,"no.\n");
             end
 
             % now gather run info and launch job
@@ -213,13 +204,13 @@ if ~isempty(Iexisting)
                         while (UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Breakout)
 
                             if contains(UserVar.hostname,"ARCHER2")
-                                nit = 10000;
+                                nit = 100000;
                             else
                                 nit = 5000;
                             end
         
                             UserVar.TargetIterations = min(nit,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
-                            fprintf(UserVar.fid,"> ANT_UaWrapper: Doing %s iterations or as many as walltime allows.\n",string(UserVar.TargetIterations));
+                            fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: Doing %s iterations or as many as walltime allows.\n",string(UserVar.TargetIterations));
     
                             UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
@@ -234,13 +225,13 @@ if ~isempty(Iexisting)
 
                         it_tmp = cumsum(UserVar.Inverse.Iterations);
 
-                        fprintf(fid,'============================\n');
-                        fprintf(fid,string(datetime("now"))+"\n");                     
+                        fprintf(UserVar.fid_experimentlog,'============================\n');
+                        fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");                     
                         if UserVar.Restart
-                            fprintf(UserVar.fid,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s due to walltime constraints. Done %s iterations out of %s.\n",...
+                            fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s due to walltime constraints. Done %s iterations out of %s.\n",...
                             UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
                         else
-                            fprintf(UserVar.fid,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
+                            fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
                             UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
                         end
     
@@ -256,9 +247,9 @@ if ~isempty(Iexisting)
 
                         [~] = ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable,'write');
 
-                        fprintf(fid,'============================\n');
-                        fprintf(fid,string(datetime("now"))+"\n");                        
-                        fprintf(UserVar.fid,"> ANT_UaWrapper: %s: End spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
+                        fprintf(UserVar.fid_experimentlog,'============================\n');
+                        fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");                        
+                        fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: %s: End spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
     
                     end
 
@@ -287,7 +278,7 @@ else
     if ~isempty(RunTable)
         Inew = find(RunTable{:,'ExpID'}==0);
     else
-        fprintf(fid,"Empty RunTable - stop job and quit./n");
+        fprintf(UserVar.fid_masterlog,"Empty RunTable - stop job and quit./n");
         quit;
     end
 end
@@ -319,8 +310,8 @@ if ~isempty(Inew)
 
     % make copy of master folder for new experiment
     % if new folder already exists: rename first
-    sourcefolder = ['./ANT_',char(type),'_9999/'];
-    newfolder = [char(UserVar.casefolder),'./',char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
+    sourcefolder = [char(UserVar.home),'/ANT_',char(type),'_9999/'];
+    newfolder = [char(UserVar.casefolder),'/',char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
     if exist(newfolder,"dir") == 7
         movefile(newfolder,[newfolder,'_old/']);
     else
@@ -329,8 +320,13 @@ if ~isempty(Inew)
     % rename RunTable file
     movefile(newfolder+"/RunTable_ANT_Inverse_9999.csv",UserVar.runtable_exp);
 
-    fprintf(fid,'============================\n');
-    fprintf(fid,string(datetime("now"))+"\n");    
+    % initialize experiment log file
+    logfile = UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+string(UserVar.Experiment)+".log";
+    fid = fopen(logfile,'a+');
+    UserVar.fid_experimentlog = fid;
+
+    fprintf(UserVar.fid_experimentlog,'============================\n');
+    fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");    
     
     % now gather run info
     if type=="Diagnostic"
@@ -369,7 +365,7 @@ if ~isempty(Inew)
                     end
 
                     UserVar.TargetIterations = min(nit,it_tmp(UserVar.Inverse.Cycle)-UserVar.Inverse.IterationsDone);
-                    fprintf(UserVar.fid,"> ANT_UaWrapper: Doing %s iterations or as many as walltime allows.\n",string(UserVar.TargetIterations));
+                    fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: Doing %s iterations or as many as walltime allows.\n",string(UserVar.TargetIterations));
     
                     UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
@@ -384,13 +380,13 @@ if ~isempty(Inew)
 
                 it_tmp = cumsum(UserVar.Inverse.Iterations);
 
-                fprintf(fid,'============================\n');
-                fprintf(fid,string(datetime("now"))+"\n");                     
+                fprintf(UserVar.fid_experimentlog,'============================\n');
+                fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");                     
                 if UserVar.Restart
-                    fprintf(UserVar.fid,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s due to walltime constraints. Done %s iterations out of %s.\n",...
+                    fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s due to walltime constraints. Done %s iterations out of %s.\n",...
                     UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
                 else
-                    fprintf(UserVar.fid,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
+                    fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: %s: Breaking out of inverse cycle %s. Done %s iterations out of %s.\n",...
                     UserVar.Experiment,string(UserVar.Inverse.Cycle),string(UserVar.Inverse.IterationsDone),string(it_tmp(end)));
                 end
     
@@ -405,9 +401,9 @@ if ~isempty(Inew)
                 RunTable{ind,"SpinupYearsDone"} = UserVar.Spinup.YearsDone;   
                 [~] = ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable,'write');
 
-                fprintf(fid,'============================\n');
-                fprintf(fid,string(datetime("now"))+"\n");                
-                fprintf(UserVar.fid,"> ANT_UaWrapper: %s: Breaking out of spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
+                fprintf(UserVar.fid_experimentlog,'============================\n');
+                fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");                
+                fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: %s: Breaking out of spinup cycle %s.\n",UserVar.Experiment,string(UserVar.Spinup.Cycle));
     
             end
 
@@ -420,10 +416,13 @@ if ~isempty(Inew)
 
 else
 
-    fid = fopen( UserVar.home+"/"+string(UserVar.pgid)+"_job_submitted", 'wt' );
-    fclose(fid);
-    fprintf(fid,"   ...ANT_UaWrapper: Nothing to do. Try again later.\n");
+    fid2 = fopen( UserVar.home+"/"+string(UserVar.pgid)+"_job_submitted", 'wt' );
+    fclose(fid2);
+    fprintf(UserVar.fid_masterlog,"   ...ANT_UaWrapper: Nothing to do. Try again later.\n");
     quit;
 
 end
+
+% At the end always exit matlab to avoid rogue jobs
+quit;
 

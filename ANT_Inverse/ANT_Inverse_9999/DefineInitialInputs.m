@@ -134,7 +134,7 @@ if UserVar.InverseCycle
     t0 = tic(); 
     start(T); %start the timer
     remainingTime = round(UserVar.walltime_remaining-toc(t0));
-    fprintf(UserVar.fid,"> At %s: remaining time on wallclock timer is %ss. Fmincon will be stopped when this time has been exceeded.\n",string(datetime("now")),num2str(remainingTime));
+    fprintf(UserVar.fid_experimentlog,"> At %s: remaining time on wallclock timer is %ss. Fmincon will be stopped when this time has been exceeded.\n",string(datetime("now")),num2str(remainingTime));
 
 end
 

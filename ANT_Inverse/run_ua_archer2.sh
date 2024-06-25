@@ -23,6 +23,9 @@ export PYTHONPATH=$PWD:$CASEDIR:$PYTHONPATH
 # Make MCR available
 MCR=$WORK/MCR_2023b/R2023b/
 
+# Shorter variable name
+JOBID=$SLURM_JOB_ID
+
 # Make sure MCR cache (as defined in Ua_MCR.sh) exists
 # If you want the cache in a different location, modify it here AND in ua_run/Ua_MCR.sh
 if [ ! -d $WORK/mcr_cache ]; then
@@ -46,6 +49,12 @@ export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 #   ensure the subjobs are placed on the correct node. e.g. this converts
 #   "nid[001234,002345]" to "nid001234 nid002345"
 nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
+
+# Write information to jobs_master_ARCHER2.log
+currenttime=`date +%Y%m%d-%H%M%S`
+echo ------------------------------------------------------ >> jobs_master_ARCHER2.log
+echo "$currenttime": STARTING "$0", JobID: "$JOBID" >> jobs_master_ARCHER2.log
+echo ------------------------------------------------------ >> jobs_master_ARCHER2.log
 
 # start timer
 timestart=`date +%s`
@@ -71,10 +80,7 @@ do
         # recommend that you specify `--mem=1500M` (1,500 MiB).
         srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
         --exact --mem-per-cpu=1500M --output /dev/null \
-        --error stderr_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR $UA_CONFIG &
-
-        JOBID=$SLURM_JOB_ID
-        echo $JOBID
+        --error stderr_jobid${JOBID}_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR $UA_CONFIG 
 
         # pause until ua job has been submitted
         submitted=0
@@ -95,8 +101,25 @@ done
 # Wait for all subjobs to finish
 wait
 
+# gather information about job
+currenttime=`date +%Y%m%d-%H%M%S`
+timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
+EJ=$(sacct -j ${JOBID}  --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
+exit=$(sacct -j ${JOBID}  --format=Exitcode 2>&1 | sed -n 3p) # exit code
+
+# Write information to jobs_master_ARCHER2.log
+echo ------------------------------------------------------ >> jobs_master_ARCHER2.log
+echo "$currenttime": ENDING "$0", JobID: "$JOBID", Exit code: "$exit" >> jobs_master_ARCHER2.log
+echo Time elapsed: "$timeelapsed" >> jobs_master_ARCHER2.log
+echo Consumed Energy J: "$EJ" >> jobs_master_ARCHER2.log
+echo ------------------------------------------------------ >> jobs_master_ARCHER2.log
+
 # Update global RunTable
 python update_runtable.py $UA_CONFIG
+
+# Clean up
+rm $(JOB_ID)_job_submitted
+find . -maxdepth 1 -name 'stderr_jobid${JOBID}*.out' -size 0 | xargs rm -rf
 
 # Relaunch script
 THISSCRIPT=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/Command=/{print $2}')

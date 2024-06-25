@@ -43,10 +43,10 @@ try
     UserVar = Ua2D(UserVar);   
     
 catch ME
-    fprintf(UserVar.fid,'============================\n');
-    fprintf(UserVar.fid,string(datetime("now"))+"\n");
-    fprintf(UserVar.fid,'============================\n');
-    fprintf(UserVar.fid,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
+    fprintf(UserVar.fid_experimentlog,'============================\n');
+    fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");
+    fprintf(UserVar.fid_experimentlog,'============================\n');
+    fprintf(UserVar.fid_experimentlog,'An error occurred in the execution of ExpID %s.\n',string(UserVar.ExpID));
 
     UserVar.Breakout = 1;
     UserVar.Error = 1;
