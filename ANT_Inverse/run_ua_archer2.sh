@@ -2,7 +2,7 @@
 # Slurm job options (job-name, compute nodes, job time)
 #SBATCH --job-name=ANT_uaconfig
 #SBATCH --time=24:00:00
-#SBATCH --nodes=4
+#SBATCH --nodes=6
 #SBATCH --ntasks-per-node=30
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
@@ -51,13 +51,14 @@ export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 
 # Write information to jobs_master_ARCHER2.log
-currenttime=`date +%Y%m%d-%H%M%S`
-echo ------------------------------------------------------ >> jobs_master_ARCHER2.log
-echo "$currenttime": STARTING "$0", JobID: "$JOBID" >> jobs_master_ARCHER2.log
-echo ------------------------------------------------------ >> jobs_master_ARCHER2.log
+currenttime=$(date +"%d-%m-%Y %H:%M:%S")
+jobname=$(sacct -j ${SLURM_JOB_ID}  --format=Jobname%15 2>&1 | sed -n 3p) 
+echo ------------------------------------------------------------------------------ >> jobs_master_ARCHER2.log
+echo "$currenttime || STARTING $jobname (Config file $UA_CONFIG, JobID $SLURM_JOB_ID)" >> jobs_master_ARCHER2.log
+echo ------------------------------------------------------------------------------ >> jobs_master_ARCHER2.log
 
 # start timer
-timestart=`date +%s`
+timestart=$(date +"%s")
 
 # make local copy of runtable
 python copy_runtable.py $UA_CONFIG
@@ -69,8 +70,8 @@ do
     for i in $(seq 1 30)
     do
         # update remaining walltime in config file
-        timenow=`date +%s`
-	seconds_expired=$(expr "$timenow" - "$timestart")
+	timenow=$(date +"%s")
+	seconds_expired=$(expr $timenow - $timestart)
 	python update_walltime.py $UA_CONFIG ${seconds_expired}
 
         # Launch subjob overriding job settings as required and in the background
@@ -80,7 +81,7 @@ do
         # recommend that you specify `--mem=1500M` (1,500 MiB).
         srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
         --exact --mem-per-cpu=1500M --output /dev/null \
-        --error stderr_jobid${JOBID}_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR $UA_CONFIG 
+        --error stderr_jobid${JOBID}_node${nodeid}_job${i}.out ./Ua_MCR.sh $MCR $UA_CONFIG & 
 
         # pause until ua job has been submitted
         submitted=0
@@ -92,7 +93,6 @@ do
 	        sleep 5 
 	    else
  		sleep 1
-
             fi
         done
     done
@@ -102,17 +102,17 @@ done
 wait
 
 # gather information about job
-currenttime=`date +%Y%m%d-%H%M%S`
+currenttime=$(date +"%d-%m-%Y %H:%M:%S")
 timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
 EJ=$(sacct -j ${JOBID}  --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
 exit=$(sacct -j ${JOBID}  --format=Exitcode 2>&1 | sed -n 3p) # exit code
 ex
 # Write information to jobs_master_ARCHER2.log
-echo ------------------------------------------------------ >> jobs_master_ARCHER2.log
-echo "$currenttime": ENDING "$0", JobID: "$JOBID", Exit code: "$exit" >> jobs_master_ARCHER2.log
-echo Time elapsed: "$timeelapsed" >> jobs_master_ARCHER2.log
-echo Consumed Energy J: "$EJ" >> jobs_master_ARCHER2.log
-echo ------------------------------------------------------ >> jobs_master_ARCHER2.log
+echo -------------------------------------------------------------------------------------------------- >> jobs_master_ARCHER2.log
+echo "$currenttime || ENDING $jobname (Config file $UA_CONFIG, JobID $SLURM_JOB_ID) || Exit code $exit" >> jobs_master_ARCHER2.log
+echo "Time elapsed: $timeelapsed" >> jobs_master_ARCHER2.log
+echo "Energy Consumption [J]: $EJ" >> jobs_master_ARCHER2.log
+echo -------------------------------------------------------------------------------------------------- >> jobs_master_ARCHER2.log
 
 # Update global RunTable
 python update_runtable.py $UA_CONFIG

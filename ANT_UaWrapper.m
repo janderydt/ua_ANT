@@ -418,8 +418,7 @@ else
 
     fid2 = fopen( UserVar.home+"/"+string(UserVar.pgid)+"_job_submitted", 'wt' );
     fclose(fid2);
-    fprintf(UserVar.fid_masterlog,"   ...ANT_UaWrapper: Nothing to do. Try again later.\n");
-    quit;
+    %fprintf(UserVar.fid_masterlog,"   ...ANT_UaWrapper: Nothing to do. Try again later.\n");
 
 end
 
