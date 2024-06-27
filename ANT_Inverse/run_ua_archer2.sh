@@ -51,7 +51,7 @@ export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 
 # Write information to jobs_master_ARCHER2.log
-currenttime=$(date +"%d-%m-%Y %H:%M:%S")
+currenttime=$(date +"%d-%b-%Y %H:%M:%S")
 jobname=$(sacct -j ${SLURM_JOB_ID}  --format=Jobname%15 2>&1 | sed -n 3p) 
 echo "$currenttime || STARTING $jobname (Config file $UA_CONFIG, JobID $SLURM_JOB_ID)" >> jobs_master_ARCHER2.log
 echo " " >> jobs_master_ARCHER2.log
@@ -101,7 +101,7 @@ done
 wait
 
 # gather information about job
-currenttime=$(date +"%d-%m-%Y %H:%M:%S")
+currenttime=$(date +"%d-%b-%Y %H:%M:%S")
 timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
 EJ=$(sacct -j ${JOBID}  --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
 exitcode=$(sacct -j ${JOBID}  --format=Exitcode 2>&1 | sed -n 3p) # exit code
