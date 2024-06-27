@@ -3,7 +3,7 @@
 #SBATCH --job-name=ANT_uaconfig
 #SBATCH --time=24:00:00
 #SBATCH --nodes=6
-#SBATCH --ntasks-per-node=30
+#SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
 #SBATCH --distribution=block:block
@@ -52,8 +52,8 @@ nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 
 # Write information to jobs_master_ARCHER2.log
 currenttime=$(date +"%d-%b-%Y %H:%M:%S")
-jobname=$(sacct -j ${SLURM_JOB_ID}  --format=Jobname%15 2>&1 | sed -n 3p) 
-echo "$currenttime || STARTING $jobname (Config file $UA_CONFIG, JobID $SLURM_JOB_ID)" >> jobs_master_ARCHER2.log
+jobname=$(sacct -j ${JOBID} --format=Jobname%15 2>&1 | sed -n 3p) 
+echo "${currenttime} || STARTING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
 echo " " >> jobs_master_ARCHER2.log
 
 # start timer
@@ -103,7 +103,7 @@ wait
 # gather information about job
 currenttime=$(date +"%d-%b-%Y %H:%M:%S")
 timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
-EJ=$(sacct -j ${JOBID}  --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
+EJ=$(sacct -j ${JOBID}  --format=ConsumedEnergy 2>&1 | sed -n 5p) # energy usage
 exitcode=$(sacct -j ${JOBID}  --format=Exitcode 2>&1 | sed -n 3p) # exit code
 
 # Write information to jobs_master_ARCHER2.log
