@@ -10,7 +10,7 @@ if UserVar.SpinupCycle
     
     if isempty(Fsmb_RACMO_climatology)
     
-        load("../../ANT_Data/ANT_Interpolants/ScatteredInterpolants_SMB.mat","Fsmb_RACMO");
+        load(UserVar.datafolder+"ANT_Interpolants/ScatteredInterpolants_SMB.mat","Fsmb_RACMO");
         
         % RACMO climatology between 2000 and 2018
         Istart = find(contains(string(Fsmb_RACMO.years),"2000"));
@@ -46,7 +46,7 @@ if UserVar.SpinupCycle
 
         ab = 0*x; % ab can be zero because we keep ice shelf thickness fixed as boundary condition
 
-        dhdt_filename = "../../ANT_Data/ANT_Interpolants/dhdt_"+string(UserVar.Geometry)+"_"+string(UserVar.Geometry+1)+".mat";
+        dhdt_filename = UserVar.datafolder+"/ANT_Interpolants/dhdt_"+string(UserVar.Geometry)+"_"+string(UserVar.Geometry+1)+".mat";
 
         if exist(dhdt_filename,"file")==2
 
