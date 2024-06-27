@@ -53,9 +53,8 @@ nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 # Write information to jobs_master_ARCHER2.log
 currenttime=$(date +"%d-%m-%Y %H:%M:%S")
 jobname=$(sacct -j ${SLURM_JOB_ID}  --format=Jobname%15 2>&1 | sed -n 3p) 
-echo ------------------------------------------------------------------------------ >> jobs_master_ARCHER2.log
 echo "$currenttime || STARTING $jobname (Config file $UA_CONFIG, JobID $SLURM_JOB_ID)" >> jobs_master_ARCHER2.log
-echo ------------------------------------------------------------------------------ >> jobs_master_ARCHER2.log
+echo " " >> jobs_master_ARCHER2.log
 
 # start timer
 timestart=$(date +"%s")
@@ -105,14 +104,13 @@ wait
 currenttime=$(date +"%d-%m-%Y %H:%M:%S")
 timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
 EJ=$(sacct -j ${JOBID}  --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
-exit=$(sacct -j ${JOBID}  --format=Exitcode 2>&1 | sed -n 3p) # exit code
-ex
+exitcode=$(sacct -j ${JOBID}  --format=Exitcode 2>&1 | sed -n 3p) # exit code
+
 # Write information to jobs_master_ARCHER2.log
-echo -------------------------------------------------------------------------------------------------- >> jobs_master_ARCHER2.log
-echo "$currenttime || ENDING $jobname (Config file $UA_CONFIG, JobID $SLURM_JOB_ID) || Exit code $exit" >> jobs_master_ARCHER2.log
+echo "$currenttime || ENDING $jobname (Config file $UA_CONFIG, JobID $SLURM_JOB_ID) || Exit code $exitcode" >> jobs_master_ARCHER2.log
 echo "Time elapsed: $timeelapsed" >> jobs_master_ARCHER2.log
 echo "Energy Consumption [J]: $EJ" >> jobs_master_ARCHER2.log
-echo -------------------------------------------------------------------------------------------------- >> jobs_master_ARCHER2.log
+echo " " >> jobs_master_ARCHER2.log
 
 # Update global RunTable
 python update_runtable.py $UA_CONFIG
