@@ -1,11 +1,11 @@
 function plot_scatterdata
 
-variable_to_plot = 'qGL'; %options: qGL, niter, misfit
+variable_to_plot = 'misfit'; %options: qGL, niter, misfit
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_2.csv";
-UserVar.idrange = [3000,3999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_3.csv";
+UserVar.idrange = [4000,4999];
 
 addpath("/mnt/md0/Ua/cases/ANT/");
 

@@ -5,7 +5,7 @@ copyfile("./ANT_"+UserVar.type+"_9999/*.m",UserVar.casefolder+"/"+UserVar.Experi
 
 %% check if experiment runtable exists, otherwise, create a new one
 if ~isfile(UserVar.runtable_exp)
-    copyfile("./ANT_Inverse_9999/RunTable_ANT_Inverse_9999.csv",UserVar.runtable_exp);
+    copyfile("./ANT_"+UserVar.type+"_9999/RunTable_ANT_"+UserVar.type+"_9999.csv",UserVar.runtable_exp);
 end
 
 %% log changes in tables

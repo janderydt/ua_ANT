@@ -4,10 +4,10 @@ function UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar)
 %% ICE SHELF
 UserVar.ISGeometry = RunTable{ind,"ISthick"}; % this is the geometry BEFORE the perturbation
 if ismember(UserVar.ISGeometry,[2000,2009,2014,2018])
-    UserVar.ISGeometryInterpolants = [pwd,'../../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-',num2str(UserVar.ISGeometry),'_EXTRUDED.mat'];
+    UserVar.ISGeometryInterpolants = UserVar.datafolder+"ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+string(UserVar.ISGeometry)+"_EXTRUDED.mat";
 elseif floor(UserVar.ISGeometry/1e3)==1
-    NameOfFiletoRead = "../ANT_Inverse/ANT_Inverse_"+string(UserVar.ISGeometry)+...
-        "/ANT_Inverse_"+string(UserVar.ISGeometry)+"-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleIS"})+".mat";
+    NameOfFiletoRead = "../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.ISGeometry)+...
+        "/"+UserVar.Domain+"_Inverse_"+string(UserVar.ISGeometry)+"-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleIS"})+".mat";
     load(NameOfFiletoRead,"F","MUA");
     FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
     Fb = FB; Fb.Values = F.b;
@@ -16,7 +16,7 @@ elseif floor(UserVar.ISGeometry/1e3)==1
     UserVar.ISGeometryInterpolants = "GeometryInterpolantsIS.mat";
     save("./"+UserVar.Experiment+"/"+UserVar.ISGeometryInterpolants,"FB","Fb","Fs","Frho");
 else
-    error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise ISthick flag in RunTable.']);
+    error("ExpID "+RunTable{ind,"ExpID"}+": Do not recognise ISthick flag in RunTable.");
 end
 
 %% GROUNDED ICE

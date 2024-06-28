@@ -27,6 +27,7 @@ __pycache__/
 __init__.py
 
 #ignore specific case folders, only track master folder
+ANT_Diagnostic/cases/*
 ANT_Inverse/cases/*
 !ANT_Inverse/cases/README.md
 ANT_Inverse_tmp/
