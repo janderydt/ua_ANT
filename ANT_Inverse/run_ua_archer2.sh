@@ -107,18 +107,19 @@ EJ=$(sacct -j ${JOBID}  --format=ConsumedEnergy 2>&1 | sed -n 5p) # energy usage
 exitcode=$(sacct -j ${JOBID}  --format=Exitcode 2>&1 | sed -n 3p) # exit code
 
 # Write information to jobs_master_ARCHER2.log
-echo "$currenttime || ENDING $jobname (Config file $UA_CONFIG, JobID $SLURM_JOB_ID) || Exit code $exitcode" >> jobs_master_ARCHER2.log
-echo "Time elapsed: $timeelapsed" >> jobs_master_ARCHER2.log
-echo "Energy Consumption [J]: $EJ" >> jobs_master_ARCHER2.log
+echo "${currenttime} || ENDING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
+echo " > Exit code: ${exitcode}" >> jobs_master_ARCHER2.log
+echo " > Time elapsed: ${timeelapsed}" >> jobs_master_ARCHER2.log
+echo " > Energy Consumption [J]: ${EJ}" >> jobs_master_ARCHER2.log
 echo " " >> jobs_master_ARCHER2.log
 
 # Update global RunTable
 python update_runtable.py $UA_CONFIG
 
 # Clean up
-rm $(JOB_ID)_job_submitted
-find . -maxdepth 1 -name 'stderr_jobid${JOBID}*.out' -size 0 | xargs rm -rf
+rm ${JOB_ID}_job_submitted
+find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -size 0 | xargs rm -rf
 
 # Relaunch script
-THISSCRIPT=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/Command=/{print $2}')
+THISSCRIPT=$(scontrol show job "${SLURM_JOB_ID}" | awk -F= '/Command=/{print $2}')
 python -c "from utils import submit_job; submit_job(budget_code='$ACC',sbatch_script='$THISSCRIPT',input_var=['UA_CONFIG=$UA_CONFIG','ACC=$ACC'])"
