@@ -29,6 +29,21 @@ elseif UserVar.Finished==0 && UserVar.Restart==1
     fprintf(UserVar.fid_experimentlog,'> ANT_CleanUp: ExpID %s RESTART REQUIRED.\n',string(UserVar.ExpID));
     fprintf(UserVar.fid_experimentlog,'============================\n');
 
+elseif UserVar.Finished==0 && UserVar.Restart=0 && UserVar.Error==0
+	
+    RunTable{ind,"Submitted"} = 0;
+    RunTable{ind,"Running"} = 0;
+    RunTable{ind,"Finished"} = 0;
+    RunTable{ind,"Restart"} = 0;
+    RunTable{ind,"FinishedTime"}(:) = string(datetime("now"));
+
+    if UserVar.InverseCycle==1
+	    fprintf(UserVar.fid_experimentlog,'> ANT_CleanUp: ExpID %s FINISHED INVERSE CYCLE.\n',string(UserVar.ExpID));
+    else
+            fprintf(UserVar.fid_experimentlog,'> ANT_CleanUp: ExpID %s FINISHED SPINUP CYCLE.\n',string(UserVar.ExpID));
+    end
+    fprintf(UserVar.fid_experimentlog,'============================\n');
+
 elseif UserVar.Error==1
 
     RunTable{ind,"Running"} = 0;
@@ -40,7 +55,7 @@ elseif UserVar.Error==1
 
 else
 
-    error("ANT_Cleanup: unknown case");
+    error("ANT_Cleanup ExpID "+string(UsserVar.ExpID)+": unknown case");
     
 end
 
