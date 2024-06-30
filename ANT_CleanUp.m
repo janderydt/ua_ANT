@@ -29,7 +29,7 @@ elseif UserVar.Finished==0 && UserVar.Restart==1
     fprintf(UserVar.fid_experimentlog,'> ANT_CleanUp: ExpID %s RESTART REQUIRED.\n',string(UserVar.ExpID));
     fprintf(UserVar.fid_experimentlog,'============================\n');
 
-elseif UserVar.Finished==0 && UserVar.Restart=0 && UserVar.Error==0
+elseif UserVar.Finished==0 && UserVar.Restart==0 && UserVar.Error==0
 	
     RunTable{ind,"Submitted"} = 0;
     RunTable{ind,"Running"} = 0;

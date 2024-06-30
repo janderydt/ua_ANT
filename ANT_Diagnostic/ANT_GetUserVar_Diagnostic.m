@@ -3,7 +3,7 @@ function UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar)
 %% target geometry interpolants
 %% ICE SHELF
 UserVar.ISGeometry = RunTable{ind,"ISthick"}; % this is the geometry BEFORE the perturbation
-if ismember(UserVar.ISGeometry,[2000,2009,2014,2018])
+if ismember(UserVar.ISGeometry,["01062000","01062009","01062014","01062018"])
     UserVar.ISGeometryInterpolants = UserVar.datafolder+"ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+string(UserVar.ISGeometry)+"_EXTRUDED.mat";
 elseif floor(UserVar.ISGeometry/1e3)==1
     NameOfFiletoRead = "../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.ISGeometry)+...
