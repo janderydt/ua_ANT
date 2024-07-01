@@ -318,7 +318,7 @@ if ~isempty(Inew)
         copyfile(sourcefolder,[newfolder,'/']); 
     end
     % rename RunTable file
-    movefile(newfolder+"/RunTable_ANT_Inverse_9999.csv",UserVar.runtable_exp);
+    movefile(newfolder+"/RunTable_ANT_"+UserVar.type+"_9999.csv",UserVar.runtable_exp);
 
     % initialize experiment log file
     logfile = UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+string(UserVar.Experiment)+".log";

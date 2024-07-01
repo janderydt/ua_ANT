@@ -19,7 +19,7 @@ UserVar.home = pwd;
 RunTable_inverse_file = "../ANT_Inverse/RunTable_ARCHER2_2.csv";
 
 %% experiment number for new geometry
-ExpID_newgeom = 1111;
+ExpID_newgeom = 98;
 
 %% read original run table
 UserVar.type = "Inverse";
