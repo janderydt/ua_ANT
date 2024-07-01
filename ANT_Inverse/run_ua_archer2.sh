@@ -1,6 +1,6 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
-#SBATCH --job-name=ANT_uaconfig
+#SBATCH --job-name=ANT_Inv
 #SBATCH --time=24:00:00
 #SBATCH --nodes=6
 #SBATCH --ntasks-per-node=1
