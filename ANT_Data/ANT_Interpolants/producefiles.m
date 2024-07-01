@@ -57,7 +57,19 @@ function producefiles
 % Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,1);
 % Klear;
 
-Velinterpolantfile = "GriddedInterpolants_2018-2019_MeaSUREs_ITSLIVE_Velocities";
-Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2018";
+Velinterpolantfile = "GriddedInterpolants_2019-2020_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2019";
 Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,1);
 Klear;
+
+Velinterpolantfile = "GriddedInterpolants_2020-2021_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2020";
+Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,1);
+Klear;
+
+Velinterpolantfile = "GriddedInterpolants_2021-2022_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2021";
+Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,1);
+Klear;
+
+

@@ -6,7 +6,7 @@ function Create_Geometry_from_reference_and_ds(targettime,CreateGeotiff)
 % representative for the targettime below.
 
 if nargin==0
-    targettime = datetime(2018,06,01); % format (YYYY,MM,DD)
+    targettime = datetime(2020,06,01); % format (YYYY,MM,DD)
     CreateGeotiff=1;
 elseif nargin==1
     CreateGeotiff=1;

@@ -1,4 +1,4 @@
-function ANT_CreateNewRunsTable(X,GradientCalc,SlidingLaw)
+function ANT_GenerateRunTable(X,GradientCalc,SlidingLaw)
 
 addpath('../');
 

@@ -37,8 +37,10 @@ UserVar.Error=0;
 
 try
     
-    fid = fopen( UserVar.home+"/"+string(UserVar.pgid)+"_job_submitted", 'wt' );
-    fclose(fid);
+    if UserVar.hostname=="ARCHER2"
+        fid = fopen( UserVar.home+"/"+string(UserVar.pgid)+"_job_submitted", 'wt' );
+        fclose(fid);
+    end
 
     UserVar = Ua2D(UserVar);   
     
