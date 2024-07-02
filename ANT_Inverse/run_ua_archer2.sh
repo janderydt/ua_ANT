@@ -62,9 +62,6 @@ timestart=$(date +"%s")
 # make local copy of runtable
 python ../copy_runtable.py $UA_CONFIG
 
-# copy latest version of Ua MCR file
-cp ../Ua ./
-
 # Loop over the nodes assigned to the job
 for nodeid in $nodelist
 do
@@ -117,7 +114,7 @@ echo " > Energy Consumption [J]: ${EJ}" >> jobs_master_ARCHER2.log
 echo " " >> jobs_master_ARCHER2.log
 
 # Update global RunTable
-python update_runtable.py $UA_CONFIG
+python ../update_runtable.py $UA_CONFIG
 
 # Clean up
 rm ${JOB_ID}_job_submitted
