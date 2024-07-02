@@ -4,8 +4,8 @@ variable_to_plot = 'misfit'; %options: qGL, niter, misfit
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_3.csv";
-UserVar.idrange = [4000,4999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_2.csv";
+UserVar.idrange = [3000,3999];
 
 addpath("/mnt/md0/Ua/cases/ANT/");
 
@@ -24,7 +24,7 @@ I = find(ExpID>=UserVar.idrange(1) & ExpID<=UserVar.idrange(2));
 %% Gather data
 for ii=1:numel(I)
     folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/ANT_nsmbl_Inverse_"+ExpID(I(ii));
-    restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(I(ii))+"-RestartFile.mat";
+    restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(I(ii))+"-RestartFile_InverseCycle1.mat";
     if exist(restartfile,"file")
         load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");
         m(ii) = F.m(1);
@@ -63,7 +63,7 @@ end
 
 save("scatterdata.mat","m","n","gaA","gaC","gsA","gsC","niter","qGL","I");
 
-qGL(niter<100)=nan;
+%qGL(niter<100)=nan;
 qGL = qGL/1e12; % convert to Gt/yr
 
 
@@ -90,8 +90,8 @@ end
 
 dummydata = nan*plotdata;
 
-plotdata(plotdata<cmin)=cmin; 
-plotdata(plotdata>cmax)=cmax; 
+%plotdata(plotdata<cmin)=cmin; 
+%plotdata(plotdata>cmax)=cmax; 
 
 colormap('jet');
 marker_size = 1+100*niter/(max(niter)-min(niter));
@@ -104,9 +104,15 @@ end
 
 ind = 1;
 % row 1: m
-scatter(ax_fig(ind),m,m,marker_size,plotdata,'filled'); ylabel(ax_fig(ind),"m"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
+%scatter(ax_fig(ind),m,m,marker_size,plotdata,'filled'); ylabel(ax_fig(ind),"m"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
+edges = linspace(min(m),max(m),10);
+[~,~,bin] = histcounts(m,edges);
+meany = accumarray(bin(:),plotdata(:))./accumarray(bin(:),1);
+xmid = 0.5*(edges(1:end-1)+edges(2:end));
+bar(ax_fig(ind),xmid,meany);
+ylabel(ax_fig(ind),"qGL [Gt/yr]"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
 ind = ind+1;
-scatter(ax_fig(ind),n,m,marker_size,plotdata,'filled'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
+scatter(ax_fig(ind),n,m,marker_size,plotdata,'filled'); ylabel(ax_fig(ind),"m"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
 scatter(ax_fig(ind),gaA,m,marker_size,plotdata,'filled'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;

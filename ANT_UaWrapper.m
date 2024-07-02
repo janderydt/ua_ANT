@@ -331,6 +331,7 @@ if ~isempty(Inew)
     % now gather run info
     if type=="Diagnostic"
 
+        % initialize User variables
         UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
 
         UserVar.Restart = 0;
@@ -359,7 +360,7 @@ if ~isempty(Inew)
                 while (UserVar.Inverse.IterationsDone < it_tmp(UserVar.Inverse.Cycle) && ~UserVar.Breakout)
     
                     if contains(UserVar.hostname,"ARCHER2")
-                        nit = 10000;
+                        nit = 100000;
                     else
                         nit = 5000;
                     end

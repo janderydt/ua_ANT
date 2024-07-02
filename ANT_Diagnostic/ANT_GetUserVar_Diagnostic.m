@@ -39,11 +39,11 @@ NameOfFiletoRead = "../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(Use
         "/"+UserVar.Domain+"_Inverse_"+string(UserVar.GIGeometry)+"-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleGI"})+".mat";
 if exist(NameOfFiletoRead,"file")
     % new boundary
-    load(FiletoRead,"MUA");
+    load(NameOfFiletoRead,"MUA");
     MeshBoundaryCoordinates = [MUA.Boundary.x(:) MUA.Boundary.y(:)];
     MeshBoundaryCoordinatesFile = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates";
     save(MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
-    UserVar.MeshBoundaryCoordinatesFile = UserVar.casefolder+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates";
+    UserVar.MeshBoundaryCoordinatesFile = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates";
 else
     error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to read calving front: "+NameOfFiletoRead);
 end
@@ -64,25 +64,25 @@ UserVar.InverseC = RunTable{ind,"InverseC"};
 UserVar.InverseCFill = RunTable{ind,"InverseCFill"};
 
 % copy relevant files   
-NameOfFiletoRead="../ANT_Inverse/ANT_Inverse_"+string(UserVar.InverseC)+"/"+"ANT_Inverse_"+string(UserVar.InverseC)+...
+NameOfFiletoRead="../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseC)+"/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseC)+...
     "-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleC"})+".mat";
 if exist(NameOfFiletoRead,"file")
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
     C = F.C; m = F.m;
     UserVar.NameOfFileForReadingSlipperinessEstimate = "ANT_Inverse_"+string(UserVar.InverseC)+"_C-Estimate.mat";
-    save(UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimate,"MUA","C","m");
+    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimate,"MUA","C","m");
     UserVar.SlidingLaw = CtrlVarInRestartFile.SlidingLaw;
 else
     error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy C field: "+NameOfFiletoRead);
 end
 
-NameOfFiletoRead="../ANT_Inverse/ANT_Inverse_"+string(UserVar.InverseCFill)+"/"+"ANT_Inverse_"+string(UserVar.InverseCFill)+...
+NameOfFiletoRead="../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseCFill)+"/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseCFill)+...
         "-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleC"})+".mat";
 if exist(NameOfFiletoRead,"file")    
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
     C = F.C; m = F.m;
     UserVar.NameOfFileForReadingSlipperinessEstimateFill = "ANT_Inverse_"+string(UserVar.InverseCFill)+"_C-Estimate.mat";
-    save(UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimateFill,"MUA","C","m");
+    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimateFill,"MUA","C","m");
 else
     error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy C field: "+NameOfFiletoRead);
 end   
@@ -92,27 +92,32 @@ UserVar.InverseA = RunTable{ind,"InverseA"};
 UserVar.InverseAFill = RunTable{ind,"InverseAFill"}; 
 
 % copy relevant files   
-NameOfFiletoRead="../ANT_Inverse/ANT_Inverse_"+string(UserVar.InverseA)+"/"+"ANT_Inverse_"+string(UserVar.InverseA)+...
+NameOfFiletoRead="../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseA)+"/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseA)+...
     "-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleA"})+".mat";
 if exist(NameOfFiletoRead,"file")
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
     AGlen = F.AGlen; n = F.n;
     UserVar.NameOfFileForReadingAGlenEstimate = "ANT_Inverse_"+string(UserVar.InverseA)+"_AGlen-Estimate.mat";
-    save(UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,"MUA","AGlen","n");
+    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,"MUA","AGlen","n");
 else
     error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy AGlen field: "+NameOfFiletoRead);
 end   
 
-NameOfFiletoRead="../ANT_Inverse/ANT_Inverse_"+string(UserVar.InverseAFill)+"/"+"ANT_Inverse_"+string(UserVar.InverseAFill)+...
+NameOfFiletoRead="../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseAFill)+"/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseAFill)+...
     "-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleA"})+".mat";
 if exist(NameOfFiletoRead,"file")
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
     AGlen = F.AGlen; n = F.n;
     UserVar.NameOfFileForReadingAGlenEstimateFill = "ANT_Inverse_"+string(UserVar.InverseAFill)+"_AGlen-Estimate.mat";
-    save(UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimateFill,"MUA","AGlen","n");
+    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimateFill,"MUA","AGlen","n");
 else
     error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy AGlen field: "+NameOfFiletoRead);
 end  
 
 %% outputs
 UserVar.UaOutputDirectory = './ResultsFiles';
+
+%% write log file
+fprintf(UserVar.fid_experimentlog,"> ANT_GetUserVar_Diagnostic: ExpID %s: Starting diagnostic experiment on %s.\n",string(UserVar.ExpID),UserVar.hostname);
+
+
