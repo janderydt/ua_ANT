@@ -201,21 +201,26 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
     copyfile(CtrlVar.Inverse.NameOfRestartOutputFile,NameOfRestartOutputFile);
 end
 
-%% Deal with diagnostic runs
-if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')
+%% Deal with spinup simulations
+if strcmp(CtrlVar.DefineOutputsInfostring,'Last call') % the string "last call" is only set for a transient simulation, not for an inverse simulation
     % calculate total number of years over all spinup cycles
     YearsDoneInThisRun = CtrlVar.time;
     UserVar.Spinup.YearsDone = UserVar.Spinup.YearsDone + YearsDoneInThisRun;
-    if YearsDoneInThisRun ~= CtrlVar.TotalTime        
-        UserVar.Breakout = 1;
-        UserVar.Error = 1;
-        fprintf(CtrlVar.fidlog,['Simulation did not reach expected end time. Done %s years instead of %s. ',...
-                'Writing restart file and breaking out.\n'],num2str(YearsDoneInThisRun),num2str(CtrlVar.TotalTime));  
+    if RunInfo.Spinup.stoppedduetowalltime == 1
+        fprintf(CtrlVar.fidlog,['Simulation stopped due to walltime constraints. Done %s years instead of %s. ',...
+        		'Writing restart file.\n'],num2str(YearsDoneInThisRun),num2str(CtrlVar.TotalTime));         
+        UserVar.Restart = 1;         
     else
-        UserVar.Error = 0;
+        fprintf(CtrlVar.fidlog,'Simulation reached expected number of %s years.\n',num2str(CtrlVar.TotalTime));
+        UserVar.Restart = 0;       
     end
+    UserVar.Error = 0;
+    UserVar.Finished = 0;
+    UserVar.Breakout = 1;
     WriteForwardRunRestartFile(UserVar,CtrlVar,MUA,BCs,F,GF,l,RunInfo);
     NameOfRestartOutputFile = erase(CtrlVar.NameOfRestartFiletoWrite,".mat")+"_SpinupCycle"+string(UserVar.Spinup.Cycle)+".mat";
+    copyfile(CtrlVar.NameOfRestartFiletoWrite,NameOfRestartOutputFile);
+    NameOfRestartOutputFile = erase(CtrlVar.NameOfRestartFiletoWrite,".mat")+"_Yrs"+strrep(string(UserVar.time),".","k")+".mat";
     copyfile(CtrlVar.NameOfRestartFiletoWrite,NameOfRestartOutputFile);
 end
 

@@ -1,5 +1,21 @@
 function [UserVar,CtrlVar,MeshBoundaryCoordinates]=DefineInitialInputs(UserVar,CtrlVar)
 
+%% Keep track of walltime
+% These lines define a UI to keep track of the remaining walltime.
+% If the walltime expires, the UI is set to false, which is picked
+% up by the fmincon minimization algorithm or DefineRunStopCriterion.m and 
+% used as a stopping % criteria to break out of the inversion or spinup.
+% We apply a generous 60min buffer to allow fmincon and the runstep to 
+% cleanly finish the current iteration.
+UserVar.walltime_remaining = UserVar.walltime_remaining-3600;
+setappdata(0,'FMINCONstopFlag',false); %stopping flag is false
+T = timer('startdelay',UserVar.walltime_remaining,'timerfcn',@(src,evt)setappdata(0,'FMINCONstopFlag',true)); %initialize timer to change value of fminconstopflag after wallclocktime
+t0 = tic(); 
+start(T); %start the timer
+remainingTime = round(UserVar.walltime_remaining-toc(t0));
+fprintf(UserVar.fid_experimentlog,"> At %s: remaining time on wallclock timer is %ss. Fmincon will be stopped when this time has been exceeded.\n",string(datetime("now")),num2str(remainingTime));
+
+%% 
 CtrlVar.Experiment = UserVar.Experiment;
 CtrlVar.Restart=UserVar.Restart;
 
@@ -13,11 +29,13 @@ elseif UserVar.SpinupCycle
     CtrlVar.doInverseStep=0;
     CtrlVar.TotalNumberOfForwardRunSteps=inf; % an arbitrary large number
     CtrlVar.TotalTime=UserVar.Spinup.Years(UserVar.Spinup.Cycle);
-    CtrlVar.time=0;
-    CtrlVar.dt = 1e-3;
-    CtrlVar.RestartTime=0; 
-    CtrlVar.ResetTime=1;
-    CtrlVar.ResetTimeStep=1;    % perhaps this has to be reconsidered if model has issues converging
+    if ~UserVar.Spinup.Restart
+        CtrlVar.time=0;
+        CtrlVar.ResetTime=1;
+        CtrlVar.dt = 1e-3;
+        CtrlVar.ResetTimeStep=1; 
+        CtrlVar.RestartTime=0;  
+    end          
     CtrlVar.InitialDiagnosticStep=1; 
     CtrlVar.NameOfRestartFiletoRead = UserVar.NameOfRestartFiletoRead;   
 else
@@ -122,22 +140,9 @@ if UserVar.InverseCycle
     CtrlVar.Inverse.Regularize.logAGlen.gs=UserVar.Inverse.logAGlen.gs ;
     CtrlVar.Inverse.Regularize.logC.ga=UserVar.Inverse.logC.ga;
     CtrlVar.Inverse.Regularize.logC.gs=UserVar.Inverse.logC.gs; 
-
-    % these lines define a UI to keep track of the remaining walltime.
-    % if the walltime expires, the UI is set to false, which is picked
-    % up by the fmincon minimization algorithm and used as a stopping
-    % criteria to break out of the inversion. We apply a generous 60min buffer
-    % to allow fmincon to finish the current iteration
-    UserVar.walltime_remaining = UserVar.walltime_remaining-3600;
-    setappdata(0,'FMINCONstopFlag',false); %stopping flag is false
-    T = timer('startdelay',UserVar.walltime_remaining,'timerfcn',@(src,evt)setappdata(0,'FMINCONstopFlag',true)); %initialize timer to change value of fminconstopflag after wallclocktime
-    t0 = tic(); 
-    start(T); %start the timer
-    remainingTime = round(UserVar.walltime_remaining-toc(t0));
-    fprintf(UserVar.fid_experimentlog,"> At %s: remaining time on wallclock timer is %ss. Fmincon will be stopped when this time has been exceeded.\n",string(datetime("now")),num2str(remainingTime));
-
 end
 
+%% Settings for optimization algorithm
 Hfunc=@(p,lambda) p+lambda ;  % just needs to defined here, this is then later replaced with a function that returns the Hessian estmation.
 CtrlVar.Inverse.MatlabOptimisationHessianParameters = optimoptions('fmincon',...
         'Algorithm','interior-point',...

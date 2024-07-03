@@ -28,6 +28,17 @@ spinup_tmp = RunTable{ind,"SpinupYears"}{:};
 UserVar.Spinup.Years = str2double(split(spinup_tmp,"+"));
 UserVar.Spinup.YearsDone = RunTable{ind,"SpinupYearsDone"};
 UserVar.Spinup.Cycle = find([0; cumsum(UserVar.Spinup.Years)]==UserVar.Spinup.YearsDone);
+UserVar.Spinup.Restart = 0;
+if isempty(UserVar.Spinup.Cycle) & UserVar.Restart == 0
+    fprintf(UserVar.fid_experimentlog,"> ANT_GetUserVar_Inverse: Expecting SpinupYearsDone to be equal to [%s] but got %s instead.\n",...
+            string(spinup_tmp),string(UserVar.Spinup.YearsDone));
+    error("Unexpected number of SpinupYearsDone.");
+elseif isempty(UserVar.Spinup.Cycle) & UserVar.Restart == 1
+    %% restarting spinup cycle 
+    UserVar.Spinup.Restart = 1;
+    Itmp = find(cumsum(UserVar.Spinup.Years)-UserVar.Spinup.YearsDone>0);
+    UserVar.Spinup.Cycle = Itmp(1);
+end
 
 % check stopping criteria for inverse run
 %if UserVar.InverseCycle
