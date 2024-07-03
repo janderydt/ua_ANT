@@ -139,8 +139,11 @@ load(UserVar.casefolder+"/"+UserVar.Experiment+"/"+NameOfRestartFiletoRead,"F","
 FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
 Fb = FB; Fb.Values = F.b;
 Fs = FB; Fs.Values = F.s;
-UserVar.GeometryInterpolants = "GeometryInterpolants_fromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+".mat";
+UserVar.GeometryInterpolants = "ScatteredInterpolants_GeometryfromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+".mat";
 save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.GeometryInterpolants,"FB","Fb","Fs");
+clearvars FB Fb Fs;
+B=F.B; b=F.b; s=F.s; S=F.S; rho=F.rho;
+save(UserVar.casefolder+"/"+UserVar.Experiment+"/GeometryfromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+"_mesh_Nnodes"+string(MUA.Nnodes)+"_Nele"+string(MUA.Nele)+".mat","B","S","s","b");
 
 %% velocity interpolants
 UserVar.Velocity = RunTable{ind,"Velocity"};

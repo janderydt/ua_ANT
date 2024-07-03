@@ -11,8 +11,7 @@ alpha=0 ;
 % previously been constructed for the same mesh. If not, we read the
 % interpolants and construct a new file for this particular mesh.
 filename_geometryfields = UserVar.GeometryInterpolants;
-filename_geometryfields = erase(filename_geometryfields,"GriddedInterpolants_");
-filename_geometryfields = erase(filename_geometryfields,".mat");
+filename_geometryfields = erase(filename_geometryfields,["GriddedInterpolants_","ScatteredInterpolants_",".mat"]);
 filename_geometryfields = filename_geometryfields + "_mesh_Nodes" + string(MUA.Nnodes) + "_Nele" + string(MUA.Nele) + ".mat";
 
 fprintf('Loading geometry and density fields %s...',FieldsToBeDefined);
