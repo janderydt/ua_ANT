@@ -3,7 +3,7 @@
 #SBATCH --job-name=ANT_Inv
 #SBATCH --time=24:00:00
 #SBATCH --nodes=6
-#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks-per-node=30
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
 #SBATCH --distribution=block:block
