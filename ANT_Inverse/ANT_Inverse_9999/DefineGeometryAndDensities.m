@@ -22,20 +22,25 @@ x=MUA.coordinates(:,1); y=MUA.coordinates(:,2);
 if exist(filename_geometryfields,"file")
     load(filename_geometryfields,"B","b","S","s","rho");
 else
-    load(UserVar.GeometryInterpolants,'FB','Fs','Fb');
+    load(UserVar.GeometryInterpolants,'FB');
     B = FB(x,y);
+    clearvars FB;
     B = inpaint_nans(B,4);
+    load(UserVar.GeometryInterpolants,'Fs');
     s = Fs(x,y);
+    clearvars Fs; 
     s = inpaint_nans(s,4);
+    load(UserVar.GeometryInterpolants,'Fb'); 
     b = Fb(x,y);
+    clearvars Fb;
     b = inpaint_nans(b,4);
     S = 0*x;
     load(UserVar.DensityInterpolant,'Frho');
     rho = Frho(MUA.coordinates(:,1),MUA.coordinates(:,2));
+    clearvars Frho; 
     rho(rho<100)=100;
     rho(rho>917)=917;
     save(filename_geometryfields,"B","b","S","s","rho");
-    clearvars FB Fs Fb Frho
 end
 
 rhow=1027; 
