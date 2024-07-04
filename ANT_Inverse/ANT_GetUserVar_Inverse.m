@@ -141,9 +141,13 @@ Fb = FB; Fb.Values = F.b;
 Fs = FB; Fs.Values = F.s;
 UserVar.GeometryInterpolants = "ScatteredInterpolants_GeometryfromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+".mat";
 save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.GeometryInterpolants,"FB","Fb","Fs");
-clearvars FB Fb Fs;
+clearvars FB Fb Fs; % try to save some memory
+% We create another file with the Ua geometry fields. This wastes a bit of 
+% storage space, but for inverse simulations we do not change the grid, so
+% it is more memory efficient to read the Ua fields directly, rather than
+% load the interpolants
 B=F.B; b=F.b; s=F.s; S=F.S; rho=F.rho;
-save(UserVar.casefolder+"/"+UserVar.Experiment+"/GeometryfromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+"_mesh_Nnodes"+string(MUA.Nnodes)+"_Nele"+string(MUA.Nele)+".mat","B","S","s","b");
+save(UserVar.casefolder+"/"+UserVar.Experiment+"/GeometryfromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+"_mesh_Nnodes"+string(MUA.Nnodes)+"_Nele"+string(MUA.Nele)+".mat","B","S","s","b","rho");
 
 %% velocity interpolants
 UserVar.Velocity = RunTable{ind,"Velocity"};
