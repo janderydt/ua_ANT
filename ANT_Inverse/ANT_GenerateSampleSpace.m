@@ -6,8 +6,10 @@ clearvars;
 rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
-type = "Adjoint"; % options: FixPoint or Adjoint
-sliding = "Weertman"; 
+GradientCalc = "Adjoint"; % options: FixPoint or Adjoint
+SlidingLaw = "Weertman"; 
+Enrich = 1; % enriches the existing Latin Hypercube
+EnrichSampleSize = 360;
 
 Input.Name = 'Parameter array for inverse simulations';
 ind = 1;
@@ -15,7 +17,7 @@ ind = 1;
 %% -------------------- %%
 %% CONTINUOUS VARIABLES %%
 %% -------------------- %%
-switch type
+switch GradientCalc
     case "Adjoint"
 
         Input.Marginals = uq_Marginals(6,'Uniform',[0]);
@@ -109,8 +111,16 @@ switch type
 
 end
 
+if Enrich
+
+    Xnew = uq_enrichLHS(X,EnrichSampleSize,myInput);
+    X = Xnew;
+
+end
+
 T=array2table(X,'VariableNames',{Input.Marginals(:).Name});
-ANT_CreateNewRunsTable(T,type,sliding);
+
+ANT_GenerateRunTable(T,GradientCalc,SlidingLaw,Enrich);
 
 return
 %% ------------------ %%
