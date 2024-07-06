@@ -55,11 +55,11 @@ end
 %% added by JDR 16 May to stop fmincon based on walltime
 if exitflag==-1
 
-    RunInfo.Inverse.stoppedduetowalltime = 1;
+    UserVar.Inverse.stoppedduetowalltime = 1;
 
 else
 
-    RunInfo.Inverse.stoppedduetowalltime = 0;
+    UserVar.Inverse.stoppedduetowalltime = 0;
 
 end
 

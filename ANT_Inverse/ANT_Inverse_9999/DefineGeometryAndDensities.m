@@ -36,31 +36,38 @@ if exist(filename_geometryfields,"file")
     end
     fprintf('done.\n');
 else
-    if contains(FieldsToBeDefined,"B")
-        load(UserVar.GeometryInterpolants,'FB');
-        B = FB(x,y);
-        clearvars FB;
-        B = inpaint_nans(B,4);
+    fprintf('file does not exist, try interpolants instead...');
+    if exist(UserVar.GeometryInterpolants)
+        if contains(FieldsToBeDefined,"B")
+            load(UserVar.GeometryInterpolants,'FB');
+            B = FB(x,y);
+            clearvars FB;
+            B = inpaint_nans(B,4);
+        end
+        if contains(FieldsToBeDefined,"s")
+            load(UserVar.GeometryInterpolants,'Fs');
+            s = Fs(x,y);
+            clearvars Fs; 
+            s = inpaint_nans(s,4);
+        end
+        if contains(FieldsToBeDefined,"b")
+            load(UserVar.GeometryInterpolants,'Fb'); 
+            b = Fb(x,y);
+            clearvars Fb;
+            b = inpaint_nans(b,4);
+        end
+        if contains(FieldsToBeDefined,"rho")
+            load(UserVar.DensityInterpolant,'Frho');
+            rho = Frho(MUA.coordinates(:,1),MUA.coordinates(:,2));
+            clearvars Frho;
+        end    
+        %save(filename_geometryfields,"B","b","S","s","rho");
+        fprintf('done.\n');
+        fprintf('Used geometry interpolants from %s.\n',UserVar.GeometryInterpolants);
+    else
+        error("File with interpolants from previous spinup ("+UserVar.GeometryInterpolants+") does not exist. "+...
+            "Check if it is created by ANT_GetUserVar_Inverse. Breaking out.");
     end
-    if contains(FieldsToBeDefined,"s")
-        load(UserVar.GeometryInterpolants,'Fs');
-        s = Fs(x,y);
-        clearvars Fs; 
-        s = inpaint_nans(s,4);
-    end
-    if contains(FieldsToBeDefined,"b")
-        load(UserVar.GeometryInterpolants,'Fb'); 
-        b = Fb(x,y);
-        clearvars Fb;
-        b = inpaint_nans(b,4);
-    end
-    if contains(FieldsToBeDefined,"rho")
-        load(UserVar.DensityInterpolant,'Frho');
-        rho = Frho(MUA.coordinates(:,1),MUA.coordinates(:,2));
-        clearvars Frho;
-    end    
-    %save(filename_geometryfields,"B","b","S","s","rho");
-    fprintf('file does not exist. Used geometry interpolants from %s instead.\n',UserVar.GeometryInterpolants);
 end
 
 rho(rho<100)=100;

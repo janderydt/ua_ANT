@@ -174,7 +174,7 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
     IterationsDoneInThisRun = RunInfo.Inverse.Iterations(end)-UserVar.Inverse.Iter0;
     UserVar.Inverse.IterationsDone = UserVar.Inverse.IterationsDone + IterationsDoneInThisRun;
 	if IterationsDoneInThisRun ~= CtrlVar.Inverse.Iterations
-        if RunInfo.Inverse.stoppedduetowalltime == 1
+        if UserVar.Inverse.stoppedduetowalltime == 1
             fprintf(CtrlVar.fidlog,['Simulation stopped due to walltime constraints. Done %s iterations instead of %s. ',...
         		'Writing restart file.\n'],num2str(IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));         
             UserVar.Restart = 1;
@@ -206,7 +206,7 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'Last call') % the string "last call" 
     % calculate total number of years over all spinup cycles
     YearsDoneInThisRun = CtrlVar.time;
     UserVar.Spinup.YearsDone = UserVar.Spinup.YearsDone + YearsDoneInThisRun;
-    if RunInfo.Spinup.stoppedduetowalltime == 1
+    if UserVar.Spinup.stoppedduetowalltime == 1
         fprintf(CtrlVar.fidlog,['Simulation stopped due to walltime constraints. Done %s years instead of %s. ',...
         		'Writing restart file.\n'],num2str(YearsDoneInThisRun),num2str(CtrlVar.TotalTime));         
         UserVar.Restart = 1;         
@@ -220,7 +220,7 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'Last call') % the string "last call" 
     WriteForwardRunRestartFile(UserVar,CtrlVar,MUA,BCs,F,GF,l,RunInfo);
     NameOfRestartOutputFile = erase(CtrlVar.NameOfRestartFiletoWrite,".mat")+"_SpinupCycle"+string(UserVar.Spinup.Cycle)+".mat";
     copyfile(CtrlVar.NameOfRestartFiletoWrite,NameOfRestartOutputFile);
-    NameOfRestartOutputFile = erase(CtrlVar.NameOfRestartFiletoWrite,".mat")+"_Yrs"+strrep(string(UserVar.time),".","k")+".mat";
+    NameOfRestartOutputFile = erase(CtrlVar.NameOfRestartFiletoWrite,".mat")+"_Yrs"+strrep(string(CtrlVar.time),".","k")+".mat";
     copyfile(CtrlVar.NameOfRestartFiletoWrite,NameOfRestartOutputFile);
 end
 

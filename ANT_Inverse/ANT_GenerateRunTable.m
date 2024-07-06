@@ -69,7 +69,9 @@ for ind=1:size(X,1)
             gsA_Start = RunTable_Start{:,'gsA'};
             m_Start = RunTable_Start{:,'m'};
             n_Start = RunTable_Start{:,'n'};
+            ItDone_Start = RunTable_Start{:,'InverseIterationsDone'};
             Start = [gaC_Start(:) gaA_Start(:) gsC_Start(:) gsA_Start(:) m_Start(:) n_Start(:)];
+            Start = Start(ItDone_Start>=15e3,:);
         end
         [Idx,D] = knnsearch(Start,[gaC gaA gsC gsA m n],"Distance","seuclidean");
         startC = ExpID_Start(Idx);

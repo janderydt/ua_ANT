@@ -29,12 +29,12 @@ if isempty(FC) & exist(CFile,"file")
     m2 = m; % new
 
     if m1 ~= m2
-        velfile = "../"+erase(CFile,"_C-Estimate.mat")+"/"+strrep(CFile,"_C-Estimate.mat","-RestartFile.mat");
+        velfile = UserVar.casefolder+"/"+erase(CFile,"_C-Estimate.mat")+"/"+strrep(CFile,"_C-Estimate.mat","-RestartFile_InverseCycle1.mat");
+        fprintf("Rescaling C values from m=%s to m=%s using measured velocities from %s.\n",string(m1),string(m2),velfile);
         tmp = load(velfile,'MUA','Meas');
         [~,v1] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,0,hypot(tmp.Meas.us,tmp.Meas.vs));
         v1(isnan(v1))=1; v1(v1==0)=1;
         C = max((max(C+CtrlVar.Czero,CtrlVar.Cmin)).^(m2/m1).*(v1.^2+CtrlVar.SpeedZero^2).^((m1-m2)/(2*m1))-CtrlVar.Czero,CtrlVar.Cmin);
-        fprintf("Rescaling C values from m=%s to m=%s.\n",string(m1),string(m2));
     end
 
     save("C_interpolated.mat","CtrlVar","MUA","C");

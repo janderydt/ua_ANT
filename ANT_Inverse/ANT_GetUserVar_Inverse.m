@@ -40,10 +40,9 @@ elseif isempty(UserVar.Spinup.Cycle) & UserVar.Restart == 1
     UserVar.Spinup.Cycle = Itmp(1);
 end
 
-% check stopping criteria for inverse run
-%if UserVar.InverseCycle
-%    UserVar.Inverse.MinGradNorm = RunTable{ind,"MinGradNorm"};
-%end
+% initialize walltime variables
+UserVar.Inverse.stoppedduetowalltime = 0;
+UserVar.Spinup.stoppedduetowalltime = 0;
 
 % Restart files
 UserVar.NameOfRestartFiletoRead = UserVar.Experiment + "-RestartFile.mat";
@@ -136,16 +135,21 @@ UserVar.Inverse.logAGlen.ga = RunTable{ind,"gaA"};
 NameOfRestartFiletoRead = ...
     strrep(UserVar.NameOfRestartFiletoRead,".mat","_SpinupCycle"+string(UserVar.Inverse.Cycle-1)+".mat");
 load(UserVar.casefolder+"/"+UserVar.Experiment+"/"+NameOfRestartFiletoRead,"F","MUA");
-FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
-Fb = FB; Fb.Values = F.b;
-Fs = FB; Fs.Values = F.s;
+
 UserVar.GeometryInterpolants = "ScatteredInterpolants_GeometryfromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+".mat";
-save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.GeometryInterpolants,"FB","Fb","Fs");
-clearvars FB Fb Fs; % try to save some memory
-% We create another file with the Ua geometry fields. This wastes a bit of 
-% storage space, but for inverse simulations we do not change the grid, so
+% Lines below are removed to save memory. The interpolants should not be
+% needed because we don't change the mesh during the spinup
+%FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
+%Fb = FB; Fb.Values = F.b;
+%Fs = FB; Fs.Values = F.s;
+%save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.GeometryInterpolants,"FB","Fb","Fs");
+%clearvars FB Fb Fs; 
+
+% We create a new file with the Ua geometry fields at the end of the spinup,
+% so we can use these fields directly in the next inversion. This wastes a bit of 
+% storage space, but for spinup simulation we do not adapt the mesh, so
 % it is more memory efficient to read the Ua fields directly, rather than
-% load the interpolants
+% load interpolants
 B=F.B; b=F.b; s=F.s; S=F.S; rho=F.rho;
 save(UserVar.casefolder+"/"+UserVar.Experiment+"/GeometryfromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+"_mesh_Nnodes"+string(MUA.Nnodes)+"_Nele"+string(MUA.Nele)+".mat","B","S","s","b","rho");
 
@@ -175,11 +179,14 @@ function UserVar = ANT_GetUserVar_Spinup(RunTable,ind,UserVar)
 
 UserVar.Restart = 1;
 
-% copy and rename inverse restart file
-%UserVar.Spinup.NameOfRestartFiletoRead = ...
-%    strrep(UserVar.Inverse.NameOfRestartInputFile,"-RestartFile","_SpinupCycle"+string(UserVar.Spinup.Cycle)+"-RestartFile");
-%copyfile("./"+string(UserVar.Experiment)+"/"+UserVar.Inverse.NameOfRestartInputFile,...
-%    "./"+string(UserVar.Experiment)+"/"+UserVar.Spinup.NameOfRestartFiletoRead);
+% make sure to start from the correct restart file
+if UserVar.Spinup.Restart == 0 % this means we start a new spinup, using the restart file from the previous inversion
+    NameOfRestartInputFile = strrep(UserVar.NameOfRestartFiletoRead,".mat","_InverseCycle"+string(UserVar.Spinup.Cycle)+".mat");
+    copyfile(UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+NameOfRestartInputFile,...
+        UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+UserVar.NameOfRestartFiletoRead);
+else
+    %nothing to do: we restart the spinup from UserVar.NameOfRestartFiletoRead
+end
 
 %% Read geometry interpolants from Runtable
 UserVar.Geometry = RunTable{ind,"startGeometry"};
@@ -248,8 +255,7 @@ if RunTable{ind,"startC"} > 0
         C = F.C; xC = MUA.coordinates(:,1); yC = MUA.coordinates(:,2); m = F.m;
         muk = F.muk; q = F.q;
         save(UserVar.casefolder+"/"+string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+...
-            UserVar.NameOfFileForReadingSlipperinessEstimate,"MUA","CtrlVarInRestartFile","xC","yC","C" + ...
-            "m","muk","q");
+            "/"+UserVar.NameOfFileForReadingSlipperinessEstimate,"MUA","CtrlVarInRestartFile","xC","yC","C","m","muk","q");
     else    
         copyfile(UserVar.casefolder+"/"+string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startC"})+...
                 "/"+UserVar.NameOfFileForReadingSlipperinessEstimate,...
@@ -275,7 +281,7 @@ if RunTable{ind,"startAglen"} > 0
         load(RestartFile,"F","MUA","CtrlVarInRestartFile");
         AGlen = F.AGlen; xA = MUA.coordinates(:,1); yA = MUA.coordinates(:,2); n = F.n;
         save(UserVar.casefolder+"/"+string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+...
-            UserVar.NameOfFileForReadingAGlenEstimate,"MUA","CtrlVarInRestartFile","xA","yA","AGlen","n");
+            "/"+UserVar.NameOfFileForReadingAGlenEstimate,"MUA","CtrlVarInRestartFile","xA","yA","AGlen","n");
     else    
         copyfile(UserVar.casefolder+"/"+string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"startC"})+...
                 "/"+UserVar.NameOfFileForReadingSlipperinessEstimate,...
