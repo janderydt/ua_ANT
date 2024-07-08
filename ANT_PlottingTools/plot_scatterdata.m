@@ -4,61 +4,67 @@ variable_to_plot = 'misfit'; %options: qGL, niter, misfit
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_4.csv";
-UserVar.idrange = [5000,5999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+["/RunTable_ARCHER2_2.csv","/RunTable_ARCHER2_5.csv"];
+UserVar.idrange = [3000,3999;6000,6999];
 
 addpath("/mnt/md0/Ua/cases/ANT/");
-
-%% read run table
-RunTable = ANT_ReadWritetable(UserVar,UserVar.Table,[],'read');
 
 %% load basins
 filename = 'basins_IMBIE_v2.mat'; 
 B = load(filename);
 B = RemoveSmallIceRisesAndIslands(B);
 
-%% ExpIDs
-ExpID = RunTable{:,"ExpID"};
-I = find(ExpID>=UserVar.idrange(1) & ExpID<=UserVar.idrange(2));
+kk=0;
 
-%% Gather data
-for ii=1:numel(I)
-    folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/ANT_nsmbl_Inverse_"+ExpID(I(ii));
-    restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(I(ii))+"-RestartFile_InverseCycle1.mat";
-    if exist(restartfile,"file")
-        load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");
-        m(ii) = F.m(1);
-        n(ii) = F.n(1);
-        gaA(ii) = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.ga;
-        gaC(ii) = CtrlVarInRestartFile.Inverse.Regularize.logC.ga;
-        gsA(ii) = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.gs;
-        gsC(ii) = CtrlVarInRestartFile.Inverse.Regularize.logC.gs;
-        % number of iterations done
-        niter(ii) = UserVarInRestartFile.Inverse.IterationsDone;
-        fprintf("(%s/%s) ExpID %s: done %s iterations.\n",string(ii),string(numel(I)),string(UserVarInRestartFile.ExpID),string(niter(ii)));
-        % Obtain Ua fluxes across the grounding line (qGL) into floating areas
-        %[B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
-        % qGL(ii) = 0;
-        % for jj=1:numel(GL)
-        %     qGL(ii) = qGL(ii)+sum(GL(jj).qGL);
-        % end            
-        GL=FluxAcrossGroundingLine(CtrlVarInRestartFile,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
-        qGL(ii) = sum(GL);
-        I(ii) = InvFinalValues.I; % calculated as 
-     else
-        table_ind = I(ii);
-        m(ii) = RunTable{table_ind,"m"};
-        n(ii) = RunTable{table_ind,"n"};
-        gaA(ii) = RunTable{table_ind,"gaA"};
-        gaC(ii) = RunTable{table_ind,"gaC"};
-        gsA(ii) = RunTable{table_ind,"gsA"};
-        gsC(ii) = RunTable{table_ind,"gsC"};
-        niter(ii) = 0;
-        qGL(ii) = nan;
-        I(ii) = nan;
-    end
+for tt=1:numel(UserVar.Table)
+
+    %% read run table
+    RunTable = ANT_ReadWritetable(UserVar,UserVar.Table(tt),[],'read');
     
-    %fprintf("Done %s out of %s.\n",string(ii),string(numel(I)));
+    %% ExpIDs
+    ExpID = RunTable{:,"ExpID"};
+    I = find(ExpID>=UserVar.idrange(tt,1) & ExpID<=UserVar.idrange(tt,2));
+    
+    %% Gather data
+    for ii=1:numel(I)
+        folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/ANT_nsmbl_Inverse_"+ExpID(I(ii));
+        restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(I(ii))+"-RestartFile_InverseCycle1.mat";
+        if exist(restartfile,"file")
+            load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");
+            m(kk+ii) = F.m(1);
+            n(kk+ii) = F.n(1);
+            gaA(kk+ii) = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.ga;
+            gaC(kk+ii) = CtrlVarInRestartFile.Inverse.Regularize.logC.ga;
+            gsA(kk+ii) = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.gs;
+            gsC(kk+ii) = CtrlVarInRestartFile.Inverse.Regularize.logC.gs;
+            % number of iterations done
+            niter(kk+ii) = UserVarInRestartFile.Inverse.IterationsDone;
+            fprintf("(%s/%s) ExpID %s: done %s iterations.\n",string(ii),string(numel(I)),string(UserVarInRestartFile.ExpID),string(niter(ii)));
+            % Obtain Ua fluxes across the grounding line (qGL) into floating areas
+            %[B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
+            % qGL(ii) = 0;
+            % for jj=1:numel(GL)
+            %     qGL(ii) = qGL(ii)+sum(GL(jj).qGL);
+            % end            
+            GL=FluxAcrossGroundingLine(CtrlVarInRestartFile,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
+            qGL(kk+ii) = sum(GL);
+            I(kk+ii) = InvFinalValues.I; % calculated as 
+         else
+            table_ind = I(ii);
+            m(kk+ii) = RunTable{table_ind,"m"};
+            n(kk+ii) = RunTable{table_ind,"n"};
+            gaA(kk+ii) = RunTable{table_ind,"gaA"};
+            gaC(kk+ii) = RunTable{table_ind,"gaC"};
+            gsA(kk+ii) = RunTable{table_ind,"gsA"};
+            gsC(kk+ii) = RunTable{table_ind,"gsC"};
+            niter(kk+ii) = 0;
+            qGL(kk+ii) = nan;
+            I(kk+ii) = nan;
+        end
+              
+        %fprintf("Done %s out of %s.\n",string(ii),string(numel(I)));
+    end
+    kk = numel(I);
 end
 
 save("scatterdata.mat","m","n","gaA","gaC","gsA","gsC","niter","qGL","I");

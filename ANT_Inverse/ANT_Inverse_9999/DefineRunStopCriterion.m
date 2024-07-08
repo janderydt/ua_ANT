@@ -27,7 +27,7 @@ function [UserVar,isStop]=DefineRunStopCriterion(UserVar,RunInfo,CtrlVar,MUA,BCs
 
 
 
-StopFlag = getappdata(0,'FMINCONstopFlag'); %get stop flag
+StopFlag = getappdata(0,'UAstopFlag'); %get stop flag
 if StopFlag
   isStop = true;
   UserVar.Spinup.stoppedduetowalltime = 1;

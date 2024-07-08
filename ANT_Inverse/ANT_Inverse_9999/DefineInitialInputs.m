@@ -8,12 +8,12 @@ function [UserVar,CtrlVar,MeshBoundaryCoordinates]=DefineInitialInputs(UserVar,C
 % We apply a generous 60min buffer to allow fmincon and the runstep to 
 % cleanly finish the current iteration.
 UserVar.walltime_remaining = UserVar.walltime_remaining-3600;
-setappdata(0,'FMINCONstopFlag',false); %stopping flag is false
-T = timer('startdelay',UserVar.walltime_remaining,'timerfcn',@(src,evt)setappdata(0,'FMINCONstopFlag',true)); %initialize timer to change value of fminconstopflag after wallclocktime
+setappdata(0,'UAstopFlag',false); %stopping flag is false
+T = timer('startdelay',UserVar.walltime_remaining,'timerfcn',@(src,evt)setappdata(0,'UAstopFlag',true)); %initialize timer to change value of uastopflag after wallclocktime
 t0 = tic(); 
 start(T); %start the timer
 remainingTime = round(UserVar.walltime_remaining-toc(t0));
-fprintf(UserVar.fid_experimentlog,"> At %s: remaining time on wallclock timer is %ss. Fmincon will be stopped when this time has been exceeded.\n",string(datetime("now")),num2str(remainingTime));
+fprintf(UserVar.fid_experimentlog,"> At %s: remaining time on wallclock timer is %ss. Ua will be stopped when this time has been exceeded.\n",string(datetime("now")),num2str(remainingTime));
 
 %% 
 CtrlVar.Experiment = UserVar.Experiment;
@@ -38,6 +38,7 @@ elseif UserVar.SpinupCycle
     end          
     CtrlVar.InitialDiagnosticStep=1; 
     CtrlVar.NameOfRestartFiletoRead = UserVar.NameOfRestartFiletoRead;   
+    CtrlVar.UseUserDefinedRunStopCriterion=1;
 else
     error("Unknown run case");
 end
