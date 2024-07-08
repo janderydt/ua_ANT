@@ -35,8 +35,8 @@ end
 
 %% CALVING
 UserVar.Calv = RunTable{ind,"Calv"};
-NameOfFiletoRead = "../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.GIGeometry)+...
-        "/"+UserVar.Domain+"_Inverse_"+string(UserVar.GIGeometry)+"-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleGI"})+".mat";
+NameOfFiletoRead = "../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.Calv)+...
+        "/"+UserVar.Domain+"_Inverse_"+string(UserVar.Calv)+"-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleGI"})+".mat";
 if exist(NameOfFiletoRead,"file")
     % new boundary
     load(NameOfFiletoRead,"MUA");
@@ -76,17 +76,6 @@ else
     error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy C field: "+NameOfFiletoRead);
 end
 
-NameOfFiletoRead="../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseCFill)+"/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseCFill)+...
-        "-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleC"})+".mat";
-if exist(NameOfFiletoRead,"file")    
-    load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
-    C = F.C; m = F.m;
-    UserVar.NameOfFileForReadingSlipperinessEstimateFill = "ANT_Inverse_"+string(UserVar.InverseCFill)+"_C-Estimate.mat";
-    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimateFill,"MUA","C","m");
-else
-    error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy C field: "+NameOfFiletoRead);
-end   
-
 %% Glen's exponent
 UserVar.InverseA = RunTable{ind,"InverseA"};
 UserVar.InverseAFill = RunTable{ind,"InverseAFill"}; 
@@ -102,17 +91,6 @@ if exist(NameOfFiletoRead,"file")
 else
     error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy AGlen field: "+NameOfFiletoRead);
 end   
-
-NameOfFiletoRead="../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseAFill)+"/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseAFill)+...
-    "-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleA"})+".mat";
-if exist(NameOfFiletoRead,"file")
-    load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
-    AGlen = F.AGlen; n = F.n;
-    UserVar.NameOfFileForReadingAGlenEstimateFill = "ANT_Inverse_"+string(UserVar.InverseAFill)+"_AGlen-Estimate.mat";
-    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimateFill,"MUA","AGlen","n");
-else
-    error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy AGlen field: "+NameOfFiletoRead);
-end  
 
 %% outputs
 UserVar.UaOutputDirectory = './ResultsFiles';

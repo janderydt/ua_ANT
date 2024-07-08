@@ -29,8 +29,7 @@ def read_runinfo (table,runtype):
                             "startMesh": str, "Comments": str})
     elif "Diagnostic" in runtype:
         data = data.astype({"pgid": int, "ExpID": int, "Submitted": int, "Running": int, "Error": int, "Finished": int,
-                            "Restart": int, "InverseA": int, "InverseAFill": int, "InverseCycleA":int , 
-                            "InverseC": int, "InverseCFill": int, "InverseCycleC": int,
+                            "Restart": int, "InverseA": int, "InverseCycleA":int, "InverseC": int, "InverseCycleC": int, 
                             "Calv": int, "ISthick": int, "InverseCycleIS": int, "GIthick": int, "InverseCycleGI": int})
         data = data.astype({"BaseMesh": str, "Comments": str})
     else:

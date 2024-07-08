@@ -55,10 +55,8 @@ for ii=1:size(RunTable_inverse,1)
             0,...                               %Restart
             BaseMesh,...                        %BaseMesh
             RunTable_inverse.ExpID(ii),...      %InverseA
-        	RunTable_inverse.ExpID(ii),...      %InverseAFill (fields will be extruded)
         	it,...                              %InverseCycleA
         	RunTable_inverse.ExpID(ii),...      %InverseC
-        	RunTable_inverse.ExpID(ii),...      %InverseCFill (fields will be extruded)
         	it,...                              %InverseCycleC
         	RunTable_inverse.ExpID(ii),...      %Calv
         	RunTable_inverse.ExpID(ii),...      %ISthick
