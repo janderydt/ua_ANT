@@ -203,12 +203,11 @@ end
 
 %% Deal with spinup simulations
 if strcmp(CtrlVar.DefineOutputsInfostring,'Last call') % the string "last call" is only set for a transient simulation, not for an inverse simulation
-    % calculate total number of years over all spinup cycles
-    YearsDoneInThisRun = CtrlVar.time;
-    UserVar.Spinup.YearsDone = UserVar.Spinup.YearsDone + YearsDoneInThisRun;
+    % calculate total number of years over all spinup cycles 
+    UserVar.Spinup.YearsDone = CtrlVar.time;
     if UserVar.Spinup.stoppedduetowalltime == 1
         fprintf(CtrlVar.fidlog,['Simulation stopped due to walltime constraints. Done %s years instead of %s. ',...
-        		'Writing restart file.\n'],num2str(YearsDoneInThisRun),num2str(CtrlVar.TotalTime));         
+        		'Writing restart file.\n'],num2str(UserVar.Spinup.YearsDone),num2str(CtrlVar.TotalTime));         
         UserVar.Restart = 1;         
     else
         fprintf(CtrlVar.fidlog,'Simulation reached expected number of %s years.\n',num2str(CtrlVar.TotalTime));
