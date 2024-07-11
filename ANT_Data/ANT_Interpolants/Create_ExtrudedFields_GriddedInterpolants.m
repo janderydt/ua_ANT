@@ -1,34 +1,50 @@
-function Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,CreateGeotiff)
+function Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,ScalarInterpolant,CreateGeotiff,fields_to_extrude)
 
-% This function extrudes surface velocities, ice geometry (surface and draft) 
-% and densities from the present-day ice edge of Antarctica along flowlines
+% This function extrudes surface velocities, ice geometry (surface and draft), 
+% densities or any other scalar quantity from the present-day ice edge of Antarctica along flowlines
 % of ice flux (H*q). The processing chain is largely based on a script by
 % C. Greene
 % (https://github.com/chadagreene/ice-shelf-geometry/blob/main/code/flow_dem_extend.m).
-
-fields_to_extrude = '-v-geom-'; % v, geom
 
 %Velinterpolantfile = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities";
 %Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jan-2000";
 if nargin==0
     Velinterpolantfile = "GriddedInterpolants_2009-2010_MeaSUREs_ITSLIVE_Velocities";
     Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2009";
+    ScalarInterpolant = [];   
     CreateGeotiff = 1;
-elseif nargin==2
-    CreateGeotiff = 1;
-elseif nargin==1
-    error('Specify Geominterpolantfile');
+    fields_to_extrude = '-v-geom-';
 end
 
-fprintf("Load velocity and geometry interpolants...");
+if nargin==1
+    error('Specify input Geominterpolantfile');
+end
 
-load(Velinterpolantfile);
-load(Geominterpolantfile);
+if nargin==2
+    ScalarInterpolant = [];
+    CreateGeotiff = 1;
+    fields_to_extrude = '-v-geom-';
+end
 
-fprintf("done.\n");
+if nargin==3
+    fields_to_extrude = '-scalar-';
+    CreateGeotiff = 1;
+end
+
+if nargin==4
+    fields_to_extrude = '-scalar-';
+end
 
 fprintf("Interpolate data onto correct grids...");
+
 if contains(fields_to_extrude,'-v-')
+
+    fprintf("Load velocity and geometry interpolants...");
+
+    load(Velinterpolantfile);
+    load(Geominterpolantfile);
+    
+    fprintf("done.\n");
 
     x_v = Fus.GridVectors{1};
     y_v = Fus.GridVectors{2};
@@ -42,6 +58,13 @@ if contains(fields_to_extrude,'-v-')
 end
 
 if contains(fields_to_extrude,'-geom-')
+
+    fprintf("Load velocity and geometry interpolants...");
+
+    load(Velinterpolantfile);
+    load(Geominterpolantfile);
+    
+    fprintf("done.\n");
 
     x_g = Fb.GridVectors{1};
     y_g = Fs.GridVectors{2};
@@ -60,8 +83,49 @@ if contains(fields_to_extrude,'-geom-')
     %v_source_g =  Fsource(X_g,Y_g);
 
 end
+
+if contains(fields_to_extrude,'-scalar-')
+
+    [nx,ny] = size(ScalarInterpolant.Values);
+    filetoread = "Fields_to_extrude_scalar_nx"+string(nx)+"_ny"+string(ny)+".mat";
+
+    if ~exist(filetoread,"file")
+        
+        fprintf("Load velocity and geometry interpolants...");
+    
+        load(Velinterpolantfile);
+        load(Geominterpolantfile);
+        
+        fprintf("done.\n");
+    
+        x_scal = ScalarInterpolant.GridVectors{1};
+        y_scal = ScalarInterpolant.GridVectors{2};
+        [X_scal,Y_scal] = meshgrid(x_scal,y_scal);
+     
+        s = Fs(X_scal,Y_scal); b = Fb(X_scal,Y_scal);
+        s(s==0) = nan; b(b==0) = nan;    
+        H_scal = s-b;
+        
+        vx_scal = Fus(X_scal,Y_scal);
+        vy_scal =  Fvs(X_scal,Y_scal);
+        %v_source_g =  Fsource(X_g,Y_g);
+    
+        save(filetoread,"x_scal","y_scal","H_scal","vx_scal","vy_scal");
+    else
+
+        load(filetoread);
+
+    end
+
+    [X_scal,Y_scal] = meshgrid(x_scal,y_scal);
+    scal = ScalarInterpolant.Values';
+    scal(scal==0) = nan;
+
+end
+
 fprintf("done.\n");
 
+%% -v-
 if contains(fields_to_extrude,'-v-')
     fprintf("Processing velocity fields.\n");
 
@@ -82,7 +146,7 @@ if contains(fields_to_extrude,'-v-')
     fprintf("done.\n");
 
     fprintf("  > Extrude velocity field...");
-    %% Extrude velocity
+    % Extrude velocity
     % This coarse resolution round is only to constrain the faraway bits later
     % when the entire grid is inpainted. There's no real practical scientific
     % purpose to this coarse resolution, but it does ultimately help us create
@@ -151,6 +215,7 @@ if contains(fields_to_extrude,'-v-')
 
 end
 
+%% -geom-
 if contains(fields_to_extrude,'-geom-')
 
     fprintf("Processing geometry fields.\n");
@@ -239,6 +304,74 @@ if contains(fields_to_extrude,'-geom-')
 
     fprintf("done.\n");
 
+
+end
+
+%% -scalar-
+if contains(fields_to_extrude,'-scalar-')
+
+    fprintf("Processing scalar field.\n");
+
+    fprintf("  > Inpaint nan regions...");
+
+    L = bwlabel(isnan(vx_scal)); % Label the nan regions, and the ocean will be L=1.  
+    vx_scal = regionfill(vx_scal,L>1); 
+    vy_scal = regionfill(vy_scal,L>1);
+    %v_source(L>1) = 4; % interpolated
+    %v = hypot(vx_g,vy_g);
+
+    clearvars L;
+    
+    sc = 1/4; % scale for resizing velocity (for flow *directions* only) 
+    [vx_r,x_r,y_r] = demresize(vx_scal,x_scal,y_scal,sc);
+    vy_r = imresize(vy_scal,sc); 
+    H_r = imresize(H_scal,sc);
+    
+    Hvx_r = inpaint_nans(H_r.*vx_r,4);
+    Hvy_r = inpaint_nans(H_r.*vy_r,4);
+
+    clearvars vx_r vy_r H_r
+
+    fprintf("done.\n");
+
+    %% Extrude scalar field
+    fprintf("  > Extrude scalar field...");
+
+    sf = filt2(scal,x_scal(2)-x_scal(1),5e3,'lp');
+    sg = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_scal,y_scal,sf,0.1,10000);
+    tmps = scal; isf = isfinite(sg); tmps(isf) = sg(isf); 
+    sg = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_scal,y_scal,sf,0.01,10000);
+    isf = isfinite(sg); tmps(isf) = sg(isf); 
+    fprintf("done...");
+
+    clearvars sf sg isf
+
+    fprintf("  > Combine with original data and fill remaining nan regions...");
+
+    scal = regionfill(tmps,isnan(tmps)); 
+
+    clear tmp*
+
+    fprintf("done.\n");
+    
+    % if CreateGeotiff
+    % 
+    %     fprintf('Writing GeoTiff files \n');
+    % 
+    %     R = maprefcells([x_scal(1) x_scal(end)],[y_scal(1) y_scal(end)],[numel(x_scal),numel(y_scal)]);
+    %     geotiffwrite("./GeoTiffFiles/scalarfield_EXTRUDED.tif",scal,R,'CoordRefSysCode','EPSG:3031');
+    % 
+    %     fprintf('Done.\n');
+    % 
+    % end
+
+    fprintf(' Creating gridded interpolants...');
+
+    ScalarInterpolant.Values = scal';
+   
+    save(erase(fields_to_extrude,["-","scalar"])+"-Estimate_EXTRUDED.mat","ScalarInterpolant","-v7.3");
+
+    fprintf("done.\n");
 
 end
 

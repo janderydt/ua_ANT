@@ -25,15 +25,13 @@ function [UserVar,isStop]=DefineRunStopCriterion(UserVar,RunInfo,CtrlVar,MUA,BCs
 %
 %%
 
-
-
 StopFlag = getappdata(0,'UAstopFlag'); %get stop flag
 if StopFlag
   isStop = true;
   UserVar.Spinup.stoppedduetowalltime = 1;
 else
   isStop = false;
-   UserVar.Spinup.stoppedduetowalltime = 0;
+  UserVar.Spinup.stoppedduetowalltime = 0;
 end
 
 %% Example of a run-stop criterion based on norm of dh/dt.

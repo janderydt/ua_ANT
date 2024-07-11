@@ -40,10 +40,6 @@ elseif isempty(UserVar.Spinup.Cycle) & UserVar.Restart == 1
     UserVar.Spinup.Cycle = Itmp(1);
 end
 
-% initialize walltime variables
-UserVar.Inverse.stoppedduetowalltime = 0;
-UserVar.Spinup.stoppedduetowalltime = 0;
-
 % Restart files
 UserVar.NameOfRestartFiletoRead = UserVar.Experiment + "-RestartFile.mat";
 

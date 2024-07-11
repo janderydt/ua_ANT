@@ -12,6 +12,8 @@ UA_BUILD=./UaBuild
 UA_WRAPPER_FILES=$REPO_DIR/ANT_Diagnostic
 # Path to configuration-specific Ua files to overwrite
 UA_CASE_UPDATES=$REPO_DIR/ANT_Diagnostic/ANT_Diagnostic_9999
+# We need some files from the ANT_Data/ANT_Interpolants folder
+UA_INTERPOLANTS=$REPO_DIR/ANT_Data/ANT_Interpolants
 # Path to Ua source directory (default use the one inside UaMITgcm)
 UA_SOURCE=/mnt/md0/Ua/UaSource_beta
 
@@ -34,6 +36,7 @@ cp `find $UA_SOURCE/Mesh2d/ -name "*.m" ! -name 'inpoly2*'` $UA_BUILD
 cp -r $REPO_DIR/*.m $UA_BUILD
 cp -r $UA_WRAPPER_FILES/*.m $UA_BUILD
 cp -r $UA_CASE_UPDATES/* $UA_BUILD
+cp -r $UA_INTERPOLANTS/*.m $UA_BUILD
 
 # Create the executable
 $MATLAB_PATH/bin/mcc -m $UA_BUILD/ANT_UaWrapper.m -o Ua -d $UA_BUILD

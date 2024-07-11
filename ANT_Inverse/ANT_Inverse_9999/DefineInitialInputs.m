@@ -38,6 +38,7 @@ elseif UserVar.SpinupCycle
     end          
     CtrlVar.InitialDiagnosticStep=1; 
     CtrlVar.NameOfRestartFiletoRead = UserVar.NameOfRestartFiletoRead;   
+    UserVar.Spinup.stoppedduetowalltime = 0;
     CtrlVar.UseUserDefinedRunStopCriterion=1;
 else
     error("Unknown run case");

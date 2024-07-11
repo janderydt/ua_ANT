@@ -11,10 +11,18 @@ yseed = Y(perim);
 [row,col] = find(perim); 
 XY = stream2(x,y,vx,vy,xseed,yseed,[step nsteps]);
 
-% Loop through each seed location to extrapolate terminus velocity along flowlines:  
-V = XY; 
+% Remove empty entries
+IndEmpty = find(cellfun(@isempty,XY));
+XY(IndEmpty)=[];
+xseed(IndEmpty)=[];
+yseed(IndEmpty)=[];
+row(IndEmpty)=[];
+col(IndEmpty)=[];
+
+% Loop through each seed location to extrapolate seed value along flowlines:  
+V = XY;
 for k = 1:length(V) 
-   V{k}(:,1) = v_orig(row(k),col(k));
+    V{k}(:,1) = v_orig(row(k),col(k));
 end
 
 M = cell2nancat(XY);
