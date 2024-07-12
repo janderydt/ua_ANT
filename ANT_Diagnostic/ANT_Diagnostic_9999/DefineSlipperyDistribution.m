@@ -8,6 +8,8 @@ muk=0.5 ;
 tmp = load(CFile,'MUA','C','m');
 m = tmp.m(1);
 
+prefix_ExtrudedSlipperinessFileToRead = "ANT_Inverse_"+string(UserVar.InverseC)+"_C-Estimate";
+
 % check if we need to extrude AGlen by comparing the current mesh with the mesh from the inversion
 if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
 
@@ -20,7 +22,7 @@ if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
     [ID,d] = nearestNeighbor(tmp.MUA.TR,MUA.coordinates);      
     IdenticalNodes=d<tol ;
 
-    if ~exist("C-Estimate_EXTRUDED.mat","file")
+    if ~exist(prefix_ExtrudedSlipperinessFileToRead+"_EXTRUDED.mat","file")
         fprintf("Using C from file %s and extruding unknown values along streamlines.\n",CFile);
         % load basemesh
         basemesh = load(UserVar.BaseMesh.Mesh);
@@ -35,10 +37,12 @@ if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
         C_r(Ind) = 0;
         % define gridded interpolant of original AGlen
         FC_r = griddedInterpolant(X_r,Y_r,C_r);
-        Create_ExtrudedFields_GriddedInterpolants([],[],FC_r,0,"-scalar-C-"); clearvars FC_r;
+        Create_ExtrudedFields_GriddedInterpolants([],[],FC_r,0,"-scalar-"+prefix_ExtrudedSlipperinessFileToRead); clearvars FC_r;
     end
 
-    load("C-Estimate_EXTRUDED.mat");
+    fprintf("Using C from file %s.\n",prefix_ExtrudedSlipperinessFileToRead+"_EXTRUDED.mat");
+    load(prefix_ExtrudedSlipperinessFileToRead+"_EXTRUDED.mat");
+    
     C = ScalarInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2));   
 
     % now map original values of identical nodes across

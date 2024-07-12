@@ -14,16 +14,20 @@ yEle=Nodes2EleMean(MUA.connectivity,MUA.coordinates(:,2));
 % take care of potential nans in boundary
 if isfield(UserVar,'Geometry')
     variable = round(UserVar.Geometry);
-    if isfield(MeshBoundaryCoordinates,['yr',num2str(variable)])
-        BCx = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,1);
-        BCy = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,2); 
-    else
-        BCx = MeshBoundaryCoordinates(:,1);
-        BCy = MeshBoundaryCoordinates(:,2); 
-    end
+elseif isfield(UserVar,'Calv')
+    variable = round(UserVar.Calv);
 else
     error(['ExpID ',UserVar.ExpID,': Do not know Geometry.']);
 end
+
+if isfield(MeshBoundaryCoordinates,['yr',num2str(variable)])
+    BCx = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,1);
+    BCy = MeshBoundaryCoordinates.(['yr',num2str(variable)])(:,2); 
+else
+    BCx = MeshBoundaryCoordinates(:,1);
+    BCy = MeshBoundaryCoordinates(:,2); 
+end
+    
 Inan = find(isnan(BCx));
 if ~isempty(Inan)
     BCx = BCx(1:Inan(1)-1);

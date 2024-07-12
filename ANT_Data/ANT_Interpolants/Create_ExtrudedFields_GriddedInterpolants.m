@@ -354,22 +354,22 @@ if contains(fields_to_extrude,'-scalar-')
 
     fprintf("done.\n");
     
-    % if CreateGeotiff
-    % 
-    %     fprintf('Writing GeoTiff files \n');
-    % 
-    %     R = maprefcells([x_scal(1) x_scal(end)],[y_scal(1) y_scal(end)],[numel(x_scal),numel(y_scal)]);
-    %     geotiffwrite("./GeoTiffFiles/scalarfield_EXTRUDED.tif",scal,R,'CoordRefSysCode','EPSG:3031');
-    % 
-    %     fprintf('Done.\n');
-    % 
-    % end
+    if CreateGeotiff
+
+        fprintf('Writing GeoTiff files \n');
+
+        R = maprefcells([x_scal(1) x_scal(end)],[y_scal(1) y_scal(end)],[numel(x_scal),numel(y_scal)]);
+        geotiffwrite("./GeoTiffFiles/scalarfield_EXTRUDED.tif",scal,R,'CoordRefSysCode','EPSG:3031');
+
+        fprintf('Done.\n');
+
+    end
 
     fprintf(' Creating gridded interpolants...');
 
     ScalarInterpolant.Values = scal';
    
-    save(erase(fields_to_extrude,["-","scalar"])+"-Estimate_EXTRUDED.mat","ScalarInterpolant","-v7.3");
+    save(erase(fields_to_extrude,"-scalar-")+"_EXTRUDED.mat","ScalarInterpolant","-v7.3");
 
     fprintf("done.\n");
 

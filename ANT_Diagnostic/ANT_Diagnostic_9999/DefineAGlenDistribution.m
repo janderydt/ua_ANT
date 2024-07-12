@@ -5,6 +5,8 @@ AGlenFile = UserVar.NameOfFileForReadingAGlenEstimate;
 tmp = load(AGlenFile,'MUA','AGlen','n'); % load results from inversion
 n = tmp.n(1);
 
+prefix_ExtrudedAGlenFileToRead = "ANT_Inverse_"+string(UserVar.InverseA)+"_AGlen-Estimate";
+
 % check if we need to extrude AGlen by comparing the current mesh with the mesh from the inversion
 if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
 
@@ -17,7 +19,7 @@ if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
     [ID,d] = nearestNeighbor(tmp.MUA.TR,MUA.coordinates);      
     IdenticalNodes=d<tol ;
 
-    if ~exist("AGlen-Estimate_EXTRUDED.mat","file")
+    if ~exist(prefix_ExtrudedAGlenFileToRead+"_EXTRUDED.mat","file")
         fprintf("Using AGlen from file %s and extruding unknown values along streamlines.\n",AGlenFile);
         % load basemesh
         basemesh = load(UserVar.BaseMesh.Mesh);
@@ -32,10 +34,11 @@ if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
         AGlen_r(Ind) = 0;
         % define gridded interpolant of original AGlen
         FAGlen_r = griddedInterpolant(X_r,Y_r,AGlen_r);
-        Create_ExtrudedFields_GriddedInterpolants([],[],FAGlen_r,0,"-scalar-AGlen-"); clearvars FAGlen_r;
+        Create_ExtrudedFields_GriddedInterpolants([],[],FAGlen_r,0,"-scalar-"+prefix_ExtrudedAGlenFileToRead); clearvars FAGlen_r;
     end
 
-    load("AGlen-Estimate_EXTRUDED.mat");
+    fprintf("Using AGlen from file %s.\n",prefix_ExtrudedAGlenFileToRead+"_EXTRUDED.mat");
+    load(prefix_ExtrudedAGlenFileToRead+"_EXTRUDED.mat");
     AGlen = ScalarInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2));   
 
     % now map original values of identical nodes across

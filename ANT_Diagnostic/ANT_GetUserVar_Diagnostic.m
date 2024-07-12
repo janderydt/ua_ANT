@@ -2,59 +2,27 @@ function UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar)
 
 %% target geometry interpolants
 %% ICE SHELF
-UserVar.ISGeometry = RunTable{ind,"ISthick"}; % this is the geometry BEFORE the perturbation
-NameOfFiletoRead = "../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.ISGeometry)+...
-        "/"+UserVar.Domain+"_Inverse_"+string(UserVar.ISGeometry)+"-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleIS"})+".mat";
-if exist(NameOfFiletoRead,"file")
-    load(NameOfFiletoRead,"F","MUA");
-    FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
-    Fb = FB; Fb.Values = F.b;
-    Fs = FB; Fs.Values = F.s;
-    Frho = FB; Frho.Values = F.rho;
-    UserVar.ISGeometryInterpolants = "GeometryInterpolantsIS.mat";
-    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.ISGeometryInterpolants,"FB","Fb","Fs","Frho");
-else
-    error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to read ISthick geometry: "+NameOfFiletoRead);
+UserVar.ISGeometry = RunTable{ind,"ISthick"};
+switch UserVar.ISGeometry
+    case {2000,2009,2014,2018}
+        UserVar.ISGeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.ISGeometry)+"_EXTRUDED.mat";
+    otherwise
+        error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise ISthick flag in RunTable.']);
 end
 
 %% GROUNDED ICE
-UserVar.GIGeometry = RunTable{ind,"GIthick"}; % this is the geometry BEFORE the perturbation
-NameOfFiletoRead = "../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.GIGeometry)+...
-        "/"+UserVar.Domain+"_Inverse_"+string(UserVar.GIGeometry)+"-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleGI"})+".mat";
-if exist(NameOfFiletoRead,"file")
-    load(NameOfFiletoRead,"F","MUA");
-    FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
-    Fb = FB; Fb.Values = F.b;
-    Fs = FB; Fs.Values = F.s;
-    Frho = FB; Frho.Values = F.rho;
-    UserVar.GIGeometryInterpolants = "GeometryInterpolantsGI.mat";
-    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.GIGeometryInterpolants,"FB","Fb","Fs","Frho");
-else
-    error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to read GIthick geometry: "+NameOfFiletoRead);
+UserVar.GIGeometry = RunTable{ind,"GIthick"};
+switch UserVar.GIGeometry
+    case {2000,2009,2014,2018}
+        UserVar.GIGeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.GIGeometry)+"_EXTRUDED.mat";
+    otherwise
+        error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise GIthick flag in RunTable.']);
 end
 
 %% CALVING
 UserVar.Calv = RunTable{ind,"Calv"};
-NameOfFiletoRead = "../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.Calv)+...
-        "/"+UserVar.Domain+"_Inverse_"+string(UserVar.Calv)+"-RestartFile_InverseCycle"+string(RunTable{ind,"InverseCycleGI"})+".mat";
-if exist(NameOfFiletoRead,"file")
-    % new boundary
-    load(NameOfFiletoRead,"MUA");
-    MeshBoundaryCoordinates = [MUA.Boundary.x(:) MUA.Boundary.y(:)];
-    MeshBoundaryCoordinatesFile = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates";
-    save(MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
-    UserVar.MeshBoundaryCoordinatesFile = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates";
-else
-    error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to read calving front: "+NameOfFiletoRead);
-end
-
-% new mesh
-InitialMeshFileName = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+"_InitialMesh";
-save(InitialMeshFileName,"MUA");
-UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_InitialMesh";
-
-%%basemesh
 UserVar = ANT_DefineBaseMesh(UserVar,RunTable{ind,"BaseMesh"}{:});
+UserVar = ANT_ApplyMeshModifications(UserVar);
     
 %% density interpolant: same as ice shelf run
 UserVar.DensityInterpolant = UserVar.ISGeometryInterpolants;   

@@ -8,7 +8,7 @@ uqlab; % initialize uqlab
 
 GradientCalc = "Adjoint"; % options: FixPoint or Adjoint
 SlidingLaw = "Weertman"; 
-Enrich = 1; % enriches the existing Latin Hypercube
+Enrich = 0; % enriches the existing Latin Hypercube
 EnrichSampleSize = 360;
 
 Input.Name = 'Parameter array for inverse simulations';
@@ -24,13 +24,13 @@ switch GradientCalc
 
         %% Regularization
         Input.Marginals(ind).Name = 'gsC';
-        Input.Marginals(ind).Parameters = [50e3 1000e3];
-        Input.Marginals(ind).Bounds = [50e3 1000e3];
+        Input.Marginals(ind).Parameters = [25e3 50e3]; %v1: [50e3 1000e3]
+        Input.Marginals(ind).Bounds = [25e3 50e3]; %v1: [50e3 1000e3]
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gsA';
-        Input.Marginals(ind).Parameters = [50e3 1000e3]; % parameters are bounds
-        Input.Marginals(ind).Bounds = [50e3 1000e3];
+        Input.Marginals(ind).Parameters = [25e3 50e3];  %v1: [50e3 1000e3]
+        Input.Marginals(ind).Bounds = [25e3 50e3]; %v1: [50e3 1000e3]
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gaC';
@@ -39,8 +39,8 @@ switch GradientCalc
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gaA';
-        Input.Marginals(ind).Parameters = [1 200]; % parameters are bounds
-        Input.Marginals(ind).Bounds = [1 200];
+        Input.Marginals(ind).Parameters = [1 250]; % parameters are bounds
+        Input.Marginals(ind).Bounds = [1 250];
         ind = ind + 1;
         
         %% Sliding law

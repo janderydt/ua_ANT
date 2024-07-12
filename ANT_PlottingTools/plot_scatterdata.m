@@ -5,8 +5,8 @@ variable_to_plot = 'misfit'; %options: qGL, niter, misfit
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
 UserVar.cycle = 1;
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+["/RunTable_ARCHER2_2.csv"];%,"/RunTable_ARCHER2_5.csv"];
-UserVar.idrange = [3000,3999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+["/RunTable_ARCHER2_2.csv","/RunTable_ARCHER2_5.csv"];
+UserVar.idrange = [3000,3999;6000,6999];
 
 addpath("/mnt/md0/Ua/cases/ANT/");
 
@@ -33,7 +33,7 @@ for tt=1:numel(UserVar.Table)
             string(UserVar.cycle)+".mat";
         if exist(restartfile,"file")
             load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");
-            if UserVarInRestartFile.Inverse.IterationsDone == 15000
+            %if UserVarInRestartFile.Inverse.IterationsDone == 15000
                 m(kk+ii) = F.m(1);
                 n(kk+ii) = F.n(1);
                 gaA(kk+ii) = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.ga;
@@ -52,18 +52,18 @@ for tt=1:numel(UserVar.Table)
                 GL=FluxAcrossGroundingLine(CtrlVarInRestartFile,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
                 qGL(kk+ii) = sum(GL);
                 I(kk+ii) = InvFinalValues.I; % calculated as 
-            else
-                table_ind = Ind(ii);
-                m(kk+ii) = RunTable{table_ind,"m"};
-                n(kk+ii) = RunTable{table_ind,"n"};
-                gaA(kk+ii) = RunTable{table_ind,"gaA"};
-                gaC(kk+ii) = RunTable{table_ind,"gaC"};
-                gsA(kk+ii) = RunTable{table_ind,"gsA"};
-                gsC(kk+ii) = RunTable{table_ind,"gsC"};
-                niter(kk+ii) = 0;
-                qGL(kk+ii) = nan;
-                I(kk+ii) = nan;
-            end
+            % else
+            %     table_ind = Ind(ii);
+            %     m(kk+ii) = RunTable{table_ind,"m"};
+            %     n(kk+ii) = RunTable{table_ind,"n"};
+            %     gaA(kk+ii) = RunTable{table_ind,"gaA"};
+            %     gaC(kk+ii) = RunTable{table_ind,"gaC"};
+            %     gsA(kk+ii) = RunTable{table_ind,"gsA"};
+            %     gsC(kk+ii) = RunTable{table_ind,"gsC"};
+            %     niter(kk+ii) = 0;
+            %     qGL(kk+ii) = nan;
+            %     I(kk+ii) = nan;
+            % end
          else
             table_ind = Ind(ii);
             m(kk+ii) = RunTable{table_ind,"m"};

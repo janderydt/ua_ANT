@@ -52,7 +52,7 @@ for ind=1:size(X,1)
         [~,Ind] = min(hypot(m_FixPoint-m,n_FixPoint-n));
         startC = ExpID_FixPoint(Ind);
         startAGlen = 0;
-        iterations = "10000+1000";
+        iterations = "15000+1000";
         spinupyears = "1";
         invertfor = "-logC-logA-";
     elseif GradientCalc == "Adjoint" && Enrich == 1
