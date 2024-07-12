@@ -25,8 +25,8 @@ if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
         % load basemesh
         basemesh = load(UserVar.BaseMesh.Mesh);
         % interpolate AGlen onto regular grid for extrusion
-        x_r=[min(MUA_base.coordinates(:,1)):5e3:max(MUA_base.coordinates(:,1))];
-        y_r=[min(MUA_base.coordinates(:,2)):5e3:max(MUA_base.coordinates(:,2))];
+        x_r=[min(basemesh.MUA.coordinates(:,1)):5e3:max(basemesh.MUA.coordinates(:,1))];
+        y_r=[min(basemesh.MUA.coordinates(:,2)):5e3:max(basemesh.MUA.coordinates(:,2))];
         [X_r,Y_r]=ndgrid(x_r,y_r);
         FC = scatteredInterpolant(tmp.MUA.coordinates(:,1),tmp.MUA.coordinates(:,2),tmp.C);
         C_r = FC(X_r,Y_r); clearvars FC;
@@ -36,10 +36,9 @@ if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
         % define gridded interpolant of original AGlen
         FC_r = griddedInterpolant(X_r,Y_r,C_r);
         Create_ExtrudedFields_GriddedInterpolants([],[],FC_r,0,"-scalar-C-"); clearvars FC_r;
-    else
-        load("C-Estimate_EXTRUDED.mat");
     end
 
+    load("C-Estimate_EXTRUDED.mat");
     C = ScalarInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2));   
 
     % now map original values of identical nodes across

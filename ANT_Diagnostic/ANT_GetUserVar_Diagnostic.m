@@ -61,7 +61,6 @@ UserVar.DensityInterpolant = UserVar.ISGeometryInterpolants;
 
 %% sliding law
 UserVar.InverseC = RunTable{ind,"InverseC"};
-UserVar.InverseCFill = RunTable{ind,"InverseCFill"};
 
 % copy relevant files   
 NameOfFiletoRead="../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseC)+"/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseC)+...
@@ -78,7 +77,6 @@ end
 
 %% Glen's exponent
 UserVar.InverseA = RunTable{ind,"InverseA"};
-UserVar.InverseAFill = RunTable{ind,"InverseAFill"}; 
 
 % copy relevant files   
 NameOfFiletoRead="../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseA)+"/"+UserVar.Domain+"_Inverse_"+string(UserVar.InverseA)+...

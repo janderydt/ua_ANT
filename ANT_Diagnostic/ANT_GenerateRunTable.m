@@ -50,7 +50,7 @@ for ii=1:size(RunTable_inverse,1)
             0,...                               %Running
             0,...                               %Error
             "01/01/2000 00:00:00",...           %ErrorTime
-            0,...                               %Finished
+            1-RunTable_inverse.Finished(ii),... %Finished
             "01/01/2000 00:00:00",...           %FinishedTime
             0,...                               %Restart
             BaseMesh,...                        %BaseMesh
