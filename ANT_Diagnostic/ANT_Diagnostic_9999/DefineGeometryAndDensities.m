@@ -23,9 +23,9 @@ fprintf('Loading geometry and density fields %s.\n',FieldsToBeDefined);
 x=MUA.coordinates(:,1); y=MUA.coordinates(:,2);
 S = 0*x;
 
-fprintf('Trying to read fields from %s...',filename_geometryfields);
-
 %% first deal with the grounded ice and densities
+fprintf('Grounded ice: trying to read fields from %s...',filename_GIgeometryfields);
+
 if exist(filename_GIgeometryfields,"file")
     if contains(FieldsToBeDefined,"B")
         load(filename_GIgeometryfields,"B");
@@ -85,6 +85,8 @@ h = s-b;
 ISnodes = find(GF.node<0.5 & GF.NodesDownstreamOfGroundingLines & ~LakeNodes); 
 
 %% now deal with floating ice
+fprintf('Floating ice: trying to read fields from %s...',filename_ISgeometryfields);
+
 if exist(filename_ISgeometryfields,"file")
     if contains(FieldsToBeDefined,"b")
         tmp=load(filename_ISgeometryfields,"b");
