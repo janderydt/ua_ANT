@@ -1,8 +1,8 @@
 function [UserVar,s,b,S,B,rho,rhow,g]=DefineGeometryAndDensities(UserVar,CtrlVar,MUA,F,FieldsToBeDefined)
 
-if nargin<5
+%if nargin<5
     FieldsToBeDefined='sbSBrho';
-end
+%end
 
 s=[]; b=[]; S=[]; B=[]; rho = [];
 alpha=0 ;
@@ -22,6 +22,7 @@ fprintf('Loading geometry and density fields %s.\n',FieldsToBeDefined);
 
 x=MUA.coordinates(:,1); y=MUA.coordinates(:,2);
 S = 0*x;
+rhow = 1027;
 
 %% first deal with the grounded ice and densities
 fprintf('Grounded ice: trying to read fields from %s...',filename_GIgeometryfields);
@@ -36,11 +37,12 @@ if exist(filename_GIgeometryfields,"file")
     if contains(FieldsToBeDefined,"s")
         load(filename_GIgeometryfields,"s");
     end
-    if contains(FieldsToBeDefined,"rho")
-        load(filename_GIgeometryfields,"rho");
-    end
+    
+    load(filename_GIgeometryfields,"rho");
     fprintf('done.\n');
+
 else
+
     fprintf('file does not exist, try interpolants instead...');
     if exist(UserVar.GIGeometryInterpolants)
         if contains(FieldsToBeDefined,"B")
@@ -61,11 +63,11 @@ else
             clearvars Fb;
             b = inpaint_nans(b,4);
         end
-        if contains(FieldsToBeDefined,"rho")
-            load(UserVar.DensityInterpolant,'Frho');
-            rho = Frho(MUA.coordinates(:,1),MUA.coordinates(:,2));
-            clearvars Frho;
-        end    
+        
+	load(UserVar.DensityInterpolant,'Frho');
+        rho = Frho(MUA.coordinates(:,1),MUA.coordinates(:,2));
+        clearvars Frho;
+        
         %save(filename_geometryfields,"B","b","S","s","rho");
         fprintf('done.\n');
         fprintf('Used geometry interpolants from %s for grounded ice.\n',UserVar.GIGeometryInterpolants);
@@ -74,9 +76,11 @@ else
     end
 end
 
+rho(rho<100)=100;
+rho(rho>917)=917;
+
 %% where is the grounding line?
 h = s-b;
-[~,rho,rhow,~]=DefineDensities(UserVar,CtrlVar,MUA,[],[],[],[],[],[]);
 [b,s,h,GF]=Calc_bs_From_hBS(CtrlVar,MUA,h,S,B,rho,rhow);
 
 %% find floating nodes that are not lakes
@@ -121,9 +125,5 @@ else
     end
 end
 
-rho(rho<100)=100;
-rho(rho>917)=917;
-rhow=1027; 
-            
 g=9.81/1000;
 
