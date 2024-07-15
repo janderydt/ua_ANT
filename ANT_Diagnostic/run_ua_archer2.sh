@@ -62,6 +62,15 @@ timestart=$(date +"%s")
 # make local copy of runtable
 python ../copy_runtable.py $UA_CONFIG
 
+# get list of experiments to start
+Inew=`python ../get_runs_to_submit.py $UA_CONFIG new`
+Iexisting=`python ../get_runs_to_submit.py $UA_CONFIG existing`
+
+echo $Inew
+echo $nodelist
+
+exit -1
+
 # Loop over the nodes assigned to the job
 for nodeid in $nodelist
 do

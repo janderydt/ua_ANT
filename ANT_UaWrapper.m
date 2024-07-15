@@ -1,4 +1,4 @@
-function ANT_UaWrapper(ua_config,pgid,type)
+function ANT_UaWrapper(ua_config,pgid,type,Iexisting,Inew)
 
 %% find host and setup matlab path
 [~,hostname]= system("hostname"); 
@@ -22,27 +22,34 @@ end
 UserVar.home = pwd+"/";
 
 %% deal with inputs
-if nargin==1
-    ua_config = string(ua_config);
-    pgid=[];
-    type=[];
-elseif nargin==2
-    ua_config = string(ua_config);
-    if ischar(pgid)
-        pgid = str2double(pgid);
-    end    
-    type=[];
-elseif nargin==3
-    % ensure correct format
-    ua_config = string(ua_config);
-    if ischar(pgid)
-        pgid = str2double(pgid);
-    end
-    if ischar(type)
-        type = string(type);
-    end
-else
-    error("You need to either provide a config file or pgid and type. Instead got none.");
+switch nargin
+    case 0
+        error("You need to either provide a config file or pgid and type. Instead got none.");
+    case 1
+        ua_config = string(ua_config);
+        pgid=[];
+        type=[];
+        Iexisting=[];
+        Inew=[];
+    case 2
+        ua_config = string(ua_config);
+        if ischar(pgid)
+            pgid = str2double(pgid);
+        end    
+        type=[];
+        Iexisting=[];
+        Inew=[];
+    case 3
+        % ensure correct format
+        ua_config = string(ua_config);
+        if ischar(pgid)
+            pgid = str2double(pgid);
+        end
+        if ischar(type)
+            type = string(type);
+        end
+        Iexisting=[];
+        Inew=[];
 end
     
 if ~isempty(ua_config)
@@ -113,7 +120,9 @@ UserVar.fid_masterlog = fid;
 RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
 
 if ~isempty(RunTable)
-    Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}==0);
+    if isempty(Iexisting)
+        Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}==0);
+    end
 end
 
 %% launch jobs
@@ -276,7 +285,9 @@ if something_submitted % something has been submitted and run has finished -> qu
 else
     RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
     if ~isempty(RunTable)
-        Inew = find(RunTable{:,'ExpID'}==0);
+        if isempty(Inew)
+            Inew = find(RunTable{:,'ExpID'}==0);
+        end
     else
         fprintf(UserVar.fid_masterlog,"Empty RunTable - stop job and quit./n");
         quit;
