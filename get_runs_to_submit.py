@@ -36,11 +36,13 @@ if flag == "new":
     # find runs without experiment id and shift table index by 1 to comply with Matlab syntax
     Inew = np.where(expid == 0)[0] + 1
     #nInew = len(Inew)
-    print(Inew)
+    Inew_str = " ".join(str(x) for x in Inew)
+    print(Inew_str)
 
 if flag == "existing":
     # find existing runs that do not have any errors, are not submitted, running or finished
     Iexisting = np.where((expid != 0) & (error == 0) & \
             (submitted == 0) & (running == 0) & (finished == 0))[0] + 1
     #nIexisting = len(Iexisting)
-    print(Iexisting)
+    Iexisting_str = " ".join(str(x) for x in Iexisting)
+    print(Iexisting_str)

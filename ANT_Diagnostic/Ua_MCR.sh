@@ -31,7 +31,7 @@ else
       shift
   done
 # add slurm jobid to arguments
-  args="${args} \"${SLURM_JOB_ID}\""
+#  args="${args} \"${SLURM_JOB_ID}\""
   export MCR_CACHE_ROOT=$WORK/mcr_cache
   eval "\"${exe_dir}/Ua\"" $args
 fi
