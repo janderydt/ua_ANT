@@ -67,6 +67,13 @@ Inew=`python ../get_runs_to_submit.py $UA_CONFIG new`
 Iexisting=`python ../get_runs_to_submit.py $UA_CONFIG existing`
 
 echo $Inew
+
+for expid in $Iexisting
+do
+    echo ${Iexisting[$expid]}
+done
+
+echo $Iexisting
 echo $nodelist
 
 exit -1

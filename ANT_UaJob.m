@@ -15,7 +15,7 @@ RunTable{ind,"Running"} = 1;
 RunTable{ind,'pgid'} = pgid;
 
 % log changes in global table
-[~]=ANT_ReadWritetable(UserVar,UserVar.runtable_global,RunTable,'write');
+%[~]=ANT_ReadWritetable(UserVar,UserVar.runtable_global,RunTable,'write');
 
 % extract relevant row from global table
 RunTable_exp = RunTable(ind,:);
@@ -30,18 +30,10 @@ cd(UserVar.casefolder+"/"+UserVar.Experiment);
 diary(UserVar.Experiment+".out")
 diary on
 
-something_submitted = 1;
-
-Inew = [];
 UserVar.Error=0;
 
 try
     
-    if UserVar.hostname=="ARCHER2"
-        fid = fopen( UserVar.home+"/"+string(UserVar.pgid)+"_job_submitted", 'wt' );
-        fclose(fid);
-    end
-
     UserVar = Ua2D(UserVar);   
     
 catch ME

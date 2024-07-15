@@ -1,4 +1,6 @@
-function ANT_UaWrapper(ua_config,pgid,type,Iexisting,Inew)
+function ANT_UaWrapper(ua_config,pgid,type,row_number)
+
+% row_number is the row number in the RunTable of the experiment to submit
 
 %% find host and setup matlab path
 [~,hostname]= system("hostname"); 
@@ -29,16 +31,14 @@ switch nargin
         ua_config = string(ua_config);
         pgid=[];
         type=[];
-        Iexisting=[];
-        Inew=[];
+        row_number=[];
     case 2
         ua_config = string(ua_config);
         if ischar(pgid)
             pgid = str2double(pgid);
         end    
         type=[];
-        Iexisting=[];
-        Inew=[];
+        row_number=[];
     case 3
         % ensure correct format
         ua_config = string(ua_config);
@@ -48,8 +48,22 @@ switch nargin
         if ischar(type)
             type = string(type);
         end
-        Iexisting=[];
-        Inew=[];
+        row_number=[];
+    case 4
+        %fprintf("inputs are: %s, %s, %s, %s",ua_config,pgid,type,row_number);
+        ua_config = string(ua_config);
+        if ischar(pgid)
+            pgid = str2double(pgid);
+        end
+        if ischar(type)
+            type = string(type);
+        end
+        % make sure row_number is a single integer
+        row_number = round(double(string(row_number)));
+
+        if numel(row_number)>1
+            error("ANT_UaWrapper: input row_number has to be single integer.");
+        end
 end
     
 if ~isempty(ua_config)
@@ -120,8 +134,14 @@ UserVar.fid_masterlog = fid;
 RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
 
 if ~isempty(RunTable)
-    if isempty(Iexisting)
-        Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}==0);
+    Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}==0);
+    if ~isempty(Iexisting) & ~isempty(row_number)
+        % check if row_number is an existing simulation
+        if ismember(row_number,Iexisting)
+            Iexisting = row_number;
+        else
+            Iexisting = [];
+        end
     end
 end
 
@@ -285,8 +305,14 @@ if something_submitted % something has been submitted and run has finished -> qu
 else
     RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
     if ~isempty(RunTable)
-        if isempty(Inew)
-            Inew = find(RunTable{:,'ExpID'}==0);
+        Inew = find(RunTable{:,'ExpID'}==0);
+        if ~isempty(Inew) & ~isempty(row_number)
+            % check if row_number is a new simulation
+            if ismember(row_number,Inew)
+                Inew = row_number;
+            else
+                Inew = [];
+            end
         end
     else
         fprintf(UserVar.fid_masterlog,"Empty RunTable - stop job and quit./n");

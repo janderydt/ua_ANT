@@ -1,4 +1,4 @@
-function plot_scatterdata
+function plot_ensemble_inverse
 
 variable_to_plot = 'misfit'; %options: qGL, niter, misfit
 
