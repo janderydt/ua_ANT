@@ -1,4 +1,4 @@
-function ANT_UaWrapper(ua_config,pgid,type,row_number,expid)
+function ANT_UaWrapper(ua_config,pgid,type,row_number,expid_new)
 
 %% INPUTS
 % > ua_config: link to *txt file with config details such as the run table,
@@ -17,9 +17,11 @@ arguments
     pgid (1,1) string = ''
     type (1,1) string = ''
     row_number (1,1) string = ''
-    expid (1,1) string = ''
+    expid_new (1,1) string = ''
 end
-%%
+
+fprintf("inputs are: %s, %s, %s, %s, %s",ua_config,pgid,type,row_number,expid_new);
+fprintf("is type empty? %s",string(isempty(type)));
 
 %% find host and setup matlab path
 [~,hostname]= system("hostname"); 
@@ -41,7 +43,6 @@ if ~contains(UserVar.hostname,"ARCHER2")
 end
 
 UserVar.home = pwd+"/";
-%%
 
 %% deal with inputs
 if nargin == 0
@@ -54,7 +55,7 @@ if nargin > 1
 end
 if nargin > 3
     row_number = round(double(row_number));
-    expid = round(double(expid));
+    expid_new = round(double(expid_new));
 end
     
 if ~isempty(ua_config)
@@ -115,7 +116,6 @@ else
     UserVar.runtable_global = runtable;
     UserVar.idrange = idrange;
 end
-%%
 
 %% initialize global log file
 logfile = UserVar.home+"/jobs_master_"+UserVar.hostname+".log";

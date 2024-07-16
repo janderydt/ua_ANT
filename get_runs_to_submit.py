@@ -85,5 +85,6 @@ if flag == "expid":
         expid=np.append(expid,newid)
         ExpID_to_exclude = set(expid)
 
-    print(ExpID_tmp)
+    ExpID_str = " ".join(str(x) for x in ExpID_tmp)
+    print(ExpID_str)
 
