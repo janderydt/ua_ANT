@@ -42,13 +42,15 @@ finished = runtable['Finished'].values
 
 if flag == "new":
     # find runs without experiment id and shift table index by 1 to comply with Matlab syntax
-    Inew = np.where(expid == 0)[0] + 1
+    # THE INDEX HAS BEEN ADVANCED BY 1 TO COMPLY WITH MATLAB SYNTAX
+    Inew = np.where(expid == 0)[0] + 1 
     #nInew = len(Inew)
     Inew_str = " ".join(str(x) for x in Inew)
     print(Inew_str)
 
 if flag == "existing":
     # find existing runs that do not have any errors, are not submitted, running or finished
+    # THE INDEX HAS BEEN ADVANCED BY 1 TO COMPLY WITH MATLAB SYNTAX
     Iexisting = np.where((expid != 0) & (error == 0) & \
             (submitted == 0) & (running == 0) & (finished == 0))[0] + 1
     #nIexisting = len(Iexisting)
@@ -57,6 +59,7 @@ if flag == "existing":
 
 if flag == "all":
     # find all runs to submit
+    # THE INDEX HAS BEEN ADVANCED BY 1 TO COMPLY WITH MATLAB SYNTAX
     Iall = np.where((error == 0) & (submitted == 0) & (running == 0) & (finished == 0))[0] + 1
     #nIexisting = len(Iexisting)
     Iall_str = " ".join(str(x) for x in Iall)
@@ -64,16 +67,16 @@ if flag == "all":
 
 if flag == "count":  
     # find all runs to submit
-    Iall = np.where((error == 0) & (submitted == 0) & (running == 0) & (finished == 0))[0] + 1
+    Iall = np.where((error == 0) & (submitted == 0) & (running == 0) & (finished == 0))[0]
     #nIexisting = len(Iexisting)
     count = len(Iall)
     print(count)
 
 if flag == "expid":
     # find all runs to submit
-    Iall = np.where((error == 0) & (submitted == 0) & (running == 0) & (finished == 0))[0] + 1
+    Iall = np.where((error == 0) & (submitted == 0) & (running == 0) & (finished == 0))[0]
     # find corresponding experiment ids
-    ExpID_tmp = expid[Iall.astype(int)-1]
+    ExpID_tmp = expid[Iall.astype(int)]
     # find expid's that are zero and assign unique id using a random number 
     # generator and excluding any existing ids
     I_zero = np.where(ExpID_tmp == 0)[0].astype(int)

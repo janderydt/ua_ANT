@@ -76,7 +76,7 @@ if ~isempty(ua_config)
                         type = string(erase(tline,["runtype"," ","=",""""]));
                     end
                 elseif contains(tline,'pgid')
-                    if strlength(pgid)==0
+                    if isempty(pgid)
                         pgid = str2num(erase(tline,["pgid"," ","="]));
                     end
                 elseif contains(tline,'walltime=')
