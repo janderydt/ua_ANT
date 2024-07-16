@@ -72,11 +72,11 @@ if ~isempty(ua_config)
                 % process lines / type and pgid should not be overwritten
                 % by information from the config file
                 if contains(tline,'runtype')
-                    if isempty(type)
+                    if strlength(type)==0
                         type = string(erase(tline,["runtype"," ","=",""""]));
                     end
                 elseif contains(tline,'pgid')
-                    if isempty(pgid)
+                    if strlength(pgid)==0
                         pgid = str2num(erase(tline,["pgid"," ","="]));
                     end
                 elseif contains(tline,'walltime=')
