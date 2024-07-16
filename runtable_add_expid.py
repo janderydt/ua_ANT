@@ -23,9 +23,6 @@ with open(config_file, "r") as fi: # Open the file in read mode
     
 # read global runtable
 data_global = read_runinfo(runtable_global,runtype)
-    
-print(row_number)
-print(expid)
 
 # update experiment info within required range
 data_global['ExpID'].values[row_number]=expid
