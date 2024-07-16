@@ -8,8 +8,8 @@ from utils import read_runinfo, save_runinfo
 
 # read input from config file
 config_file = sys.argv[1]
-row_number = sys.argv[2]
-expid = sys.argv[3]
+row_number = int(sys.argv[2])
+expid = int(sys.argv[3])
 
 with open(config_file, "r") as fi: # Open the file in read mode
   for ln in fi:
@@ -24,6 +24,9 @@ with open(config_file, "r") as fi: # Open the file in read mode
 # read global runtable
 data_global = read_runinfo(runtable_global,runtype)
     
+print(row_number)
+print(expid)
+
 # update experiment info within required range
 data_global['ExpID'].values[row_number]=expid
 
