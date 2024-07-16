@@ -62,6 +62,13 @@ if flag == "all":
     Iall_str = " ".join(str(x) for x in Iall)
     print(Iall_str)
 
+if flag == "count":  
+    # find all runs to submit
+    Iall = np.where((error == 0) & (submitted == 0) & (running == 0) & (finished == 0))[0] + 1
+    #nIexisting = len(Iexisting)
+    count = len(Iall)
+    print(count)
+
 if flag == "expid":
     # find all runs to submit
     Iall = np.where((error == 0) & (submitted == 0) & (running == 0) & (finished == 0))[0] + 1
