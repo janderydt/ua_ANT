@@ -8,7 +8,7 @@
 #SBATCH --distribution=block:block
 
 #SBATCH --partition=standard
-#SBATCH --qos=short
+#SBATCH --qos=standard
 
 ##############################################################################################################
 # Run multiple instances of UA
