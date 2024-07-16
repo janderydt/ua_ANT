@@ -1,6 +1,25 @@
-function ANT_UaWrapper(ua_config,pgid,type,row_number)
+function ANT_UaWrapper(ua_config,pgid,type,row_number,expid)
 
-% row_number is the row number in the RunTable of the experiment to submit
+%% INPUTS
+% > ua_config: link to *txt file with config details such as the run table,
+%   run type (Inverse, Diagnostic, Transient), total walltime and remaining 
+%   walltime / format: string
+% > pgid: on linux workstations, each job has a unique pgid, which can be
+%   added as an argument here / format: integer
+% > type: when the ua_config file is not specified, provide the run type
+%   (Inverse, Diagnostic, Transient) as an argument / format: string
+% > row_number is the row number in the RunTable of the experiment to 
+%   submit / format: integer
+% > expid: when row_number is specified, you also need to provide a unique 
+%  experiment id as an argument / format: integer
+arguments
+    ua_config (1,1) string = ''
+    pgid (1,1) string = ''
+    type (1,1) string = ''
+    row_number (1,1) string = ''
+    expid (1,1) string = ''
+end
+%%
 
 %% find host and setup matlab path
 [~,hostname]= system("hostname"); 
@@ -22,52 +41,24 @@ if ~contains(UserVar.hostname,"ARCHER2")
 end
 
 UserVar.home = pwd+"/";
+%%
 
 %% deal with inputs
-switch nargin
-    case 0
-        error("You need to either provide a config file or pgid and type. Instead got none.");
-    case 1
-        ua_config = string(ua_config);
-        pgid=[];
-        type=[];
-        row_number=[];
-    case 2
-        ua_config = string(ua_config);
-        if ischar(pgid)
-            pgid = str2double(pgid);
-        end    
-        type=[];
-        row_number=[];
-    case 3
-        % ensure correct format
-        ua_config = string(ua_config);
-        if ischar(pgid)
-            pgid = str2double(pgid);
-        end
-        if ischar(type)
-            type = string(type);
-        end
-        row_number=[];
-    case 4
-        %fprintf("inputs are: %s, %s, %s, %s",ua_config,pgid,type,row_number);
-        ua_config = string(ua_config);
-        if ischar(pgid)
-            pgid = str2double(pgid);
-        end
-        if ischar(type)
-            type = string(type);
-        end
-        % make sure row_number is a single integer
-        row_number = round(double(string(row_number)));
-
-        if numel(row_number)>1
-            error("ANT_UaWrapper: input row_number has to be single integer.");
-        end
+if nargin == 0
+    error("You need to either provide a config file or pgid and type. Instead got none.");
+elseif nargin == 4
+    error("You have specified a row number, but also need to provide a unique experiment id for that row.")
+end
+if nargin > 1
+    pgid = str2double(pgid);
+end
+if nargin > 3
+    row_number = round(double(row_number));
+    expid = round(double(expid));
 end
     
 if ~isempty(ua_config)
-    %% read inputs from config file
+    % read inputs from config file
     configfile = UserVar.home+"/"+ua_config;
     if ~exist(configfile,"file")
         error("Config file "+configfile+" does not exist.");
@@ -104,14 +95,14 @@ if ~isempty(ua_config)
     % All done reading all lines, so close the file.
     fclose(fileID);
 else
-    %% No config file specified, define default values
+    % No config file specified, define default values
     walltime = 31557600; % set to some large number
     walltime_remaining = walltime;
     runtable = UserVar.home+"/RunTable_"+UserVar.hostname+".csv";
     idrange = [1 999];
 end
 
-%% check that all inputs are now available
+% check that all inputs are now available
 if isempty(type) || isempty(walltime) || isempty(pgid) || isempty(walltime_remaining) || isempty(runtable)
     error("One of the following mandatory input variables is empty: type ("+string(type)+"), "+ ...
     "walltime ("+string(walltime)+"), walltime_remaining ("+string(walltime_remaining)+"), pgid ("+string(pgid)+"), ",...
@@ -124,6 +115,7 @@ else
     UserVar.runtable_global = runtable;
     UserVar.idrange = idrange;
 end
+%%
 
 %% initialize global log file
 logfile = UserVar.home+"/jobs_master_"+UserVar.hostname+".log";
@@ -310,8 +302,10 @@ else
             % check if row_number is a new simulation
             if ismember(row_number,Inew)
                 Inew = row_number;
+                ExpID = expid_new;
             else
                 Inew = [];
+                ExpID = 0;
             end
         end
     else
@@ -325,19 +319,23 @@ if ~isempty(Inew)
 
     ind = Inew(1);
 
-    % generate unique ExpID and save to run table
-    existingID = RunTable{:,"ExpID"};
-    ExpID = 0;
-    while ismember(ExpID,existingID) 
-        ExpID = randi([UserVar.idrange(1) UserVar.idrange(2)]);
+    % if expid hasn't been specified as input then generate unique ExpID
+    % and write to global runtable
+    if ExpID == 0
+        existingID = RunTable{:,"ExpID"};
+        while ismember(ExpID,existingID) 
+            ExpID = randi([UserVar.idrange(1) UserVar.idrange(2)]);
+        end   
+        RunTable{ind,"ExpID"} = ExpID;
+        RunTable{ind,'pgid'} = pgid;
+        [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_global,RunTable,'write');
+    else
+        RunTable{ind,"ExpID"} = ExpID;
+        RunTable{ind,'pgid'} = pgid;
     end
-    UserVar.ExpID = ExpID;
-    RunTable{ind,"ExpID"} = ExpID;
-    RunTable{ind,'pgid'} = pgid;
 
-    [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_global,RunTable,'write');
-    
     % initialize some UserVars
+    UserVar.ExpID = ExpID;
     UserVar.Finished = 0;
     UserVar.Restart = 0;
     UserVar.Breakout = 0;
@@ -381,8 +379,8 @@ if ~isempty(Inew)
             
             % read Runtable again in case any changes were made by other
             % processes
-            RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
-            ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+            %RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
+            %ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                
             % initialize User variables
             UserVar = ANT_GetUserVar_Inverse(RunTable,ind,UserVar);

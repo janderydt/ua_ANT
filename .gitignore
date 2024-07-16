@@ -1,4 +1,3 @@
-#ignore all .mat, .log, .txt, .out, *.asv, *.png, *.tif, *.nc files
 *.mat
 !ANT_Diagnostic/ANT_Diagnostic_9999/Fields_to_extrude*.mat
 *.log
