@@ -26,18 +26,22 @@ ExpID_newgeom = 2018;
 UserVar.type = "Inverse";
 RunTable_inverse =  ANT_ReadWritetable(UserVar,RunTable_inverse_file,[],'read');
 
-%% construct new run table
-UserVar.Table = erase(RunTable_inverse_file,["../ANT_Inverse/",".csv"])+"_Diagnostic.csv";
+%% construct new run table or append to existing run table
+UserVar.Table = "./RunTable_ARCHER2_Diagnostic_2.csv";
 if ~exist(UserVar.Table,"file")
     copyfile("EmptyTable.csv",UserVar.Table);
 end
 UserVar.type = "Diagnostic";
 RunTable_diagnostic = ANT_ReadWritetable(UserVar,UserVar.Table,[],'read');
+
+IndOriginalGeometry = find(contains(RunTable_diagnostic.Comments,"Original"));
+ExistingInverseRunsInDiagnosticTable = unique(RunTable_diagnostic.InverseA(IndOriginalGeometry));
+
 BaseMesh='2000_2009_2014_2018_meshmin3000_meshmax100000_refined';
 
 for ii=1:size(RunTable_inverse,1)
     
-    if RunTable_inverse.Finished(ii)
+    if ~ismember(RunTable_inverse.ExpID(ii),ExistingInverseRunsInDiagnosticTable) && RunTable_inverse.Finished(ii)
 
         Newrows=[];
         Newrow_tmp=[];
