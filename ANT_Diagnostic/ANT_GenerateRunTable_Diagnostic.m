@@ -1,4 +1,4 @@
-function ANT_GenerateRunTable
+function ANT_GenerateRunTable_Diagnostic
 
 % This script uses an existing runtable for inverse simulations as a basis
 % to construct a new runtable for diagnostic simulations. Each inverse
