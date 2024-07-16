@@ -34,7 +34,7 @@ for i in range(data_global.shape[0]):
        expfolder = os.getcwd()+'/cases/'+data_global['Domain'].values[i]+'_'+runtype.strip().strip("\"")+'_'+str(ExpID)+'/'
        exptable = 'RunTable_'+data_global['Domain'].values[i]+'_'+runtype.strip().strip("\"")+'_'+str(ExpID)+'.csv'
        if os.path.isfile(expfolder+exptable):
-          print('Reading data from '+exptable)
+          #print('Reading data from '+exptable)
           data_exp = read_runinfo(expfolder+exptable,runtype)
           data_global.loc[i]=data_exp.loc[0]
        else:
