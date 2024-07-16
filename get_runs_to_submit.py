@@ -1,6 +1,7 @@
 import os
 import sys
 import numpy as np
+import random
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
@@ -20,6 +21,13 @@ with open(config_file, "r") as fi: # Open the file in read mode
   for ln in fi:
     if ln.startswith("runtable="):
       runtable_global = ln.strip("runtable=").strip("\n")
+
+with open(config_file, "r") as fi: # Open the file in read mode
+  for ln in fi:
+    if ln.startswith("idrange="):
+      idrange = ln.strip("idrange=[").strip("]\n")
+      idrange = idrange.split(':')
+      idrange = range(int(idrange[0]),int(idrange[1]))
 
 # Initialize the Run table, which is used to store details about each simulation
 runtable = read_runinfo(runtable_global,runtype)
@@ -46,3 +54,29 @@ if flag == "existing":
     #nIexisting = len(Iexisting)
     Iexisting_str = " ".join(str(x) for x in Iexisting)
     print(Iexisting_str)
+
+if flag == "all":
+    # find all runs to submit
+    Iall = np.where((error == 0) & (submitted == 0) & (running == 0) & (finished == 0))[0] + 1
+    #nIexisting = len(Iexisting)
+    Iall_str = " ".join(str(x) for x in Iall)
+    print(Iall_str)
+
+if flag == "expid":
+    # find all runs to submit
+    Iall = np.where((error == 0) & (submitted == 0) & (running == 0) & (finished == 0))[0] + 1
+    # find corresponding experiment ids
+    ExpID_tmp = expid[Iall.astype(int)-1]
+    # find expid's that are zero and assign unique id using a random number 
+    # generator and excluding any existing ids
+    I_zero = np.where(ExpID_tmp == 0)[0].astype(int)
+    ExpID_to_exclude = set(expid)
+
+    for i in I_zero:
+        newid = random.choice(list(set([x for x in idrange]) - ExpID_to_exclude))
+        ExpID_tmp[i] = newid
+        expid=np.append(expid,newid)
+        ExpID_to_exclude = set(expid)
+
+    print(ExpID_tmp)
+
