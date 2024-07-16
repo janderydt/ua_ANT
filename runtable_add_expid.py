@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 from utils import read_runinfo, save_runinfo
 
 # read input from config file
-config_file = sys.argv[1]
+config_file = sys.argv[1]+".tmp"
 row_number = int(sys.argv[2])
 expid = int(sys.argv[3])
 

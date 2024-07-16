@@ -20,9 +20,6 @@ arguments
     expid_new (1,1) string = ''
 end
 
-fprintf("inputs are: %s, %s, %s, %s, %s",ua_config,pgid,type,row_number,expid_new);
-fprintf("is type empty? %s",string(isempty(type)));
-
 %% find host and setup matlab path
 [~,hostname]= system("hostname"); 
 if strfind(hostname,"C23000100")
