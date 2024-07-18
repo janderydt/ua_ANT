@@ -83,7 +83,7 @@ def submit_batch (options,command):
 # options: Options object
 # input_var: a list of variable definitions to pass with --export=, eg 'UA_CONFIG=<path>'
 # afterok: a list of SBATCH job IDs of previously submitted jobs. If it is defined, this job will stay on hold until the given jobs successfully complete.
-def submit_job (budget_code, Nnodes=1, sbatch_script, input_var=None, afterok=None):
+def submit_job (budget_code, Nnodes, sbatch_script, input_var=None, afterok=None):
 
     # Construct sbatch call line by line.
     command = 'sbatch'
