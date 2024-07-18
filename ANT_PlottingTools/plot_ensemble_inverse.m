@@ -4,18 +4,17 @@ variable_to_plot = 'misfit'; %options: qGL, niter, misfit
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.cycle = 1;
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+["/RunTable_ARCHER2_2.csv","/RunTable_ARCHER2_5.csv"];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+["/RunTable_ARCHER2_2.csv"];
 UserVar.idrange = [3000,3999;6000,6999];
 
 addpath("/mnt/md0/Ua/cases/ANT/");
 
-%% load basins
-filename = 'basins_IMBIE_v2.mat'; 
-B = load(filename);
-B = RemoveSmallIceRisesAndIslands(B);
-
-kk=0;
+if exist("inversiondata.mat","file")
+    load("inversiondata.mat");
+else
+    data=[];    
+    inverse_experiments_analyzed = [];
+end
 
 for tt=1:numel(UserVar.Table)
 
@@ -25,66 +24,79 @@ for tt=1:numel(UserVar.Table)
     %% ExpIDs
     ExpID = RunTable{:,"ExpID"};
     Ind = find(ExpID>=UserVar.idrange(tt,1) & ExpID<=UserVar.idrange(tt,2));
-    
+    % only keep experiments that have not been analyzed yet
+    if ~isempty(data)
+        Ind_ignore = ismember(Ind,inverse_experiments_analyzed);
+    else
+        Ind_ignore = 0*Ind;
+    end
+    % only keep experiments that have finished
+    Ind_finished = RunTable{Ind,"Finished"}==1;
+    Ind = Ind(Ind_ignore==0 & Ind_finished==1);
+
     %% Gather data
     for ii=1:numel(Ind)
+        inverse_experiments_analyzed(end+1) = Ind(ii);
         folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/ANT_nsmbl_Inverse_"+ExpID(Ind(ii));
-        restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(Ind(ii))+"-RestartFile_InverseCycle"+...
-            string(UserVar.cycle)+".mat";
-        if exist(restartfile,"file")
-            load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");
-            %if UserVarInRestartFile.Inverse.IterationsDone == 15000
-                m(kk+ii) = F.m(1);
-                n(kk+ii) = F.n(1);
-                gaA(kk+ii) = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.ga;
-                gaC(kk+ii) = CtrlVarInRestartFile.Inverse.Regularize.logC.ga;
-                gsA(kk+ii) = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.gs;
-                gsC(kk+ii) = CtrlVarInRestartFile.Inverse.Regularize.logC.gs;
-                % number of iterations done
-                niter(kk+ii) = UserVarInRestartFile.Inverse.IterationsDone;
-                fprintf("(%s/%s) ExpID %s: done %s iterations.\n",string(ii),string(numel(Ind)),string(UserVarInRestartFile.ExpID),string(niter(ii)));
+        
+        % store in data array
+        if isempty(data)
+            data_ind = 1;            
+        else
+            [~,data_ind] = ismember(Ind(ii),[data(:).InverseExpID]);
+            if data_ind==0 % add new element to data structure
+                ndata = numel(data);
+                data_ind = ndata+1;
+            end
+        end
+
+        for cc=1:2
+            restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(Ind(ii))+"-RestartFile_InverseCycle"+...
+                string(cc)+".mat";
+
+            if exist(restartfile,"file")
+                load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");    
+                GL=FluxAcrossGroundingLine(CtrlVarInRestartFile,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
+                qGL = sum(GL);
+
+                data(data_ind).InverseExpID = ExpID(Ind(ii));
+                data(data_ind).cycle(cc) = cc;
+                data(data_ind).m = F.m(1);
+                data(data_ind).n = F.n(1);
+                data(data_ind).SlidingLaw = CtrlVarInRestartFile.SlidingLaw;
+                data(data_ind).gaA = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.ga;
+                data(data_ind).gaC = CtrlVarInRestartFile.Inverse.Regularize.logC.ga;
+                data(data_ind).gsA = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.gs;
+                data(data_ind).gsC = CtrlVarInRestartFile.Inverse.Regularize.logC.gs;
+                data(data_ind).startgeometry = RunTable{Ind(ii),"startGeometry"};
+                data(data_ind).niter(cc) = UserVarInRestartFile.Inverse.IterationsDone;
+                data(data_ind).misfit(cc) = InvFinalValues.I;
+                data(data_ind).qGL(cc) = qGL;
+
+                
                 % Obtain Ua fluxes across the grounding line (qGL) into floating areas
                 %[B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
                 % qGL(ii) = 0;
                 % for jj=1:numel(GL)
                 %     qGL(ii) = qGL(ii)+sum(GL(jj).qGL);
                 % end            
-                GL=FluxAcrossGroundingLine(CtrlVarInRestartFile,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
-                qGL(kk+ii) = sum(GL);
-                I(kk+ii) = InvFinalValues.I; % calculated as 
-            % else
-            %     table_ind = Ind(ii);
-            %     m(kk+ii) = RunTable{table_ind,"m"};
-            %     n(kk+ii) = RunTable{table_ind,"n"};
-            %     gaA(kk+ii) = RunTable{table_ind,"gaA"};
-            %     gaC(kk+ii) = RunTable{table_ind,"gaC"};
-            %     gsA(kk+ii) = RunTable{table_ind,"gsA"};
-            %     gsC(kk+ii) = RunTable{table_ind,"gsC"};
-            %     niter(kk+ii) = 0;
-            %     qGL(kk+ii) = nan;
-            %     I(kk+ii) = nan;
-            % end
-         else
-            table_ind = Ind(ii);
-            m(kk+ii) = RunTable{table_ind,"m"};
-            n(kk+ii) = RunTable{table_ind,"n"};
-            gaA(kk+ii) = RunTable{table_ind,"gaA"};
-            gaC(kk+ii) = RunTable{table_ind,"gaC"};
-            gsA(kk+ii) = RunTable{table_ind,"gsA"};
-            gsC(kk+ii) = RunTable{table_ind,"gsC"};
-            niter(kk+ii) = 0;
-            qGL(kk+ii) = nan;
-            I(kk+ii) = nan;
+                 % calculated as 
+
+                % store in data array
+            end
         end
-              
-        %fprintf("Done %s out of %s.\n",string(ii),string(numel(I)));
+
+        fprintf("done %s our of %s.\n",string(ii),string(numel(Ind)));
+        
     end
-    kk = numel(I);
 end
 
-save("scatterdata.mat","m","n","gaA","gaC","gsA","gsC","niter","qGL","I");
+save("inversiondata.mat","data","inverse_experiments_analyzed");
 
-%qGL(niter<100)=nan;
+plot_ensemble_perturbation;
+
+return
+
 qGL = qGL/1e12; % convert to Gt/yr
 
 

@@ -170,18 +170,21 @@ UserVar.Inverse.priorAGlen = RunTable{ind,"priorAGlen"};
 
 end
 
-
 function UserVar = ANT_GetUserVar_Spinup(RunTable,ind,UserVar)
 
 UserVar.Restart = 1;
 
 % make sure to start from the correct restart file
-if UserVar.Spinup.Restart == 0 % this means we start a new spinup, using the restart file from the previous inversion
+if UserVar.Spinup.Restart == 0 
+    % this means we start a new spinup, using the restart file from the previous inversion
     NameOfRestartInputFile = strrep(UserVar.NameOfRestartFiletoRead,".mat","_InverseCycle"+string(UserVar.Spinup.Cycle)+".mat");
     copyfile(UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+NameOfRestartInputFile,...
         UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+UserVar.NameOfRestartFiletoRead);
 else
-    %nothing to do: we restart the spinup from UserVar.NameOfRestartFiletoRead
+    % we restart the spinup in the current spinup cycle
+    NameOfRestartInputFile = strrep(UserVar.NameOfRestartFiletoRead,".mat","_SpinupCycle"+string(UserVar.Spinup.Cycle)+".mat");
+    copyfile(UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+NameOfRestartInputFile,...
+        UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+UserVar.NameOfRestartFiletoRead);
 end
 
 %% Read geometry interpolants from Runtable
