@@ -1,3 +1,0 @@
-%%
-% Files and Data Manipulations
-%
