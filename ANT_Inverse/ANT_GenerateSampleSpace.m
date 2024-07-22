@@ -9,7 +9,7 @@ uqlab; % initialize uqlab
 GradientCalc = "Adjoint"; % options: FixPoint or Adjoint
 SlidingLaw = "Weertman"; 
 Enrich = 0; % enriches the existing Latin Hypercube
-EnrichSampleSize = 360;
+EnrichSampleSize = 180;
 
 Input.Name = 'Parameter array for inverse simulations';
 ind = 1;
@@ -24,29 +24,38 @@ switch GradientCalc
 
         %% Regularization
         Input.Marginals(ind).Name = 'gsC';
-        Input.Marginals(ind).Parameters = [25e3 50e3]; %v1: [50e3 1000e3]
-        Input.Marginals(ind).Bounds = [25e3 50e3]; %v1: [50e3 1000e3]
+        %Input.Marginals(ind).Parameters = log10([25e3 50e3]); %v1: [50e3 1000e3]
+        %Input.Marginals(ind).Bounds = log10([25e3 50e3]); %v1: [50e3 1000e3]
+        Input.Marginals(ind).Parameters = [0 (log(50e3)-log(1e3))/log(2)];
+        Input.Marginals(ind).Bounds = [0 (log(50e3)-log(1e3))/log(2)];
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gsA';
-        Input.Marginals(ind).Parameters = [25e3 50e3];  %v1: [50e3 1000e3]
-        Input.Marginals(ind).Bounds = [25e3 50e3]; %v1: [50e3 1000e3]
+        %Input.Marginals(ind).Parameters = log10([25e3 50e3]);  %v1: [50e3 1000e3]
+        %Input.Marginals(ind).Bounds = log10([25e3 50e3]); %v1: [50e3 1000e3]
+        Input.Marginals(ind).Parameters = [0 (log(50e3)-log(1e3))/log(2)];
+        Input.Marginals(ind).Bounds =[0 (log(50e3)-log(1e3))/log(2)];
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gaC';
-        Input.Marginals(ind).Parameters = [1 100];
-        Input.Marginals(ind).Bounds = [1 100];
+        %Input.Marginals(ind).Parameters = log10([1 100]);
+        %Input.Marginals(ind).Bounds = log10([1 100]);
+        Input.Marginals(ind).Parameters = [0 (log(100)-log(0.1))/log(2)];
+        Input.Marginals(ind).Bounds = [0 (log(100)-log(0.1))/log(2)];
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gaA';
-        Input.Marginals(ind).Parameters = [1 250]; % parameters are bounds
-        Input.Marginals(ind).Bounds = [1 250];
+        %Input.Marginals(ind).Parameters = log10([1 250]); % parameters are bounds
+        %Input.Marginals(ind).Bounds = log10([1 250]);
+        Input.Marginals(ind).Parameters = [0 (log(250)-log(0.1))/log(2)];
+        Input.Marginals(ind).Bounds = [0 (log(250)-log(0.1))/log(2)];
         ind = ind + 1;
         
         %% Sliding law
         Input.Marginals(ind).Name = 'm';
         Input.Marginals(ind).Parameters = [2 9];
         Input.Marginals(ind).Bounds = [2 9];
+        %Input.Marginals(ind).Moments = [0];
         ind = ind + 1;
         
         %Input.Marginals(ind).Name = 'ubprior';
@@ -58,6 +67,7 @@ switch GradientCalc
         Input.Marginals(ind).Name = 'n';
         Input.Marginals(ind).Parameters = [2 4];
         Input.Marginals(ind).Bounds = [2 4];
+        %Input.Marginals(ind).Moments = [0];
         %ind = ind + 1;
         
         %Input.Marginals(ind).Name = 'epsprior';
@@ -73,8 +83,21 @@ switch GradientCalc
         uq_selectInput(myInput);
         X = uq_getSample(numel(Input.Marginals)*30,'LHS');
 
-        %uq_display(myInput);
-
+        X(:,1) = 1e3.*2.^X(:,1);
+        X(:,2) = 1e3.*2.^X(:,2); 
+        X(:,3) = 0.1.*2.^X(:,3);
+        X(:,4) = 0.1.*2.^X(:,4);
+        figure; hold on;
+        for ii=1:6
+            for jj=1:6
+                subplot(6,6,(ii-1)*6+jj);
+                if ii==jj
+                    histogram(X(:,ii),15)
+                else
+                    plot(X(:,ii),X(:,jj),'ok');
+                end
+            end
+        end
 
     case "FixPoint"
 

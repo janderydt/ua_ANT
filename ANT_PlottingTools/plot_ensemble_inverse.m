@@ -4,7 +4,8 @@ variable_to_plot = 'misfit'; %options: qGL, niter, misfit
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+["/RunTable_ARCHER2_2.csv"];
+UserVar.cycle = 2;
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+["/RunTable_ARCHER2_2.csv","/RunTable_ARCHER2_5.csv"];
 UserVar.idrange = [3000,3999;6000,6999];
 
 addpath("/mnt/md0/Ua/cases/ANT/");
@@ -26,7 +27,7 @@ for tt=1:numel(UserVar.Table)
     Ind = find(ExpID>=UserVar.idrange(tt,1) & ExpID<=UserVar.idrange(tt,2));
     % only keep experiments that have not been analyzed yet
     if ~isempty(data)
-        Ind_ignore = ismember(Ind,inverse_experiments_analyzed);
+        Ind_ignore = ismember(ExpID(Ind),inverse_experiments_analyzed);
     else
         Ind_ignore = 0*Ind;
     end
@@ -36,7 +37,7 @@ for tt=1:numel(UserVar.Table)
 
     %% Gather data
     for ii=1:numel(Ind)
-        inverse_experiments_analyzed(end+1) = Ind(ii);
+        inverse_experiments_analyzed(end+1) = ExpID(Ind(ii));
         folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/ANT_nsmbl_Inverse_"+ExpID(Ind(ii));
         
         % store in data array
@@ -93,42 +94,48 @@ end
 
 save("inversiondata.mat","data","inverse_experiments_analyzed");
 
-plot_ensemble_perturbation;
-
-return
-
-qGL = qGL/1e12; % convert to Gt/yr
-
-
 %% Plotting
 H=fig('units','inches','width',120*12/72.27,'height',80*12/72.27,'fontsize',14,'font','Helvetica');
 
 switch variable_to_plot
     case 'qGL'
-        plotdata = qGL;        
+        for ii=1:numel(data)
+            plotdata(ii,:) = data(ii).qGL(:)'/1e12;  
+        end
         cmin = 1000;
         cmax = 3000;
         cbLabel = "Grounding line flux [Gt/yr]";
     case 'niter' 
-        plotdata = niter;        
+        for ii=1:numel(data)
+            plotdata(ii,:) = data(ii).niter(:)';  
+        end       
         cmin = 0;
         cmax = max(niter(:));
         cbLabel = "Number of iterations";
     case 'misfit'
-        plotdata = I;
+        for ii=1:numel(data)
+            plotdata(ii,:) = data(ii).misfit(:)';  
+        end 
         cmin = 0;
         cmax = 1000;
         cbLabel = "Misfit";
 end
+m = [data(:).m];
+n = [data(:).n];
+gaA = [data(:).gaA];
+gaC = [data(:).gaC];
+gsA = [data(:).gsA];
+gsC = [data(:).gsC];
 
+
+plotdata = plotdata(:,UserVar.cycle);
 dummydata = nan*plotdata;
 
 %plotdata(plotdata<cmin)=cmin; 
 %plotdata(plotdata>cmax)=cmax; 
 
 colormap('jet');
-marker_size = 1+100*niter/(max(niter)-min(niter));
-
+marker_size = 30;%;1+100*niter/(max(niter)-min(niter));
 
 tlo_fig = tiledlayout(6,6,"TileSpacing","compact");
 for i = 1:36
@@ -138,13 +145,13 @@ end
 ind = 1;
 % row 1: m
 %scatter(ax_fig(ind),m,m,marker_size,plotdata,'filled'); ylabel(ax_fig(ind),"m"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
-edges = linspace(min(m),max(m),10);
-[~,~,bin] = histcounts(m,edges);
-meany = accumarray(bin(:),plotdata(:))./accumarray(bin(:),1);
-xmid = 0.5*(edges(1:end-1)+edges(2:end));
-bar(ax_fig(ind),xmid,meany);
-ylabel(ax_fig(ind),"qGL [Gt/yr]"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
-ind = ind+1;
+% edges = linspace(min(m),max(m),10);
+% [~,~,bin] = histcounts(m,edges);
+% meany = accumarray(bin(:),plotdata(:))./accumarray(bin(:),1);
+% xmid = 0.5*(edges(1:end-1)+edges(2:end));
+% bar(ax_fig(ind),xmid,meany);
+% ylabel(ax_fig(ind),"qGL [Gt/yr]"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
+% ind = ind+1;
 scatter(ax_fig(ind),n,m,marker_size,plotdata,'filled'); ylabel(ax_fig(ind),"m"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
 scatter(ax_fig(ind),gaA,m,marker_size,plotdata,'filled'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");

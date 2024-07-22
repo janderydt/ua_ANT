@@ -1,6 +1,7 @@
 function plot_ensemble_perturbation
 
-variable_to_plot = 'm'; % n, m, gsA, gsC, gaA, gaC
+variable_to_plot = 'n'; % n, m, gsA, gsC, gaA, gaC
+basins_to_analyze = {'H-Hp','G-H','F-G'};
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Diagnostic";
@@ -13,6 +14,15 @@ addpath("/mnt/md0/Ua/cases/ANT/");
 filename = 'basins_IMBIE_v2.mat'; 
 B = load(filename);
 B = RemoveSmallIceRisesAndIslands(B);
+% only keep basins F-G, G-H, H-Hp (Abbot, Amundsen, Getz)
+Ind = contains(B.name,basins_to_analyze);
+Bfields= fields(B);
+for ii=1:numel(Bfields)
+    if ~contains(Bfields{ii},'note')
+        tmp = B.(Bfields{ii});
+        B.(Bfields{ii}) = tmp(Ind);
+    end
+end
 
 kk=0;
 
@@ -58,9 +68,23 @@ for tt=1:numel(UserVar.Table)
         if ~isempty(outputfiles)
             outputfile = outputfiles(1).folder + "/" + outputfiles(1).name;
             expinfo = Comments{Ind(ii)};
-            load(outputfile,"CtrlVar","F","MUA");             
-            GL=FluxAcrossGroundingLine(CtrlVar,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
-            qGL = sum(GL);    
+            load(outputfile,"CtrlVar","F","MUA");      
+
+            %GL=FluxAcrossGroundingLine(CtrlVar,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
+            %qGL = sum(GL);
+            % Obtain Ua fluxes across the grounding line (qGL) into floating areas
+            [B,~] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVar);
+            
+            % Obtain Ua fluxes across the open boundary (qOB) into the ocean
+            B = Calc_UaOBFlux_PerBasin(MUA,F,F.GF,B,CtrlVar); 
+    
+            % Sum values of SMB, qGL and qOB for each basin
+            for bb=1:numel(B.x) 
+                B.qGL_tot{bb} = sum(B.qGL{bb},'omitmissing')/1e12; 
+                B.qOB_tot{bb} = sum(B.qOB{bb},'omitmissing')/1e12; 
+                B.qtot{bb} = B.qGL_tot{bb}+B.qOB_tot{bb}; 
+            end
+
             % store in data array
             if isempty(data)
                 data_ind = 1;            
@@ -100,44 +124,44 @@ for tt=1:numel(UserVar.Table)
                 geomfields = {'Original','Calv','dhIS','dh','Calv_dh'};
                 for ff=1:numel(geomfields)
                     data(data_ind).(geomfields{ff}).geometry=[];
-                    data(data_ind).(geomfields{ff}).qGL=[];
+                    data(data_ind).(geomfields{ff}).qGL.FG=[];
+                    data(data_ind).(geomfields{ff}).qGL.GH=[];
+                    data(data_ind).(geomfields{ff}).qGL.HHp=[];
+                    data(data_ind).(geomfields{ff}).qOB.FG=[];
+                    data(data_ind).(geomfields{ff}).qOB.GH=[];
+                    data(data_ind).(geomfields{ff}).qOB.HHp=[];
                     data(data_ind).(geomfields{ff}).cycle=[];
                 end
             end
 
             if contains(expinfo,"Original")
-                year = RunTable{Ind(ii),"Calv"};              
-                data(data_ind).Original.geometry(end+1) = year;
-                data(data_ind).Original.qGL(end+1) = qGL;
-                data(data_ind).Original.cycle(end+1) = InverseCycle;
-
+                year = RunTable{Ind(ii),"Calv"};   
+                fieldname = 'Original';
             elseif contains(expinfo,"Ice front geometry")
                 year = RunTable{Ind(ii),"Calv"};
-                data(data_ind).Calv.geometry(end+1) = year;
-                data(data_ind).Calv.qGL(end+1) = qGL;
-                data(data_ind).Calv.cycle(end+1) = InverseCycle;
-                
+                fieldname = 'Calv';
             elseif contains(expinfo,"Ice shelf thickness")
                 year = RunTable{Ind(ii),"ISthick"};
-                data(data_ind).dhIS.geometry(end+1) = year;
-                data(data_ind).dhIS.qGL(end+1) = qGL;
-                data(data_ind).dhIS.cycle(end+1) = InverseCycle;
-
+                fieldname = 'dhIS';
             elseif contains(expinfo,"Ice thickness")
                 year = RunTable{Ind(ii),"ISthick"};
-                data(data_ind).dh.geometry(end+1) = year;
-                data(data_ind).dh.qGL(end+1) = qGL;
-                data(data_ind).dh.cycle(end+1) = InverseCycle;
-
+                fieldname = 'dh';
             elseif contains(expinfo,"Ice front and thickness")
                 year = RunTable{Ind(ii),"Calv"};
-                data(data_ind).Calv_dh.geometry(end+1) = year;
-                data(data_ind).Calv_dh.qGL(end+1) = qGL;
-                data(data_ind).Calv_dh.cycle(end+1) = InverseCycle;
-
+                fieldname = 'Calv_dh';
             else
                 error("Unknown experiment info "+expinfo);
             end
+
+            data(data_ind).(fieldname).geometry(end+1) = year;
+            data(data_ind).(fieldname).qGL.FG(end+1) = cell2mat(B.qGL_tot(1));
+            data(data_ind).(fieldname).qGL.GH(end+1) = cell2mat(B.qGL_tot(2));
+            data(data_ind).(fieldname).qGL.HHp(end+1) = cell2mat(B.qGL_tot(3));
+            data(data_ind).(fieldname).qOB.FG(end+1) = cell2mat(B.qOB_tot(1));
+            data(data_ind).(fieldname).qOB.GH(end+1) = cell2mat(B.qOB_tot(2));
+            data(data_ind).(fieldname).qOB.HHp(end+1) = cell2mat(B.qOB_tot(3));
+            data(data_ind).(fieldname).cycle(end+1) = InverseCycle;
+
         end             
         fprintf("Done %s out of %s.\n",string(ii),string(numel(Ind)));
     end
@@ -148,11 +172,11 @@ save("perturbationdata.mat","data","perturbation_experiments_analyzed");
 %% gather data in userfriendly format 
 for ii=1:numel(data)
 
-    orig(ii,:)=data(ii).Original.qGL(:)'/1e12; % convert from kg/yr to Gt/yr
-    calv(ii,:)=data(ii).Calv.qGL(:)'/1e12;
-    dhIS(ii,:)=data(ii).dhIS.qGL(:)'/1e12;
-    dh(ii,:)=data(ii).dh.qGL(:)'/1e12;
-    calvdh(ii,:)=data(ii).Calv_dh.qGL(:)'/1e12;
+    orig(ii,:)=data(ii).Original.qGL.GH(:)'; % convert from kg/yr to Gt/yr
+    calv(ii,:)=data(ii).Calv.qGL.GH(:)';
+    dhIS(ii,:)=data(ii).dhIS.qGL.GH(:)';
+    dh(ii,:)=data(ii).dh.qGL.GH(:)';
+    calvdh(ii,:)=data(ii).Calv_dh.qGL.GH(:)';
     misfit(ii,:)=data(ii).Inverse.misfit(:)';
     gsA(ii) = [data(ii).Inverse.gsA];
     gsC(ii) = [data(ii).Inverse.gsC];

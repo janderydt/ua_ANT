@@ -1,5 +1,7 @@
 function TrainANN
 
+geometry = 2000;
+cycle = 1;
 net = feedforwardnet([10],'trainlm');
 
 % set early stopping parameters
@@ -8,7 +10,20 @@ net.divideParam.trainRatio = 0.8; % training set [%]
 net.divideParam.valRatio = 0.1; % validation set [%]
 net.divideParam.testRatio = 0.1; % test set [%]
  
-load("scatterdata.mat");
+load("inversiondata.mat");
+
+startgeometry=[data(:).startgeometry];
+Ind = find(startgeomtry==geometry);
+gaA=[data(Ind).gaA];
+gaC=[data(Ind).gaC];
+gsA=[data(Ind).gsA];
+gsC=[data(Ind).gsC];
+m=[data(Ind).m];
+n=[data(Ind).n];
+
+for ii=1:numel(Ind)
+    qGL(ii) = data(Ind).qGL(1,cycle);
+end
 
 [X(1,:),XC(1),XS(1)] = normalize(gaA);
 [X(2,:),XC(2),XS(2)] = normalize(gaC); 
