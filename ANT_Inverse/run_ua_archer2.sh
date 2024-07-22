@@ -18,11 +18,6 @@
 # -A n02-xxxxx is the budget code
 ###########################################################################################'##################
 
-# lock global log file for writing
-if [ -f global_log_active ]; then
-    pause 1
-else 
-
 # Add top directory to python path (this makes the utils.py file visible to this script)
 CASEDIR=$WORK/ua/cases/ANT
 export PYTHONPATH=$PWD:$CASEDIR:$PYTHONPATH
@@ -58,9 +53,15 @@ export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 
 # Write information to jobs_master_ARCHER2.log
-currenttime=$(date +"%d-%b-%Y %H:%M:%S")
-jobname=$(sacct -j ${JOBID} --format=Jobname%15 2>&1 | sed -n 3p) 
-echo "${currenttime} || STARTING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
+# lock file
+if [ -f global_log_active ]; then
+    pause 1
+else 
+    touch global_log_active
+    currenttime=$(date +"%d-%b-%Y %H:%M:%S")
+    jobname=$(sacct -j ${JOBID} --format=Jobname%15 2>&1 | sed -n 3p) 
+    echo "${currenttime} || STARTING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
+fi
 
 # start timer
 timestart=$(date +"%s")
@@ -124,7 +125,8 @@ then
     currenttime=$(date +"%d-%b-%Y %H:%M:%S")
     jobname=$(sacct -j ${JOBID} --format=Jobname%15 2>&1 | sed -n 3p)
     echo " > Total number of jobs submitted: ${jobs_submitted} out of ${Nb_experiments_to_start}" >> jobs_master_ARCHER2.log
-    echo " " >> jobs_master_ARCHER2.log
+    echo "---------------------------------------------------" >> jobs_master_ARCHER2.log
+    rm global_log_active
 
     # Wait for all subjobs to finish and gather exit codes
     rets=()
@@ -144,6 +146,12 @@ then
     nonempty_error_files = $(find . -maxdepth 1 -name "stderr_jobid7126461*.out" -type f ! -size 0 | xargs ls -1 | wc -l)
 
     # Write information to jobs_master_ARCHER2.log
+    if [ -f global_log_active ]; then
+    	pause 1
+    else 
+        touch global_log_active
+    fi
+        
     echo "${currenttime} || ENDING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
     echo " > Exit codes (if different from zero):" >> jobs_master_ARCHER2.log 
     for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
@@ -188,5 +196,7 @@ then
         currenttime=$(date +"%d-%b-%Y %H:%M:%S")
         echo "${currenttime} || ERROR in ${jobname} - Aborting" >> jobs_master_ARCHER2.log
     fi
-    echo " " >> jobs_master_ARCHER2.log
+    echo "---------------------------------------------------" >> jobs_master_ARCHER2.log
+    
+    rm global_log_active
 fi
