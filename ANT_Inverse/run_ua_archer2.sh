@@ -101,7 +101,7 @@ then
                 # recommend that you specify `--mem=1500M` (1,500 MiB).
                 srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
                 --exact --mem-per-cpu=3000M --output /dev/null \
-                --error stderr_jobid${JOBID}_node${nodeid}_job${i}.out ./Ua_MCR.sh \
+                --error stderr_jobid${JOBID}_expid${ExpID[$jobs_submitted]}.out ./Ua_MCR.sh \
 		$MCR $UA_CONFIG ${SLURM_JOB_ID} "" ${RowNb[$jobs_submitted]} ${ExpID[$jobs_submitted]} \
 		& pids+=($!) 
 
