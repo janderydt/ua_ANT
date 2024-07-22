@@ -38,13 +38,13 @@ try
     
 catch ME
 
-    fprintf(UserVar.fid_masterlog,string(datetime("now"))+" || ERROR in the execution of ExpID %s.\n",string(UserVar.ExpID));
+    fprintf(UserVar.fid_experimentlog,string(datetime("now"))+" || ERROR in the execution of ExpID %s.\n",string(UserVar.ExpID));
 
     UserVar.Breakout = 1;
     UserVar.Error = 1;
 
-    msgString = getReport(ME,'extended'); 
-    fprintf(UserVar.fid_masterlog,"%s \n\n",msgString);
+    msgString = getReport(ME,'extended');
+    fprintf(UserVar.fid_experror,"%s \n\n",msgString);
 
 end
 

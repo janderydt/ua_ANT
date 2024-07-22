@@ -155,10 +155,12 @@ if ~isempty(Iexisting)
         UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(RunTable{ind,'ExpID'})];
         UserVar.ExpID = RunTable{ind,'ExpID'};
 
-        % initialize experiment log file
+        % initialize experiment log and error files
         logfile = UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+string(UserVar.Experiment)+".log";
         fid = fopen(logfile,'a+');
         UserVar.fid_experimentlog = fid;
+        errorfile = UserVar.home+"/stderr_jobid"+string(UserVar.pgid)+"_expid"+string(UserVar.ExpID)+".out";
+        UserVar.fid_experror = fopen(errorfile,'a+');
 
         % check if not submitted, not running, not finished
         indnsnr = RunTable{ind,'Submitted'}==0 & RunTable{ind,'Running'}==0 & RunTable{ind,'Finished'}==0;
@@ -339,7 +341,7 @@ if ~isempty(Inew)
     UserVar.Domain = RunTable{ind,'Domain'};
     UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
     UserVar.runtable_exp = UserVar.casefolder + "/" + UserVar.Experiment + "/RunTable_" + UserVar.Experiment + ".csv";
-
+    
     % make copy of master folder for new experiment
     % if new folder already exists: rename first
     sourcefolder = [char(UserVar.home),'/ANT_',char(type),'_9999/'];
@@ -352,10 +354,12 @@ if ~isempty(Inew)
     % rename RunTable file
     movefile(newfolder+"/RunTable_ANT_"+UserVar.type+"_9999.csv",UserVar.runtable_exp);
 
-    % initialize experiment log file
+    % initialize experiment log and error files
     logfile = UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+string(UserVar.Experiment)+".log";
     fid = fopen(logfile,'a+');
     UserVar.fid_experimentlog = fid;
+    errorfile = UserVar.home+"/stderr_jobid"+string(UserVar.pgid)+"_expid"+string(UserVar.ExpID)+".out";
+    UserVar.fid_experror = fopen(errorfile,'a+');
 
     fprintf(UserVar.fid_experimentlog,'============================\n');
     fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");    

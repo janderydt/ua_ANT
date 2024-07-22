@@ -18,6 +18,11 @@
 # -A n02-xxxxx is the budget code
 ###########################################################################################'##################
 
+# lock global log file for writing
+if [ -f global_log_active ]; then
+    pause 1
+else 
+
 # Add top directory to python path (this makes the utils.py file visible to this script)
 CASEDIR=$WORK/ua/cases/ANT
 export PYTHONPATH=$PWD:$CASEDIR:$PYTHONPATH
@@ -135,6 +140,9 @@ then
     EJ=$(sstat ${JOBID} -o consumed 2>&1 | sed -n 3p) 
     exitflag=0
 
+    # Find non-empty error files
+    nonempty_error_files = $(find . -maxdepth 1 -name "stderr_jobid7126461*.out" -type f ! -size 0 | xargs ls -1 | wc -l)
+
     # Write information to jobs_master_ARCHER2.log
     echo "${currenttime} || ENDING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
     echo " > Exit codes (if different from zero):" >> jobs_master_ARCHER2.log 
@@ -144,6 +152,11 @@ then
 	    exitflag=1
 	fi
     done
+    echo " > Non-empty error log files (if any):" >> jobs_master_ARCHER2.log
+    if [ $(nonempty_error_files) -gt 0 ]; then
+        echo $(find . -maxdepth 1 -name "stderr_jobid7126461*.out" -type f ! -size 0) >> jobs_master_ARCHER2.log
+        exitflag=1
+    fi
     echo " > Time elapsed: ${timeelapsed}" >> jobs_master_ARCHER2.log
     echo " > Energy Consumption [J]: ${EJ}" >> jobs_master_ARCHER2.log
     echo " " >> jobs_master_ARCHER2.log
@@ -155,7 +168,6 @@ then
     python ../update_runtable.py $UA_CONFIG
 
     # Clean up directory
-    rm ${JOBID}_job_submitted
     find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -size 0 | xargs rm -rf
 
     # Relaunch script if all jobs finished ok
