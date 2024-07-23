@@ -142,7 +142,7 @@ then
     exitflag=0
 
     # Find non-empty error files
-    nonempty_error_files = $(find . -maxdepth 1 -name "stderr_jobid7126461*.out" -type f ! -size 0 | xargs ls -1 | wc -l)
+    nonempty_error_files=$(find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -type f ! -size 0 | wc -l)
 
     # Write information to jobs_master_ARCHER2.log
     while [ -f global_log_active ]; do
@@ -159,9 +159,9 @@ then
 	    exitflag=1
 	fi
     done
-    echo " > Non-empty error log files (if any):" >> jobs_master_ARCHER2.log
-    if [ $(nonempty_error_files) -gt 0 ]; then
-        echo $(find . -maxdepth 1 -name "stderr_jobid7126461*.out" -type f ! -size 0) >> jobs_master_ARCHER2.log
+    echo " > Non-empty error log files: ${nonempty_error_files}" >> jobs_master_ARCHER2.log
+    if [ ${nonempty_error_files} -gt 0 ]; then
+        echo "      $(find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -type f ! -size 0)" >> jobs_master_ARCHER2.log
         exitflag=1
     fi
     echo " > Time elapsed: ${timeelapsed}" >> jobs_master_ARCHER2.log
@@ -181,6 +181,9 @@ then
         # calculate number of required nodes for resubmission
         Nb_experiments_to_start=`python ../get_runs_to_submit.py $UA_CONFIG count`
         Nodes_required=$(( ($Nb_experiments_to_start/30) + ($Nb_experiments_to_start%30>0) )) 
+        if [ ${Nodes_required} -gt 6 ]; then
+	    Nodes_required=6
+	fi	    
 	if [ $Nodes_required -gt 0 ]; then
 	    THISSCRIPT=$(scontrol show job "${SLURM_JOB_ID}" | awk -F= '/Command=/{print $2}')
             currenttime=$(date +"%d-%b-%Y %H:%M:%S")
