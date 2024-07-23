@@ -166,7 +166,6 @@ then
     fi
     echo " > Time elapsed: ${timeelapsed}" >> jobs_master_ARCHER2.log
     echo " > Energy Consumption [J]: ${EJ}" >> jobs_master_ARCHER2.log
-    echo " " >> jobs_master_ARCHER2.log
 
     # Copy temporary RunTable
     python ../copy_runtable.py $UA_CONFIG ".tmp" ""
