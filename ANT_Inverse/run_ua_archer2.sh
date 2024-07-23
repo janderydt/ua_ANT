@@ -53,15 +53,14 @@ export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 nodelist=$(scontrol show hostnames $SLURM_JOB_NODELIST)
 
 # Write information to jobs_master_ARCHER2.log
-# lock file
-if [ -f global_log_active ]; then
-    pause 1
-else 
-    touch global_log_active
-    currenttime=$(date +"%d-%b-%Y %H:%M:%S")
-    jobname=$(sacct -j ${JOBID} --format=Jobname%15 2>&1 | sed -n 3p) 
-    echo "${currenttime} || STARTING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
-fi
+# lock file for writing
+while [ -f global_log_active ]; do
+    sleep 1
+done 
+touch global_log_active
+currenttime=$(date +"%d-%b-%Y %H:%M:%S")
+jobname=$(sacct -j ${JOBID} --format=Jobname%15 2>&1 | sed -n 3p) 
+echo "${currenttime} || STARTING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
 
 # start timer
 timestart=$(date +"%s")
@@ -146,12 +145,12 @@ then
     nonempty_error_files = $(find . -maxdepth 1 -name "stderr_jobid7126461*.out" -type f ! -size 0 | xargs ls -1 | wc -l)
 
     # Write information to jobs_master_ARCHER2.log
-    if [ -f global_log_active ]; then
-    	pause 1
-    else 
-        touch global_log_active
-    fi
-        
+    while [ -f global_log_active ]; do
+    	sleep 1
+    done 
+    
+    touch global_log_active
+       
     echo "${currenttime} || ENDING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
     echo " > Exit codes (if different from zero):" >> jobs_master_ARCHER2.log 
     for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
