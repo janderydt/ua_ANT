@@ -1,6 +1,6 @@
 function plot_parameterdistribution_inverse
 
-RunTable = "RunTable_ARCHER2_"+string([3 5 8])+".csv";
+RunTable = "RunTable_ARCHER2_"+string([2 5 8])+".csv";
 
 gaA=[]; gaC=[]; gsA=[]; gsC=[]; m=[]; n=[]; finished=[]; error=[];
 Ind_finished=[]; Ind_error=[];
@@ -29,7 +29,7 @@ for tt=1:numel(RunTable)
     Ind_error_tmp = find(error_tmp==1);
     Ind_error = [Ind_error; Ind_error_tmp];
 
-    fprintf("%s: Finished %s out of %s. %s ended with error message. %s still running.\n",...
+    fprintf("%s: Finished %s out of %s. %s ended with an error message. %s still running.\n",...
         RunTable(tt),...
         string(numel(Ind_finished_tmp)),string(numel(finished_tmp)),...
         string(numel(Ind_error_tmp)),...
@@ -41,23 +41,23 @@ end
 Ind_finished = find(finished==1);
 Ind_error = find(error==1);
 
-fprintf("TOTAL: Finished %s out of %s. %s ended with error message. %s still running.\n",...
+fprintf("TOTAL: Finished %s out of %s. %s ended with an error message. %s still running.\n",...
     string(numel(Ind_finished)),string(numel(finished)),string(numel(Ind_error)),...
     string(numel(finished)-numel(Ind_error)-numel(Ind_finished)));
 
 figure;  hold on;
-g(1)=histogram(gaA,linspace(min(gaA),max(gaA),50));
-g(2)=histogram(gaA(Ind_finished),linspace(min(gaA),max(gaA),50));
-g(3)=histogram(gaA(Ind_error),linspace(min(gaA),max(gaA),50));
+g(1)=histogram(log10(gaA),linspace(min(log10(gaA)),max(log10(gaA)),50));
+g(2)=histogram(log10(gaA(Ind_finished)),linspace(min(log10(gaA)),max(log10(gaA)),50));
+g(3)=histogram(log10(gaA(Ind_error)),linspace(min(log10(gaA)),max(log10(gaA)),50));
 title("gaA (min: "+string(min(gaA))+", max: "+string(max(gaA))+")");
 xlabel('gaA'); ylabel('count');
 grid on; box on;
 legend(g(:),["all","finished","error"],'Location','northwest');
 
 figure;  hold on;
-g(1)=histogram(gaC,linspace(min(gaC),max(gaC),50));
-g(2)=histogram(gaC(Ind_finished),linspace(min(gaC),max(gaC),50));
-g(3)=histogram(gaC(Ind_error),linspace(min(gaC),max(gaC),50));
+g(1)=histogram(log10(gaC),linspace(min(log10(gaC)),max(log10(gaC)),50));
+g(2)=histogram(log10(gaC(Ind_finished)),linspace(log10(min(gaC)),max(log10(gaC)),50));
+g(3)=histogram(log10(gaC(Ind_error)),linspace(min(log10(gaC)),max(log10(gaC)),50));
 title("gaC (min: "+string(min(gaC))+", max: "+string(max(gaC))+")");
 xlabel('gaC'); ylabel('count');
 grid on; box on;

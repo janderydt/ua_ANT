@@ -88,6 +88,16 @@ function opts = setoptions(UserVar,TableToReadOrWrite)
 
 opts = detectImportOptions(TableToReadOrWrite);
 
+I=find(contains(opts.VariableNames,'SubmissionTime'));
+opts.VariableTypes(I)={'char'};
+I=find(contains(opts.VariableNames,'ErrorTime'));
+opts.VariableTypes(I)={'char'};
+I=find(contains(opts.VariableNames,'FinishedTime'));
+opts.VariableTypes(I)={'char'};
+% opts=setvaropts(opts,'SubmissionTime','InputFormat','dd/MM/uuuu HH:mm:ss');
+% opts=setvaropts(opts,'ErrorTime','InputFormat','dd/MM/uuuu HH:mm:ss');
+% opts=setvaropts(opts,'FinishedTime','InputFormat','dd/MM/uuuu HH:mm:ss');
+
 if UserVar.type == "Inverse"
 
     I=find(contains(opts.VariableNames,'Domain'));
@@ -104,9 +114,11 @@ if UserVar.type == "Inverse"
     opts.VariableTypes(I)={'char'};
                 
 elseif UserVar.type == "Diagnostic"
+
     % none to correct
 
 elseif UserVar.type == "Transient"
+
     % none to correct
 
 end
