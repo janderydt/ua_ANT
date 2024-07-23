@@ -9,7 +9,7 @@ if ~isfile(UserVar.runtable_exp)
 end
 
 %% log changes in tables
-RunTable{ind,"SubmissionTime"}(:) = string(datetime("now")); 
+RunTable{ind,"SubmissionTime"} = string(datetime("now","format","yyyy-MM-dd HH:mm:ss")); 
 RunTable{ind,"Submitted"} = 1;
 RunTable{ind,"Running"} = 1;
 RunTable{ind,'pgid'} = pgid;

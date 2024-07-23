@@ -152,7 +152,7 @@ if ~isempty(Iexisting)
 
         % experiment name and unique ID
         UserVar.Domain = RunTable{ind,'Domain'};
-        UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(RunTable{ind,'ExpID'})];
+        UserVar.Experiment = UserVar.Domain+"_"+type+"_"+string(RunTable{ind,'ExpID'});
         UserVar.ExpID = RunTable{ind,'ExpID'};
 
         % initialize experiment log and error files
@@ -339,13 +339,13 @@ if ~isempty(Inew)
     UserVar.Restart = 0;
     UserVar.Breakout = 0;
     UserVar.Domain = RunTable{ind,'Domain'};
-    UserVar.Experiment = [char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
+    UserVar.Experiment = UserVar.Domain+"_"+type+"_"+string(RunTable{ind,'ExpID'});
     UserVar.runtable_exp = UserVar.casefolder + "/" + UserVar.Experiment + "/RunTable_" + UserVar.Experiment + ".csv";
     
     % make copy of master folder for new experiment
     % if new folder already exists: rename first
-    sourcefolder = [char(UserVar.home),'/ANT_',char(type),'_9999/'];
-    newfolder = [char(UserVar.casefolder),'/',char(UserVar.Domain),'_',char(type),'_',num2str(ExpID)];
+    sourcefolder = UserVar.home+"/ANT_"+type+"_9999/";
+    newfolder = UserVar.casefolder+"/"+UserVar.Domain+"_"+type+"_"+string(ExpID);
     if exist(newfolder,"dir") == 7
         movefile(newfolder,[newfolder,'_old/']);
     else
