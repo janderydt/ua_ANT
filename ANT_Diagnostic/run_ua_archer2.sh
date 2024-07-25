@@ -137,8 +137,8 @@ then
     # gather information about job
     currenttime=$(date +"%d-%b-%Y %H:%M:%S")
     timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
-    #EJ=$(sacct -j ${JOBID}  --format=ConsumedEnergy 2>&1 | sed -n 5p) # energy usage
-    EJ=$(sstat ${JOBID} -o consumed 2>&1 | sed -n 3p) 
+    EJ=$(sstat -j ${JOBID} --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
+    MaxRSS=$(sstat -j ${JOBID} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage 
     exitflag=0
 
     # Find non-empty error files
@@ -166,6 +166,7 @@ then
     fi
     echo " > Time elapsed: ${timeelapsed}" >> jobs_master_ARCHER2.log
     echo " > Energy Consumption [J]: ${EJ}" >> jobs_master_ARCHER2.log
+    echo " > Maximum memory usage [bytes]: ${MaxRSS}" >> jobs_master_ARCHER2.log
 
     # Copy temporary RunTable
     python ../copy_runtable.py $UA_CONFIG ".tmp" ""
