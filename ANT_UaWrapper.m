@@ -106,11 +106,11 @@ if isempty(type) || isempty(walltime) || isempty(pgid) || isempty(walltime_remai
     "walltime ("+string(walltime)+"), walltime_remaining ("+string(walltime_remaining)+"), pgid ("+string(pgid)+"), ",...
     "runtable ("+string(runtable)+"), idrange ("+string(idrange)+").");
 else
-    UserVar.type = type;
+    UserVar.type = string(type);
     UserVar.pgid = pgid;
     UserVar.walltime = walltime; 
     UserVar.walltime_remaining = walltime_remaining;
-    UserVar.runtable_global = runtable;
+    UserVar.runtable_global = string(runtable);
     UserVar.idrange = idrange;
 end
 
@@ -152,11 +152,12 @@ if ~isempty(Iexisting)
 
         % experiment name and unique ID
         UserVar.Domain = RunTable{ind,'Domain'};
-        UserVar.Experiment = UserVar.Domain+"_"+type+"_"+string(RunTable{ind,'ExpID'});
         UserVar.ExpID = RunTable{ind,'ExpID'};
+        UserVar.Experiment = UserVar.Domain+"_"+UserVar.type+"_"+string(UserVar.ExpID);
 
         % initialize experiment log and error files
-        logfile = UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+string(UserVar.Experiment)+".log";
+        logfile = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+".log";
+        
         fid = fopen(logfile,'a+');
         UserVar.fid_experimentlog = fid;
         errorfile = UserVar.home+"/stderr_jobid"+string(UserVar.pgid)+"_expid"+string(UserVar.ExpID)+".out";
@@ -339,7 +340,7 @@ if ~isempty(Inew)
     UserVar.Restart = 0;
     UserVar.Breakout = 0;
     UserVar.Domain = RunTable{ind,'Domain'};
-    UserVar.Experiment = UserVar.Domain+"_"+type+"_"+string(RunTable{ind,'ExpID'});
+    UserVar.Experiment = UserVar.Domain+"_"+UserVar.type+"_"+string(UserVar.ExpID);
     UserVar.runtable_exp = UserVar.casefolder + "/" + UserVar.Experiment + "/RunTable_" + UserVar.Experiment + ".csv";
     
     % make copy of master folder for new experiment
@@ -347,15 +348,15 @@ if ~isempty(Inew)
     sourcefolder = UserVar.home+"/ANT_"+type+"_9999/";
     newfolder = UserVar.casefolder+"/"+UserVar.Domain+"_"+type+"_"+string(ExpID);
     if exist(newfolder,"dir") == 7
-        movefile(newfolder,[newfolder,'_old/']);
+        movefile(newfolder,newfolder+"_old/");
     else
-        copyfile(sourcefolder,[newfolder,'/']); 
+        copyfile(sourcefolder,newfolder+"/"); 
     end
     % rename RunTable file
     movefile(newfolder+"/RunTable_ANT_"+UserVar.type+"_9999.csv",UserVar.runtable_exp);
 
     % initialize experiment log and error files
-    logfile = UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+string(UserVar.Experiment)+".log";
+    logfile = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+".log";
     fid = fopen(logfile,'a+');
     UserVar.fid_experimentlog = fid;
     errorfile = UserVar.home+"/stderr_jobid"+string(UserVar.pgid)+"_expid"+string(UserVar.ExpID)+".out";

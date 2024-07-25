@@ -1,12 +1,12 @@
-function plot_ensemble_inverse
+function plot_Inverse_Ensemble
 
 variable_to_plot = 'misfit'; %options: qGL, niter, misfit
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
 UserVar.cycle = 2;
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+["/RunTable_ARCHER2_2.csv","/RunTable_ARCHER2_5.csv"];
-UserVar.idrange = [3000,3999;6000,6999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 5 8])+".csv";
+UserVar.idrange = [3000,3999;6000,6999;9000,9999];
 
 addpath("/mnt/md0/Ua/cases/ANT/");
 

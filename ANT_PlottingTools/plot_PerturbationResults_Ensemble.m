@@ -1,7 +1,24 @@
-function plot_ensemble_perturbation
+function plot_PerturbationResults_Ensemble
 
-variable_to_plot = 'n'; % n, m, gsA, gsC, gaA, gaC
-basins_to_analyze = {'H-Hp','G-H','F-G'};
+diagnostic_to_plot = 'Delta_qGL'; % Delta_qGL, Delta_u
+basins_to_analyze = {'A-Ap',...  % Queen Maud Land
+    'Ap-B',... % Enderby Land
+    'B-C',...  % Amery
+    'C-Cp',... % 
+    'Cp-D',... % Totton/Wilkes Land
+    'D-Dp',... % George V Coast
+    'Dp-E',... % Victoria Land
+    'E-Ep',... % Ross west
+    'Ep-F',... % Ross east
+    'F-G',...  % Getz
+    'G-H',...  % PIG, Thwaites
+    'H-Hp',... % Abbot
+    'Hp-I',... % English Coast
+    'I-Ipp',... % Northern Peninsula
+    'Ipp-J',... % Eastern Peninsula
+    'J-Jpp',... % Ronne 
+    'Jpp-K',... % Filchner
+    'K-A'}; % Caird Coast
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Diagnostic";
@@ -24,7 +41,9 @@ for ii=1:numel(Bfields)
     end
 end
 
-kk=0;
+% load mesh for interpolation of speed
+tmp = load(UserVar.home+"ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_2000_meshmin5000_meshmax100000_extrudemesh0_variableboundaryres1.mat");
+MUA_coarse = tmp.MUA;
 
 if exist("perturbationdata.mat","file")
     load("perturbationdata.mat");
@@ -35,10 +54,11 @@ end
 tmp = load("inversiondata.mat");
 data_inverse = tmp.data;
 
+Fspeed_2000=[]; Fspeed_2018=[];
+
 for tt=1:numel(UserVar.Table)
 
     % read run table
-
     RunTable = ANT_ReadWritetable(UserVar,UserVar.Table(tt),[],'read');
     
     % ExpIDs
@@ -53,7 +73,7 @@ for tt=1:numel(UserVar.Table)
     % only keep experiments that have finished
     Ind_finished = RunTable{Ind,"Finished"}==1;
     Ind = Ind(Ind_ignore==0 & Ind_finished==1);
-    Comments = RunTable{Ind,"Comments"};   
+    Comments = RunTable{Ind,"Comments"};
     
     %% Gather data
     for ii=1:numel(Ind)
@@ -66,8 +86,9 @@ for tt=1:numel(UserVar.Table)
         outputfiles = dir(folder+"/ResultsFiles/*.mat");
 
         if ~isempty(outputfiles)
+
             outputfile = outputfiles(1).folder + "/" + outputfiles(1).name;
-            expinfo = Comments{Ind(ii)};
+            expinfo = Comments{ii};
             load(outputfile,"CtrlVar","F","MUA");      
 
             %GL=FluxAcrossGroundingLine(CtrlVar,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
@@ -84,7 +105,7 @@ for tt=1:numel(UserVar.Table)
                 B.qOB_tot{bb} = sum(B.qOB{bb},'omitmissing')/1e12; 
                 B.qtot{bb} = B.qGL_tot{bb}+B.qOB_tot{bb}; 
             end
-
+          
             % store in data array
             if isempty(data)
                 data_ind = 1;            
@@ -124,13 +145,13 @@ for tt=1:numel(UserVar.Table)
                 geomfields = {'Original','Calv','dhIS','dh','Calv_dh'};
                 for ff=1:numel(geomfields)
                     data(data_ind).(geomfields{ff}).geometry=[];
-                    data(data_ind).(geomfields{ff}).qGL.FG=[];
-                    data(data_ind).(geomfields{ff}).qGL.GH=[];
-                    data(data_ind).(geomfields{ff}).qGL.HHp=[];
-                    data(data_ind).(geomfields{ff}).qOB.FG=[];
-                    data(data_ind).(geomfields{ff}).qOB.GH=[];
-                    data(data_ind).(geomfields{ff}).qOB.HHp=[];
+                    for bb=1:numel(basins_to_analyze)
+                        basin = char(erase(basins_to_analyze(bb),'-'));
+                        data(data_ind).(geomfields{ff}).qGL.(basin)=[];
+                        data(data_ind).(geomfields{ff}).qOB.(basin)=[];
+                    end
                     data(data_ind).(geomfields{ff}).cycle=[];
+                    data(data_ind).(geomfields{ff}).speed=[];
                 end
             end
 
@@ -153,14 +174,33 @@ for tt=1:numel(UserVar.Table)
                 error("Unknown experiment info "+expinfo);
             end
 
+            % save data
             data(data_ind).(fieldname).geometry(end+1) = year;
-            data(data_ind).(fieldname).qGL.FG(end+1) = cell2mat(B.qGL_tot(1));
-            data(data_ind).(fieldname).qGL.GH(end+1) = cell2mat(B.qGL_tot(2));
-            data(data_ind).(fieldname).qGL.HHp(end+1) = cell2mat(B.qGL_tot(3));
-            data(data_ind).(fieldname).qOB.FG(end+1) = cell2mat(B.qOB_tot(1));
-            data(data_ind).(fieldname).qOB.GH(end+1) = cell2mat(B.qOB_tot(2));
-            data(data_ind).(fieldname).qOB.HHp(end+1) = cell2mat(B.qOB_tot(3));
+            for bb=1:numel(basins_to_analyze)
+                basin = char(erase(basins_to_analyze(bb),'-'));
+                data(data_ind).(fieldname).qGL.(basin)(end+1) = cell2mat(B.qGL_tot(bb));
+                data(data_ind).(fieldname).qOB.(basin)(end+1) = cell2mat(B.qOB_tot(bb));
+            end           
             data(data_ind).(fieldname).cycle(end+1) = InverseCycle;
+
+            % Interpolate speed on coarser grid
+            if ismember(fieldname,["Original","dhIS","dh"])
+                if isempty(Fspeed_2000)
+                    Fspeed_2000 = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb),"natural");
+                else
+                    Fspeed_2000.Values = hypot(F.ub,F.vb);
+                end 
+                speed = Fspeed_2000(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2));
+
+            else
+                if isempty(Fspeed_2018)
+                    Fspeed_2018 = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb),"natural");
+                else
+                    Fspeed_2018.Values = hypot(F.ub,F.vb);
+                end 
+                speed = Fspeed_2018(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2));
+            end
+            data(data_ind).(fieldname).speed(:,end+1) = speed(:);
 
         end             
         fprintf("Done %s out of %s.\n",string(ii),string(numel(Ind)));
@@ -169,7 +209,7 @@ end
 
 save("perturbationdata.mat","data","perturbation_experiments_analyzed");
 
-%% gather data in userfriendly format 
+%% gather data in a user-friendly format 
 for ii=1:numel(data)
 
     orig(ii,:)=data(ii).Original.qGL.GH(:)'; % convert from kg/yr to Gt/yr
@@ -244,6 +284,10 @@ legend(s(1:6),{'Calving','Ice Shelf thickness','Ice thickness','Calving + Ice th
     'NumColumns',2,'Location','northwest');
 
 xlabel(variable_to_plot); ylabel('\Delta q_{GL} [Gt/yr]');
+ax=gca;
+ax.YScale='log';
+ax.XScale='log';
+
 grid on;
 box on;
 

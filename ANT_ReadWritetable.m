@@ -95,14 +95,11 @@ I=find(contains(opts.VariableNames,'ErrorTime'));
 opts.VariableTypes(I)={'string'};
 I=find(contains(opts.VariableNames,'FinishedTime'));
 opts.VariableTypes(I)={'string'};
-% opts=setvaropts(opts,'SubmissionTime','InputFormat','dd/MM/uuuu HH:mm:ss');
-% opts=setvaropts(opts,'ErrorTime','InputFormat','dd/MM/uuuu HH:mm:ss');
-% opts=setvaropts(opts,'FinishedTime','InputFormat','dd/MM/uuuu HH:mm:ss');
+I=find(contains(opts.VariableNames,'Domain'));
+opts.VariableTypes(I)={'string'};
 
 if UserVar.type == "Inverse"
 
-    I=find(contains(opts.VariableNames,'Domain'));
-    opts.VariableTypes(I)={'string'};
     I=find(contains(opts.VariableNames,'InverseIterations'));
     opts.VariableTypes(I)={'char'};
     I=find(contains(opts.VariableNames,'InverseIterationsDone'));
