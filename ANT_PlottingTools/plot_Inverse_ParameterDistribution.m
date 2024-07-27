@@ -1,4 +1,6 @@
-function plot_parameterdistribution_inverse
+function plot_Inverse_ParameterDistribution
+
+addpath("..");
 
 RunTable = "RunTable_ARCHER2_"+string([2 5 8])+".csv";
 
@@ -50,7 +52,7 @@ g(1)=histogram(log10(gaA),linspace(min(log10(gaA)),max(log10(gaA)),50));
 g(2)=histogram(log10(gaA(Ind_finished)),linspace(min(log10(gaA)),max(log10(gaA)),50));
 g(3)=histogram(log10(gaA(Ind_error)),linspace(min(log10(gaA)),max(log10(gaA)),50));
 title("gaA (min: "+string(min(gaA))+", max: "+string(max(gaA))+")");
-xlabel('gaA'); ylabel('count');
+xlabel('log10(gaA)'); ylabel('count');
 grid on; box on;
 legend(g(:),["all","finished","error"],'Location','northwest');
 
@@ -59,7 +61,7 @@ g(1)=histogram(log10(gaC),linspace(min(log10(gaC)),max(log10(gaC)),50));
 g(2)=histogram(log10(gaC(Ind_finished)),linspace(log10(min(gaC)),max(log10(gaC)),50));
 g(3)=histogram(log10(gaC(Ind_error)),linspace(min(log10(gaC)),max(log10(gaC)),50));
 title("gaC (min: "+string(min(gaC))+", max: "+string(max(gaC))+")");
-xlabel('gaC'); ylabel('count');
+xlabel('log10(gaC)'); ylabel('count');
 grid on; box on;
 legend(g(:),["all","finished","error"],'Location','northwest');
 

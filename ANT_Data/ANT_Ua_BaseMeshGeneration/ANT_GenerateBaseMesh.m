@@ -2,9 +2,11 @@ function ANT_GenerateBaseMesh
 
 warning('off','all');
 
-velocityfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
+%velocityfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
 %velocityfile = "/mnt/md0/Ua/cases/ANT/ANT_Inverse/ANT_Inverse_1035/ANT_Inverse_1035-RestartFile.mat";
-geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXTRUDED";
+velocityfile = "../ANT_Interpolants/GriddedInterpolants_2018-2019_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
+%geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXTRUDED";
+geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2018_EXTRUDED";
 
 % This function generates boundary and internal coordinates for Antarctica,
 % based on calving front outlines from C. Greene et al. (2022) for years 
@@ -16,10 +18,10 @@ geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXT
 % refinement criteria are defined then a mesh with uniform resolution 
 % meshav is produced.
 
-years_to_include = [2000 2009 2014 2018]; %tested with 2000
-ExtrudeMesh = 1;
+years_to_include = 2018;%[2000 2009 2014 2018]; %tested with 2000
+ExtrudeMesh = 0;
 VariableBoundaryResolution = 1;
-meshmin = 3e3;
+meshmin = 5e3;
 meshav = 10e3;
 meshmax = 100e3;
 

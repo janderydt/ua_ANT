@@ -1,7 +1,6 @@
 function [basin,ind] = Define_Quantity_PerBasin(x,y,B,doplots)
 
 %% detect basin for each coordinate pair
-
 if nargin<4
     doplots=0;
 end
@@ -15,7 +14,7 @@ for ii=1:numel(B.x)
     basin(ii).ind = [];
     Inan = [0; find(isnan(Bx)); numel(Bx)];
     for jj=1:numel(Inan)-2
-        basin(ii).ind = [basin(ii).ind; find(inpoly([xtmp(:) ytmp(:)],...
+        basin(ii).ind = [basin(ii).ind; find(inpoly2([xtmp(:) ytmp(:)],...
             [Bx(Inan(jj)+1:Inan(jj+1)-1) By(Inan(jj)+1:Inan(jj+1)-1)]))];
     end
     % avoid counting double
@@ -37,6 +36,7 @@ ind = zeros(numel(x),1)+nan;
 for ii=1:numel(B.x)
     basin(ii).ind = [basin(ii).ind; remaining(find(I==ii))];
     ind(basin(ii).ind(:)) = ii;
+    basin(ii).name = B.name{ii};
 end
 
 if doplots

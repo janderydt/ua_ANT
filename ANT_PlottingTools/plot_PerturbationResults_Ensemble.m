@@ -1,229 +1,215 @@
 function plot_PerturbationResults_Ensemble
 
-diagnostic_to_plot = 'Delta_qGL'; % Delta_qGL, Delta_u
-basins_to_analyze = {'A-Ap',...  % Queen Maud Land
-    'Ap-B',... % Enderby Land
-    'B-C',...  % Amery
-    'C-Cp',... % 
-    'Cp-D',... % Totton/Wilkes Land
-    'D-Dp',... % George V Coast
-    'Dp-E',... % Victoria Land
-    'E-Ep',... % Ross west
-    'Ep-F',... % Ross east
-    'F-G',...  % Getz
+addpath(getenv("froot_tools"));
+
+diagnostic_to_plot = 'Delta_u'; % Delta_qGL, Delta_qOB, Delta_u
+basins_to_analyze = {'F-G',...  % Getz
     'G-H',...  % PIG, Thwaites
-    'H-Hp',... % Abbot
-    'Hp-I',... % English Coast
-    'I-Ipp',... % Northern Peninsula
-    'Ipp-J',... % Eastern Peninsula
-    'J-Jpp',... % Ronne 
-    'Jpp-K',... % Filchner
-    'K-A'}; % Caird Coast
+    'H-Hp'}; % Abbot 
+file_with_perturbation_data_to_read = "perturbationdata_intermediate.mat";
 
-UserVar.home = "/mnt/md0/Ua/cases/ANT/";
-UserVar.type = "Diagnostic";
-UserVar.Table = UserVar.home+"ANT_Diagnostic/"+["RunTable_ARCHER2_Diagnostic_2.csv"];
-UserVar.idrange = [20000 29999];
-
-addpath("/mnt/md0/Ua/cases/ANT/");
-
-% load basins
-filename = 'basins_IMBIE_v2.mat'; 
-B = load(filename);
-B = RemoveSmallIceRisesAndIslands(B);
-% only keep basins F-G, G-H, H-Hp (Abbot, Amundsen, Getz)
-Ind = contains(B.name,basins_to_analyze);
-Bfields= fields(B);
-for ii=1:numel(Bfields)
-    if ~contains(Bfields{ii},'note')
-        tmp = B.(Bfields{ii});
-        B.(Bfields{ii}) = tmp(Ind);
-    end
-end
-
-% load mesh for interpolation of speed
-tmp = load(UserVar.home+"ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_2000_meshmin5000_meshmax100000_extrudemesh0_variableboundaryres1.mat");
-MUA_coarse = tmp.MUA;
-
-if exist("perturbationdata.mat","file")
-    load("perturbationdata.mat");
+%% load data
+if exist(file_with_perturbation_data_to_read,"file")
+    load(file_with_perturbation_data_to_read);
 else
-    data=[];    
-    perturbation_experiments_analyzed = [];
+    error(file_with_perturbation_data_to_read+" does not exist");
 end
 tmp = load("inversiondata.mat");
 data_inverse = tmp.data;
 
-Fspeed_2000=[]; Fspeed_2018=[];
-
-for tt=1:numel(UserVar.Table)
-
-    % read run table
-    RunTable = ANT_ReadWritetable(UserVar,UserVar.Table(tt),[],'read');
-    
-    % ExpIDs
-    ExpID = RunTable{:,"ExpID"};
-    Ind = find(ExpID>=UserVar.idrange(tt,1) & ExpID<=UserVar.idrange(tt,2));
-    % only keep experiments that have not been analyzed yet
-    if ~isempty(data)
-        Ind_ignore = ismember(Ind,perturbation_experiments_analyzed);
-    else
-        Ind_ignore = 0*Ind;
+% available drainage basins
+available_basins = fieldnames(data(1).Original.qGL);
+% check that data for basins_to_analyze is available
+for bb=1:numel(basins_to_analyze)
+    if ~ismember(erase(basins_to_analyze{bb},'-'),available_basins)
+        error("Data for basin "+basins_to_analyze{bb}+" is not available.")
     end
-    % only keep experiments that have finished
-    Ind_finished = RunTable{Ind,"Finished"}==1;
-    Ind = Ind(Ind_ignore==0 & Ind_finished==1);
-    Comments = RunTable{Ind,"Comments"};
+end
+
+%% gather data in a user-friendly format
+qGL_orig.total = zeros(numel(data),10); qOB_orig.total = zeros(numel(data),10);
+qGL_calv.total = zeros(numel(data),10); qOB_calv.total = zeros(numel(data),10);
+qGL_dhIS.total = zeros(numel(data),10); qOB_dhIS.total = zeros(numel(data),10);
+qGL_dh.total = zeros(numel(data),10); qOB_dh.total = zeros(numel(data),10);
+qGL_calvdh.total = zeros(numel(data),10); qOB_calvdh.total = zeros(numel(data),10);
+Delta_u = []; CtrlVar=Ua2D_DefaultParameters; ElementsToBeDeactivated=[];
+
+for ii=1:numel(data)-1
+
+    basinnodes_all = [];
+
+    for bb=1:numel(basins_to_analyze)
     
-    %% Gather data
-    for ii=1:numel(Ind)
+        basin = char(erase(basins_to_analyze{bb},'-'));
 
-        perturbation_experiments_analyzed(end+1) = Ind(ii);
-        InverseExpID = RunTable{Ind(ii),"InverseA"};
-        InverseCycle = RunTable{Ind(ii),"InverseCycleA"};        
-        Ind_inverse = find([data_inverse(:).InverseExpID]==InverseExpID);
-        folder = UserVar.home+"/ANT_Diagnostic/cases/ANT_nsmbl_Diagnostic_"+ExpID(Ind(ii));
-        outputfiles = dir(folder+"/ResultsFiles/*.mat");
+        switch diagnostic_to_plot
 
-        if ~isempty(outputfiles)
+            % grounding line flux
+            case "Delta_qGL"
+                qGL_orig.(basin)(ii,:) = data(ii).Original.qGL.(basin)(:)';
+                qGL_calv.(basin)(ii,:) = data(ii).Calv.qGL.(basin)(:)';
+                qGL_dhIS.(basin)(ii,:) = data(ii).dhIS.qGL.(basin)(:)';
+                qGL_dh.(basin)(ii,:) = data(ii).dh.qGL.(basin)(:)';
+                qGL_calvdh.(basin)(ii,:) = data(ii).Calv_dh.qGL.(basin)(:)';
+                qGL_orig.total(ii,:) = qGL_orig.total(ii,:)+qGL_orig.(basin)(ii,:);
+                qGL_calv.total(ii,:) = qGL_calv.total(ii,:)+qGL_calv.(basin)(ii,:);
+                qGL_dhIS.total(ii,:) = qGL_dhIS.total(ii,:)+qGL_dhIS.(basin)(ii,:);
+                qGL_dh.total(ii,:) = qGL_dh.total(ii,:)+qGL_dh.(basin)(ii,:);
+                qGL_calvdh.total(ii,:) = qGL_calvdh.total(ii,:)+qGL_calvdh.(basin)(ii,:);
 
-            outputfile = outputfiles(1).folder + "/" + outputfiles(1).name;
-            expinfo = Comments{ii};
-            load(outputfile,"CtrlVar","F","MUA");      
+            % open boundary (calving) flux    
+            case "Delta_qOB"
+                qOB.orig.(basin)(ii,:) = data(ii).Original.qOB.(basin)(:)';
+                qOB_calv.(basin)(ii,:) = data(ii).Calv.qOB.(basin)(:)';
+                qOB_dhIS.(basin)(ii,:) = data(ii).dhIS.qOB.(basin)(:)';
+                qOB_dh.(basin)(ii,:) = data(ii).dh.qOB.(basin)(:)';
+                qOB_calvdh.(basin)(ii,:) = data(ii).Calv_dh.qOB.(basin)(:)';
+                qOB_orig.total(ii,:) = qOB_orig.total(ii,:)+qOB_orig.(basin)(ii,:);
+                qOB_calv.total(ii,:) = qOB_calv.total(ii,:)+qOB_calv.(basin)(ii,:);
+                qOB_dhIS.total(ii,:) = qOB_dhIS.total(ii,:)+qOB_dhIS.(basin)(ii,:);
+                qOB_dh.total(ii,:) = qOB_dh.total(ii,:)+qOB_dh.(basin)(ii,:);
+                qOB_calvdh.total(ii,:) = qOB_calvdh.total(ii,:)+qOB_calvdh.(basin)(ii,:);
 
-            %GL=FluxAcrossGroundingLine(CtrlVar,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
-            %qGL = sum(GL);
-            % Obtain Ua fluxes across the grounding line (qGL) into floating areas
-            [B,~] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVar);
             
-            % Obtain Ua fluxes across the open boundary (qOB) into the ocean
-            B = Calc_UaOBFlux_PerBasin(MUA,F,F.GF,B,CtrlVar); 
-    
-            % Sum values of SMB, qGL and qOB for each basin
-            for bb=1:numel(B.x) 
-                B.qGL_tot{bb} = sum(B.qGL{bb},'omitmissing')/1e12; 
-                B.qOB_tot{bb} = sum(B.qOB{bb},'omitmissing')/1e12; 
-                B.qtot{bb} = B.qGL_tot{bb}+B.qOB_tot{bb}; 
-            end
-          
-            % store in data array
-            if isempty(data)
-                data_ind = 1;            
-            else
-                ExpID_list=[];
-                for nn=1:numel(data)
-                    ExpID_list(nn)=data(nn).Inverse.ExpID;
-                end
-                [~,data_ind] = ismember(InverseExpID,ExpID_list);
-                if data_ind==0 % add new element to data structure
-                    ndata = numel(data);
-                    data_ind = ndata+1;
-                end
-            end
+            % changes in speed - only keep data for the selected basins
+            case "Delta_u"
 
-            data(data_ind).Inverse.ExpID = InverseExpID;
-            data(data_ind).m = F.m(1);
-            data(data_ind).n = F.n(1);
-            data(data_ind).SlidingLaw = CtrlVar.SlidingLaw;
-            data(data_ind).Inverse.gaC = data_inverse(Ind_inverse).gaC;
-            data(data_ind).Inverse.gaA = data_inverse(Ind_inverse).gaA;
-            data(data_ind).Inverse.gsC = data_inverse(Ind_inverse).gsC;
-            data(data_ind).Inverse.gsA = data_inverse(Ind_inverse).gsA;
-            data(data_ind).Inverse.misfit(InverseCycle) = data_inverse(Ind_inverse).misfit(InverseCycle);
-            data(data_ind).startgeometry = data_inverse(Ind_inverse).startgeometry;
+                MUA_basinnames = erase({MUA_coarse.basins(:).name},'-');
+                [~,BasinInd] = ismember(basin,MUA_basinnames);
+                basinnodes = MUA_coarse.basins(BasinInd).ind;
+                basinnodes_all = [basinnodes_all; basinnodes];
 
-            %initialize structure
-            initialize = 0;
-            if ~isfield(data(data_ind),'Original')
-                initialize = 1;
-            else
-                if ~isfield(data(data_ind).Original,'geometry')
-                    initialize = 1;
-                end
-            end
-            if initialize
-                geomfields = {'Original','Calv','dhIS','dh','Calv_dh'};
-                for ff=1:numel(geomfields)
-                    data(data_ind).(geomfields{ff}).geometry=[];
-                    for bb=1:numel(basins_to_analyze)
-                        basin = char(erase(basins_to_analyze(bb),'-'));
-                        data(data_ind).(geomfields{ff}).qGL.(basin)=[];
-                        data(data_ind).(geomfields{ff}).qOB.(basin)=[];
+                for cc=1:size(data(ii).Original.speed,2)
+                    for ff=["Calv","dhIS","dh","Calv_dh"]
+                        du = data(ii).(char(ff)).speed(:,cc)-data(ii).Original.speed(:,cc);                        
+                        tmp = NaN*du; tmp(basinnodes) = du(basinnodes);
+                        du = tmp;
+                        Intdu=FEintegrate2D([],MUA_coarse,du);
+                        IntA=FEintegrate2D([],MUA_coarse,0*du+1);
+                        Ind_notnan=find(~isnan(Intdu));
+                        Delta_u.(char(ff)).(basin)(ii,cc) = sum(Intdu(Ind_notnan))/sum(IntA(Ind_notnan));
+                        if bb==numel(basins_to_analyze)
+                            du = data(ii).(char(ff)).speed(:,cc)-data(ii).Original.speed(:,cc);
+                            if isempty(ElementsToBeDeactivated)
+                                ElementsToBeDeactivated=any(~ismember(MUA_coarse.connectivity,basinnodes_all),2);
+                                [MUA_new,k,~]=DeactivateMUAelements(CtrlVar,MUA_coarse,ElementsToBeDeactivated);
+                            end
+                            du = du(k);
+                            Intdu=FEintegrate2D([],MUA_new,du);
+                            IntA=FEintegrate2D([],MUA_new,0*du+1);
+                            Ind_notnan=find(~isnan(Intdu));
+                            Delta_u.(char(ff)).total(ii,cc) = sum(Intdu(Ind_notnan))/sum(IntA(Ind_notnan));
+                            if ~isfield(Delta_u.(char(ff)),'map')
+                                Delta_u.(char(ff)).map = zeros(numel(data),MUA_new.Nnodes,size(data(ii).Original.speed,2));
+                                %Delta_u.(char(ff)).mapcounter = 0;
+                                Delta_u.(char(ff)).mapnodes(:,cc) = basinnodes_all(:);
+                            end
+                            Delta_u.(char(ff)).map(ii,:,cc) = du(:);
+                            %Delta_u.(char(ff)).mapcounter = Delta_u.(char(ff)).mapcounter+1;                    
+                            %Delta_u.(char(ff)).map_max(:,cc)
+                            %Delta_u.(char(ff)).map_min(:,cc)
+                        end
                     end
-                    data(data_ind).(geomfields{ff}).cycle=[];
-                    data(data_ind).(geomfields{ff}).speed=[];
                 end
-            end
+     
+            otherwise
 
-            if contains(expinfo,"Original")
-                year = RunTable{Ind(ii),"Calv"};   
-                fieldname = 'Original';
-            elseif contains(expinfo,"Ice front geometry")
-                year = RunTable{Ind(ii),"Calv"};
-                fieldname = 'Calv';
-            elseif contains(expinfo,"Ice shelf thickness")
-                year = RunTable{Ind(ii),"ISthick"};
-                fieldname = 'dhIS';
-            elseif contains(expinfo,"Ice thickness")
-                year = RunTable{Ind(ii),"ISthick"};
-                fieldname = 'dh';
-            elseif contains(expinfo,"Ice front and thickness")
-                year = RunTable{Ind(ii),"Calv"};
-                fieldname = 'Calv_dh';
-            else
-                error("Unknown experiment info "+expinfo);
-            end
+                error("diagnostic_to_plot "+diagnostic_to_plot+" not known.");
 
-            % save data
-            data(data_ind).(fieldname).geometry(end+1) = year;
-            for bb=1:numel(basins_to_analyze)
-                basin = char(erase(basins_to_analyze(bb),'-'));
-                data(data_ind).(fieldname).qGL.(basin)(end+1) = cell2mat(B.qGL_tot(bb));
-                data(data_ind).(fieldname).qOB.(basin)(end+1) = cell2mat(B.qOB_tot(bb));
-            end           
-            data(data_ind).(fieldname).cycle(end+1) = InverseCycle;
+        end
 
-            % Interpolate speed on coarser grid
-            if ismember(fieldname,["Original","dhIS","dh"])
-                if isempty(Fspeed_2000)
-                    Fspeed_2000 = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb),"natural");
-                else
-                    Fspeed_2000.Values = hypot(F.ub,F.vb);
-                end 
-                speed = Fspeed_2000(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2));
+        % inversion parameters
+        misfit(ii,:)=data(ii).Inverse.misfit(:)';
+        gsA(ii) = [data(ii).Inverse.gsA];
+        gsC(ii) = [data(ii).Inverse.gsC];
+        gaA(ii) = [data(ii).Inverse.gaA];
+        gaC(ii) = [data(ii).Inverse.gaC];
 
-            else
-                if isempty(Fspeed_2018)
-                    Fspeed_2018 = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb),"natural");
-                else
-                    Fspeed_2018.Values = hypot(F.ub,F.vb);
-                end 
-                speed = Fspeed_2018(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2));
-            end
-            data(data_ind).(fieldname).speed(:,end+1) = speed(:);
-
-        end             
-        fprintf("Done %s out of %s.\n",string(ii),string(numel(Ind)));
     end
-end
 
-save("perturbationdata.mat","data","perturbation_experiments_analyzed");
-
-%% gather data in a user-friendly format 
-for ii=1:numel(data)
-
-    orig(ii,:)=data(ii).Original.qGL.GH(:)'; % convert from kg/yr to Gt/yr
-    calv(ii,:)=data(ii).Calv.qGL.GH(:)';
-    dhIS(ii,:)=data(ii).dhIS.qGL.GH(:)';
-    dh(ii,:)=data(ii).dh.qGL.GH(:)';
-    calvdh(ii,:)=data(ii).Calv_dh.qGL.GH(:)';
-    misfit(ii,:)=data(ii).Inverse.misfit(:)';
-    gsA(ii) = [data(ii).Inverse.gsA];
-    gsC(ii) = [data(ii).Inverse.gsC];
-    gaA(ii) = [data(ii).Inverse.gaA];
-    gaC(ii) = [data(ii).Inverse.gaC];
+    fprintf("Done %s out of %s.\n",string(ii),string(numel(data)));
 
 end
+
+CtrlVar=Ua2D_DefaultParameters;
+CtrlVar.PlotXYscale = 1e3;
+
+A = gpuArray(zeros(size(Delta_u.Calv_dh.map(:,:,1))));
+A = Delta_u.Calv_dh.map(:,:,1); A = A'; %rows: nodes, columns: experiments
+
+nx = size(A,1); ny = size(A,2);
+
+tic
+[U,S,V] = svd(A,'econ');
+toc
+
+energy = cumsum(diag(S))/sum(diag(S));
+
+figure(111), tlo1=tiledlayout(2,2,'TileSpacing','tight'); title(tlo1,'A');
+nexttile;
+imagesc(A), axis off; colormap(slanCM('YlGnBu')); cb1=colorbar;
+title('Original');
+
+figure(222), tlo2=tiledlayout(2,2,'TileSpacing','tight'); title(tlo2,'t = 1 year');
+nexttile; 
+PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,A(:,1),CtrlVar), axis equal, axis off, colormap(slanCM('YlGnBu')); cb2=colorbar(gca);
+title('Original');
+
+figure(333), tlo3=tiledlayout(2,2,'TileSpacing','tight'); title(tlo3,'t = 850 years');
+nexttile; 
+PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,A(:,end),CtrlVar), axis equal, axis off, colormap(slanCM('YlGnBu')); cb3=colorbar(gca);
+title('Original');
+
+figure(444); tlo4=tiledlayout(2,5,'TileSpacing','tight');
+for ii=1:10
+    nexttile;
+    PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,U(:,ii),CtrlVar);
+    colormap(othercolor('RdYlBu8'));
+    title(['mode',num2str(ii)]); caxis([-0.02 0.02]);
+    axis tight; axis off;
+    %cb=colormap; cb.visible='off';
+end
+cb4=colorbar(gca);
+plotind = 2;
+for r = [10 50 100]
+    Xapprox = U(:,1:r)*S(1:r,1:r)*V(:,1:r)';
+    %Xapprox(Xapprox<0)=0; 
+    %Xapprox(Xapprox>1)=1;
+    figure(111); nexttile, imagesc(Xapprox), axis off, colormap(slanCM('YlGnBu'));
+    figure(222); nexttile, PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,Xapprox(:,1),CtrlVar), axis equal, axis off, colormap(slanCM('YlGnBu'));
+    title(['r=',num2str(r,'%d'),', ',num2str(100*energy(r),'%2.2f'),'% cumulative energy']);
+    figure(333); nexttile, PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,Xapprox(:,end),CtrlVar), axis equal, axis off, colormap(slanCM('YlGnBu'));
+    title(['r=',num2str(r,'%d'),', ',num2str(100*energy(r),'%2.2f'),'% cumulative energy']);
+    plotind = plotind + 1;
+end
+
+cb1.Layout.Tile = 'east';
+cb2.Layout.Tile = 'east';
+cb3.Layout.Tile = 'east';
+cb4.Layout.Tile = 'east';
+
+%% singular values
+figure, subplot(1,2,1)
+semilogy(diag(S),'k','linewidth',2), grid on;
+xlabel('r')
+ylabel('singlar value, \sigma_r')
+set(gca,'fontsize',14)
+subplot(1,2,2)
+plot(energy,'k','linewidth',2), grid on;
+xlabel('r')
+ylabel('cumulative energy')
+set(gca,'fontsize',14)
+
+
+
+Delta_u_mean=NaN*MUA_coarse.coordinates(:,1);  
+Delta_u_std=NaN*MUA_coarse.coordinates(:,1);  
+Delta_u_mean(Delta_u.Calv_dh.mapnodes(:,1))=mean(Delta_u.Calv_dh.map(:,:,1),1,"omitmissing");
+Delta_u_std(Delta_u.Calv_dh.mapnodes(:,1))=std(Delta_u.Calv_dh.map(:,:,1),0,1,"omitmissing");
+
+figure; PlotMeshScalarVariable([],MUA_coarse,Delta_u_mean);
+figure; PlotMeshScalarVariable([],MUA_coarse,Delta_u_std);
+
 
 m = [data(:).m];
 n = [data(:).n];
