@@ -165,7 +165,7 @@ for ii=1:10
     nexttile;
     PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,U(:,ii),CtrlVar);
     colormap(othercolor('RdYlBu8'));
-    title(['mode',num2str(ii)]); caxis([-0.02 0.02]);
+    title(['mode',num2str(ii)]); %caxis([-0.02 0.02]);
     axis tight; axis off;
     %cb=colormap; cb.visible='off';
 end

@@ -185,6 +185,11 @@ for tt=1:numel(UserVar.Table)
             data(data_ind).(fieldname).cycle(end+1) = InverseCycle;
 
             % Interpolate speed on coarser grid
+            Ind_nan = find(isnan(MUA.Boundary.x));
+            if ~isempty(Ind_nan)
+                MUA.Boundary.x = MUA.Boundary.x(1:Ind_nan(1)-1);
+                MUA.Boundary.y = MUA.Boundary.y(1:Ind_nan(1)-1);
+            end
             Ind_out = find(~inpoly2(MUA_coarse.coordinates,[MUA.Boundary.x MUA.Boundary.y]));
             if ismember(fieldname,["Original","dhIS","dh"])
   
