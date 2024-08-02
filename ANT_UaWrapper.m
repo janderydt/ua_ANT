@@ -199,6 +199,17 @@ if ~isempty(Iexisting)
 
                 % launch Ua job
                 UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
+
+            elseif type=="Transient"
+
+                something_submitted=1;
+                Inew = [];
+
+                % run info
+                UserVar = ANT_GetUserVar_Transient(RunTable,ind,UserVar);
+
+                % launch Ua job
+                UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
     
             elseif type=="Inverse"
 
@@ -372,7 +383,18 @@ if ~isempty(Inew)
         UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar);
 
         UserVar.Restart = 0;
-    
+
+        % launch Ua job
+        UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
+
+    elseif type=="Transient"
+
+        % run info
+        UserVar = ANT_GetUserVar_Transient(RunTable,ind,UserVar);
+        
+        UserVar.Restart = 0;
+
+        % launch Ua job
         UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
 
     elseif type=="Inverse"

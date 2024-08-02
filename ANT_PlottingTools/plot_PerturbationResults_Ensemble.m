@@ -1,15 +1,17 @@
-function plot_PerturbationResults_Ensemble
+function plot_PerturbationResults_Ensemble(diagnostic_to_plot,parameter_to_plot,cycles_to_plot)
 
 addpath(getenv("froot_tools"));
 
-diagnostic_to_plot = 'Delta_u'; % Delta_qGL, Delta_qOB, Delta_u
-parameter_to_plot = 'n'; % m, n, gaA, gaC, gsA, gsC
-cycles_to_plot = [1 2]; %[1 2]
+if nargin==0
+    diagnostic_to_plot = 'Delta_u'; % Delta_qGL, Delta_qOB, Delta_u
+    parameter_to_plot = 'm'; % m, n, gaA, gaC, gsA, gsC
+    cycles_to_plot = [1 2]; %[1 2]
+end
 
 basins_to_analyze = {'F-G',...  % Getz
     'G-H',...  % PIG, Thwaites
     'H-Hp'}; % Abbot 
-file_with_perturbation_data_to_read = "perturbationdata_intermediate.mat";
+file_with_perturbation_data_to_read = "perturbationdata_tmp.mat";
 
 %% load data
 if exist(file_with_perturbation_data_to_read,"file")
@@ -120,6 +122,7 @@ for ii=1:numel(data)-1
                         end
                     end
                 end
+                
      
             otherwise
 
@@ -140,11 +143,16 @@ for ii=1:numel(data)-1
 
 end
 
-CtrlVar=Ua2D_DefaultParameters;
-CtrlVar.PlotXYscale = 1e3;
-
 m = [data(:).m];
 n = [data(:).n];
+
+if diagnostic_to_plot=="Delta_u"
+    MUA = MUA_new;
+    save("Delta_u.mat", "Delta_u","MUA","gsA","gsC","gaA","gaC","m","n");
+end
+
+CtrlVar=Ua2D_DefaultParameters;
+CtrlVar.PlotXYscale = 1e3;
 
 N = misfit-min(misfit);
 N = N./max(N);
@@ -257,71 +265,44 @@ switch diagnostic_to_plot
 
 
     case "Delta_u"
+        
+        fields_to_plot = fields(Delta_u);
 
-        A = gpuArray(zeros(size(Delta_u.Calv_dh.map(:,:,1))));
-        A = Delta_u.Calv_dh.map(:,:,1); A = A'; %rows: nodes, columns: experiments
-        A(isnan(A))=0;
-        
-        nx = size(A,1); ny = size(A,2);
+        for cc=cycles_to_plot
 
-        [U,S,V] = svd(A,'econ');
-        
-        energy = cumsum(diag(S))/sum(diag(S));
-        
-        figure(111), tlo1=tiledlayout(2,2,'TileSpacing','tight'); title(tlo1,'A');
-        nexttile;
-        imagesc(A), axis off; colormap(slanCM('YlGnBu')); cb1=colorbar;
-        title('Original');
-        
-        figure(222), tlo2=tiledlayout(2,2,'TileSpacing','tight'); title(tlo2,'t = 1 year');
-        nexttile; 
-        PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,A(:,1),CtrlVar), axis equal, axis off, colormap(slanCM('YlGnBu')); cb2=colorbar(gca);
-        title('Original');
-        
-        figure(333), tlo3=tiledlayout(2,2,'TileSpacing','tight'); title(tlo3,'t = 850 years');
-        nexttile; 
-        PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,A(:,end),CtrlVar), axis equal, axis off, colormap(slanCM('YlGnBu')); cb3=colorbar(gca);
-        title('Original');
-        
-        figure(444); tlo4=tiledlayout(2,5,'TileSpacing','tight');
-        for ii=1:10
-            nexttile;
-            PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,U(:,ii),CtrlVar);
-            colormap(othercolor('RdYlBu8'));
-            title(['mode',num2str(ii)]); %caxis([-0.02 0.02]);
-            axis tight; axis off;
-            %cb=colormap; cb.visible='off';
+            figure(cc*999);
+            tlo=tiledlayout(2,numel(fields_to_plot),'TileSpacing','tight','TileIndexing', 'columnmajor');
+
+            for ff=1:numel(fields_to_plot)
+
+                deltau_av = mean(Delta_u.(fields_to_plot{ff}).map(:,:,cc),1);
+                deltau_std = std(Delta_u.(fields_to_plot{ff}).map(:,:,cc),1);
+
+                nexttile;
+                PlotNodalBasedQuantities_JDR(gca,MUA.connectivity,MUA.coordinates,deltau_av(:),CtrlVar);
+                colormap(othercolor('RdYlBu8'));
+                title(fields_to_plot{ff});
+                axis tight; axis off;
+                caxis([-1000 1000]);
+
+                for ff=1:numel(fields_to_plot)
+                     cb=colorbar; cb.Layout.Tile='east'; %cb.Ylabel.String="average";
+                end
+
+                nexttile;
+                PlotNodalBasedQuantities_JDR(gca,MUA.connectivity,MUA.coordinates,deltau_std(:),CtrlVar);
+                colormap(othercolor('RdYlBu8'));
+                axis tight; axis off;
+                caxis([-100 100]);
+
+                for ff=1:numel(fields_to_plot)
+                     cb=colorbar; cb.Layout.Tile='east'; %cb.Ylabel.String="std";
+                end
+            end
+
         end
-        cb4=colorbar(gca);
-        plotind = 2;
-        for r = [10 50 100]
-            Xapprox = U(:,1:r)*S(1:r,1:r)*V(:,1:r)';
-            %Xapprox(Xapprox<0)=0; 
-            %Xapprox(Xapprox>1)=1;
-            figure(111); nexttile, imagesc(Xapprox), axis off, colormap(slanCM('YlGnBu'));
-            figure(222); nexttile, PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,Xapprox(:,1),CtrlVar), axis equal, axis off, colormap(slanCM('YlGnBu'));
-            title(['r=',num2str(r,'%d'),', ',num2str(100*energy(r),'%2.2f'),'% cumulative energy']);
-            figure(333); nexttile, PlotNodalBasedQuantities_JDR(gca,MUA_new.connectivity,MUA_new.coordinates,Xapprox(:,end),CtrlVar), axis equal, axis off, colormap(slanCM('YlGnBu'));
-            title(['r=',num2str(r,'%d'),', ',num2str(100*energy(r),'%2.2f'),'% cumulative energy']);
-            plotind = plotind + 1;
-        end
-        
-        cb1.Layout.Tile = 'east';
-        cb2.Layout.Tile = 'east';
-        cb3.Layout.Tile = 'east';
-        cb4.Layout.Tile = 'east';
-        
-        %% singular values
-        figure, subplot(1,2,1)
-        semilogy(diag(S),'k','linewidth',2); grid on;
-        xlabel('r');
-        ylabel('singlar value, \sigma_r');
-        set(gca,'fontsize',14);
-        subplot(1,2,2)
-        plot(energy,'k','linewidth',2); grid on;
-        xlabel('r');
-        ylabel('cumulative energy');
-        set(gca,'fontsize',14);
+    
+       
 
     otherwise 
 

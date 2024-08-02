@@ -55,8 +55,6 @@ end
 tmp = load("inversiondata.mat");
 data_inverse = tmp.data;
 
-Fspeed_2000=[]; Fspeed_2018=[];
-
 for tt=1:numel(UserVar.Table)
 
     % read run table
@@ -67,7 +65,7 @@ for tt=1:numel(UserVar.Table)
     Ind = find(ExpID>=UserVar.idrange(tt,1) & ExpID<=UserVar.idrange(tt,2));
     % only keep experiments that have not been analyzed yet
     if ~isempty(data)
-        Ind_ignore = ismember(Ind,perturbation_experiments_analyzed);
+        Ind_ignore = ismember(ExpID(Ind),perturbation_experiments_analyzed);
     else
         Ind_ignore = 0*Ind;
     end
@@ -79,7 +77,7 @@ for tt=1:numel(UserVar.Table)
     %% Gather data
     for ii=1:numel(Ind)
 
-        perturbation_experiments_analyzed(end+1) = Ind(ii);
+        perturbation_experiments_analyzed(end+1) = ExpID(Ind(ii));
         InverseExpID = RunTable{Ind(ii),"InverseA"};
         InverseCycle = RunTable{Ind(ii),"InverseCycleA"};        
         Ind_inverse = find([data_inverse(:).InverseExpID]==InverseExpID);
@@ -152,6 +150,7 @@ for tt=1:numel(UserVar.Table)
                         data(data_ind).(geomfields{ff}).qOB.(basin)=[];
                     end
                     data(data_ind).(geomfields{ff}).cycle=[];
+                    data(data_ind).(geomfields{ff}).ExpID=[];
                     data(data_ind).(geomfields{ff}).speed=[];
                 end
             end
@@ -180,41 +179,45 @@ for tt=1:numel(UserVar.Table)
             for bb=1:numel(basins_to_analyze)
                 basin = char(erase(basins_to_analyze(bb),'-'));
                 data(data_ind).(fieldname).qGL.(basin)(end+1) = cell2mat(B.qGL_tot(bb));
-                data(data_ind).(fieldname).qOB.(basin)(end+1) = cell2mat(B.qOB_tot(bb));
+                data(data_ind).(fieldname).qOB.(basin)(end+1) = cell2mat(B.qOB_tot(bb));               
             end           
             data(data_ind).(fieldname).cycle(end+1) = InverseCycle;
-
-            % Interpolate speed on coarser grid
-            Ind_nan = find(isnan(MUA.Boundary.x));
-            if ~isempty(Ind_nan)
-                MUA.Boundary.x = MUA.Boundary.x(1:Ind_nan(1)-1);
-                MUA.Boundary.y = MUA.Boundary.y(1:Ind_nan(1)-1);
-            end
-            Ind_out = find(~inpoly2(MUA_coarse.coordinates,[MUA.Boundary.x MUA.Boundary.y]));
-            if ismember(fieldname,["Original","dhIS","dh"])
-  
-                if isempty(Fspeed_2000)
-                    Fspeed_2000 = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb),"natural");
-                else
-                    Fspeed_2000.Values = hypot(F.ub,F.vb);
-                end 
-                speed = Fspeed_2000(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2));
-                
-            else
-                if isempty(Fspeed_2018)
-                    Fspeed_2018 = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb),"natural");
-                else
-                    Fspeed_2018.Values = hypot(F.ub,F.vb);
-                end 
-                speed = Fspeed_2018(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2));
-            end
-
-            speed(Ind_out) = NaN;
-            data(data_ind).(fieldname).speed(:,end+1) = speed(:);
+            data(data_ind).(fieldname).ExpID(end+1) = ExpID(Ind(ii));
+            
+            % Interpolate speed to relevant grid
+            % Ind_nan = find(isnan(MUA.Boundary.x));
+            % if ~isempty(Ind_nan)
+            %     MUA.Boundary.x = MUA.Boundary.x(1:Ind_nan(1)-1);
+            %     MUA.Boundary.y = MUA.Boundary.y(1:Ind_nan(1)-1);
+            % end
+            % Ind_out = find(~inpoly2(MUA_coarse.coordinates,[MUA.Boundary.x MUA.Boundary.y]));
+            % 
+            % if ismember(fieldname,["Original","dhIS","dh"])
+            % 
+            % 
+            % 
+            %     if isempty(Fspeed_2000)
+            %         Fspeed_2000 = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb),"natural");
+            %     else
+            %         Fspeed_2000.Values = hypot(F.ub,F.vb);
+            %     end 
+            %     speed = Fspeed_2000(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2));
+            % 
+            % else
+            %     if isempty(Fspeed_2018)
+            %         Fspeed_2018 = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb),"natural");
+            %     else
+            %         Fspeed_2018.Values = hypot(F.ub,F.vb);
+            %     end 
+            %     speed = Fspeed_2018(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2));
+            % end
+            % 
+            % speed(Ind_out) = NaN;
+            data(data_ind).(fieldname).speed(:,end+1) = hypot(F.ub(:),F.vb(:));
 
         end             
         fprintf("Done %s out of %s.\n",string(ii),string(numel(Ind)));
     end
 end
 
-save("perturbationdata.mat","data","perturbation_experiments_analyzed","MUA_coarse");
+save("perturbationdata.mat","data","perturbation_experiments_analyzed","MUA_coarse","-v7.3");

@@ -7,6 +7,6 @@ Launch new jobs from the top directory (/ANT) using `python ua_jobs_master.py`. 
 The user will be asked whether they want to launch inverse or diagnostic simulations, and how many. The code will read the relevant RunTable.csv file, and submit the chosen number of jobs from that table. Jobs that are already running or have finished will be ignored.
 
 ## ARCHER2
-(Currently only available for inverse simulations)
-Launch new jobs from the ANT_Inverse folder using `sbatch --export=ALL -A budget-code ./run_ua_archer2.sh`.
+(Currently only available for inverse simulations and diagnostic simulations)
+Launch new jobs from the ANT_Inverse or ANT_Diagnostic folder using `sbatch --export=ALL,UA_CONFIG=<path to UA config file>,ACC=budget-code -A budget-code -N number_of_nodes ./run_ua_archer2.sh`.
 The user needs to provide a configuration file (ua_config.txt) with basic settings such as the type of experiment and requested walltime.
