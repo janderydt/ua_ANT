@@ -1,6 +1,7 @@
 function plot_PerturbationResults_Ensemble(diagnostic_to_plot,parameter_to_plot,cycles_to_plot)
 
 addpath(getenv("froot_tools"));
+addpath(getenv("froot_ua")+"cases/ANT");
 
 if nargin==0
     diagnostic_to_plot = 'Delta_u'; % Delta_qGL, Delta_qOB, Delta_u
@@ -10,8 +11,72 @@ end
 
 basins_to_analyze = {'F-G',...  % Getz
     'G-H',...  % PIG, Thwaites
-    'H-Hp'}; % Abbot 
-file_with_perturbation_data_to_read = "perturbationdata_tmp.mat";
+    'H-Hp'}; % Abbott
+file_with_perturbation_data_to_read = "perturbationdata.mat";
+CtrlVar=Ua2D_DefaultParameters; 
+
+%% load basins
+filename = 'basins_IMBIE_v2.mat'; 
+B = load(filename);
+B = RemoveSmallIceRisesAndIslands(B);
+
+%% prepare meshes
+if diagnostic_to_plot=="Delta_u"
+
+    UserVar.casefolder=pwd;
+    UserVar.datafolder=pwd+"/../ANT_Data/";
+    UserVar.Experiment="";
+    BaseMesh='2000_2009_2014_2018_meshmin3000_meshmax100000_refined';
+    UserVar = ANT_DefineBaseMesh(UserVar,BaseMesh);
+
+    % 2000
+    UserVar.Geometry=2000;
+    UserVar=ANT_ApplyMeshModifications(UserVar);
+    tmp = load(UserVar.InitialMeshFileName);
+    MUA_2000 = tmp.MUA; 
+    % identify basin id of each MUA node
+    [MUA_2000.basins,~] = Define_Quantity_PerBasin(MUA_2000.coordinates(:,1),MUA_2000.coordinates(:,2),B,0);
+    MUA_basinnames = erase({MUA_2000.basins(:).name},'-');
+    basinnodes_all = [];
+    for bb=1:numel(basins_to_analyze) 
+        basin = char(erase(basins_to_analyze{bb},'-'));
+        [~,BasinInd] = ismember(basin,MUA_basinnames);
+        basinnodes = MUA_2000.basins(BasinInd).ind;
+        basinnodes_all = [basinnodes_all; basinnodes];
+    end
+    ElementsToBeDeactivated=any(~ismember(MUA_2000.connectivity,basinnodes_all),2);
+    [MUA_2000,MUA_2000.k,MUA_2000.l]=DeactivateMUAelements(CtrlVar,MUA_2000,ElementsToBeDeactivated);
+    Ind_nan = find(isnan(MUA_2000.Boundary.x));
+    if ~isempty(Ind_nan)
+        MUA_2000.Boundary.x = MUA_2000.Boundary.x(1:Ind_nan(1)-1);
+        MUA_2000.Boundary.y = MUA_2000.Boundary.y(1:Ind_nan(1)-1);
+    end
+    
+    % 2018
+    UserVar.Geometry=2018;
+    UserVar=ANT_ApplyMeshModifications(UserVar);
+    tmp = load(UserVar.InitialMeshFileName);
+    MUA_2018 = tmp.MUA;
+    [MUA_2018.basins,~] = Define_Quantity_PerBasin(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2),B,0);
+    MUA_basinnames = erase({MUA_2018.basins(:).name},'-'); 
+    basinnodes_all=[];
+    for bb=1:numel(basins_to_analyze)    
+        basin = char(erase(basins_to_analyze{bb},'-'));
+        [~,BasinInd] = ismember(basin,MUA_basinnames);
+        basinnodes = MUA_2018.basins(BasinInd).ind;
+        basinnodes_all = [basinnodes_all; basinnodes];
+    end
+    ElementsToBeDeactivated=any(~ismember(MUA_2018.connectivity,basinnodes_all),2);
+    [MUA_2018,MUA_2018.k,MUA_2018.l]=DeactivateMUAelements(CtrlVar,MUA_2018,ElementsToBeDeactivated);
+    Ind_nan = find(isnan(MUA_2018.Boundary.x));
+    if ~isempty(Ind_nan)
+        MUA_2018.Boundary.x = MUA_2018.Boundary.x(1:Ind_nan(1)-1);
+        MUA_2018.Boundary.y = MUA_2018.Boundary.y(1:Ind_nan(1)-1);
+    end
+
+    delete(UserVar.InitialMeshFileName);
+    delete(UserVar.MeshBoundaryCoordinatesFile);
+end
 
 %% load data
 if exist(file_with_perturbation_data_to_read,"file")
@@ -36,18 +101,17 @@ qGL_orig.total = zeros(numel(data),2); qOB_orig.total = zeros(numel(data),2);
 qGL_calv.total = zeros(numel(data),2); qOB_calv.total = zeros(numel(data),2);
 qGL_dhIS.total = zeros(numel(data),2); qOB_dhIS.total = zeros(numel(data),2);
 qGL_dh.total = zeros(numel(data),2); qOB_dh.total = zeros(numel(data),2);
+qGL_calvdh.total = zeros(numel(data),2); qOB_calvdh.total = zeros(numel(data),2);
+
 misfit = zeros(numel(data),2);
 gsA = zeros(numel(data),1);
 gsC = zeros(numel(data),1);
 gaA = zeros(numel(data),1);
 gaC = zeros(numel(data),1);
 
-qGL_calvdh.total = zeros(numel(data),2); qOB_calvdh.total = zeros(numel(data),2);
-Delta_u = []; CtrlVar=Ua2D_DefaultParameters; ElementsToBeDeactivated=[];
+Delta_u = []; Fu_original = [];
 
-for ii=1:numel(data)-1
-
-    basinnodes_all = [];
+for ii=1:numel(data)
 
     for bb=1:numel(basins_to_analyze)
     
@@ -80,40 +144,54 @@ for ii=1:numel(data)-1
                 qOB_dhIS.total(ii,:) = qOB_dhIS.total(ii,:)+qOB_dhIS.(basin)(ii,:);
                 qOB_dh.total(ii,:) = qOB_dh.total(ii,:)+qOB_dh.(basin)(ii,:);
                 qOB_calvdh.total(ii,:) = qOB_calvdh.total(ii,:)+qOB_calvdh.(basin)(ii,:);
-
             
             % changes in speed - only keep data for the selected basins
             case "Delta_u"
 
-                MUA_basinnames = erase({MUA_coarse.basins(:).name},'-');
-                [~,BasinInd] = ismember(basin,MUA_basinnames);
-                basinnodes = MUA_coarse.basins(BasinInd).ind;
-                basinnodes_all = [basinnodes_all; basinnodes];
+                for ff=["Calv","dhIS","dh","Calv_dh"]
+                    
+                    if contains(ff,"Calv")
+                        MUA_target = MUA_2018;
+                    else
+                        MUA_target = MUA_2000;
+                    end
 
-                for cc=1:size(data(ii).Original.speed,2)
-                    for ff=["Calv","dhIS","dh","Calv_dh"]
-                        du = data(ii).(char(ff)).speed(:,cc)-data(ii).Original.speed(:,cc);                        
-                        tmp = NaN*du; tmp(basinnodes) = du(basinnodes);
-                        du = tmp;
-                        Intdu=FEintegrate2D([],MUA_coarse,du);
-                        IntA=FEintegrate2D([],MUA_coarse,0*du+1);
+                    for cc=1:size(data(ii).Original.speed,2)
+                            
+                        if contains(ff,"Calv")
+                            original_node_numbers = MUA_2000.k(find(~isnan(MUA_2000.k)));
+                            % interpolate original and perturbed speed to same grid
+                            Ind_out = find(~inpoly2(MUA_target.coordinates,[MUA_2000.Boundary.x MUA_2000.Boundary.y]));
+                            if isempty(Fu_original)
+                                Fu_original = scatteredInterpolant(MUA_2000.coordinates(:,1),MUA_2000.coordinates(:,2),data(ii).Original.speed(original_node_numbers,cc),"natural");
+                            else
+                                Fu_original.Values = data(ii).Original.speed(original_node_numbers,cc);
+                            end
+                            u_original_interp = Fu_original(MUA_target.coordinates(:,1),MUA_target.coordinates(:,2));
+                            u_original_interp(Ind_out) = nan;
+                            original_node_numbers = MUA_target.k(find(~isnan(MUA_target.k)));
+                            if size(data(ii).(char(ff)).speed,2)>=cc
+                                du = data(ii).(char(ff)).speed(original_node_numbers,cc)-u_original_interp;
+                            else
+                                du = nan*original_node_numbers;
+                            end
+                        else
+                            original_node_numbers = MUA_target.k(find(~isnan(MUA_target.k)));
+                            if size(data(ii).(char(ff)).speed,2)>=cc
+                                du = data(ii).(char(ff)).speed(original_node_numbers,cc)-data(ii).Original.speed(original_node_numbers,cc);
+                            else
+                                du = nan*original_node_numbers;
+                            end
+                        end
+                        Intdu=FEintegrate2D(CtrlVar,MUA_target,du);
+                        IntA=FEintegrate2D(CtrlVar,MUA_target,0*du+1);
                         Ind_notnan=find(~isnan(Intdu));
                         Delta_u.(char(ff)).(basin)(ii,cc) = sum(Intdu(Ind_notnan))/sum(IntA(Ind_notnan));
                         if bb==numel(basins_to_analyze)
-                            du = data(ii).(char(ff)).speed(:,cc)-data(ii).Original.speed(:,cc);
-                            if isempty(ElementsToBeDeactivated)
-                                ElementsToBeDeactivated=any(~ismember(MUA_coarse.connectivity,basinnodes_all),2);
-                                [MUA_new,k,~]=DeactivateMUAelements(CtrlVar,MUA_coarse,ElementsToBeDeactivated);
-                            end
-                            du = du(k);
-                            Intdu=FEintegrate2D([],MUA_new,du);
-                            IntA=FEintegrate2D([],MUA_new,0*du+1);
-                            Ind_notnan=find(~isnan(Intdu));
-                            Delta_u.(char(ff)).total(ii,cc) = sum(Intdu(Ind_notnan))/sum(IntA(Ind_notnan));
                             if ~isfield(Delta_u.(char(ff)),'map')
-                                Delta_u.(char(ff)).map = zeros(numel(data),MUA_new.Nnodes,size(data(ii).Original.speed,2));
+                                Delta_u.(char(ff)).map = zeros(numel(data),MUA_target.Nnodes,size(data(ii).Original.speed,2));
                                 %Delta_u.(char(ff)).mapcounter = 0;
-                                Delta_u.(char(ff)).mapnodes(:,cc) = basinnodes_all(:);
+                                %Delta_u.(char(ff)).mapnodes(:,cc) = basinnodes_all(:);
                             end
                             Delta_u.(char(ff)).map(ii,:,cc) = du(:);
                             %Delta_u.(char(ff)).mapcounter = Delta_u.(char(ff)).mapcounter+1;                    
@@ -147,11 +225,9 @@ m = [data(:).m];
 n = [data(:).n];
 
 if diagnostic_to_plot=="Delta_u"
-    MUA = MUA_new;
-    save("Delta_u.mat", "Delta_u","MUA","gsA","gsC","gaA","gaC","m","n");
+    save("Delta_u.mat", "Delta_u","MUA_2000","MUA_2018","misfit","gsA","gsC","gaA","gaC","m","n");
 end
 
-CtrlVar=Ua2D_DefaultParameters;
 CtrlVar.PlotXYscale = 1e3;
 
 N = misfit-min(misfit);
@@ -169,6 +245,11 @@ figure; hold on;
 switch diagnostic_to_plot
 
     case {'Delta_qGL','Delta_qOB'}
+
+        H=fig('units','inches','width',70*12/72.27,'height',50*12/72.27,'fontsize',14,'font','Helvetica');
+
+        ax1=subplot("position",[0.1 0.1 0.5 0.85]); hold on;
+        ax2=subplot("position",[0.65 0.1 0.3 0.85]); hold on;
 
         switch parameter_to_plot
             case 'n'
@@ -198,7 +279,8 @@ switch diagnostic_to_plot
                     ydata2 = qGL_dhIS.total(:,cc)-qorig;
                     ydata3 = qGL_dh.total(:,cc)-qorig;
                     ydata4 = qGL_calvdh.total(:,cc)-qorig;
-                    yaxislabel = "\Delta q_{GL} [Gt/yr]";
+                    yaxislabel = "\Deltaq_{GL} [Gt/yr]";
+                    dq = Calc_Delta_qGL(cc,basins_to_analyze);
         
                 case 'Delta_qOB'
         
@@ -208,6 +290,7 @@ switch diagnostic_to_plot
                     ydata3 = qOB_dh.total(:,cc)-qorig;
                     ydata4 = qOB_calvdh.total(:,cc)-qorig;
                     yaxislabel = "\Delta q_{OB} [Gt/yr]";
+                    dq = nan;
         
                 otherwise
         
@@ -221,47 +304,71 @@ switch diagnostic_to_plot
                 marker='s';               
             end
 
-            s((cc-1)*4+1)=scatter(xdata,ydata1,markersize(:,1),marker,"filled",'MarkerEdgeColor','none');
-            s((cc-1)*4+2)=scatter(xdata,ydata2,markersize(:,1),marker,"filled",'MarkerEdgeColor','none');
-            s((cc-1)*4+3)=scatter(xdata,ydata3,markersize(:,1),marker,"filled",'MarkerEdgeColor','none');
-            s((cc-1)*4+4)=scatter(xdata,ydata4,markersize(:,1),marker,"filled",'MarkerEdgeColor','none');
+            scat((cc-1)*4+1)=scatter(ax1,xdata,ydata1,markersize(:,1),marker,"filled",'MarkerEdgeColor','none');
+            scat((cc-1)*4+2)=scatter(ax1,xdata,ydata2,markersize(:,1),marker,"filled",'MarkerEdgeColor','none');
+            scat((cc-1)*4+3)=scatter(ax1,xdata,ydata3,markersize(:,1),marker,"filled",'MarkerEdgeColor','none');
+            scat((cc-1)*4+4)=scatter(ax1,xdata,ydata4,markersize(:,1),marker,"filled",'MarkerEdgeColor','none');
 
         end
 
-        colororder([newcolors;newcolors]);
+        colororder(ax1,[newcolors;newcolors]);
 
-        xlim([floor(min(xdata)) ceil(max(xdata))]);
+        xlim(ax1,[floor(min(xdata)) ceil(max(xdata))]);
         
         for ii=0:4*cycles_to_plot(end)-1
-            s(ii+1).AlphaData = alphavalue(:,floor(ii/4)+1);
-            s(ii+1).MarkerFaceAlpha='flat';
+            scat(ii+1).AlphaData = alphavalue(:,floor(ii/4)+1);
+            scat(ii+1).MarkerFaceAlpha='flat';
         end
         
         for ii=1:4
-            s(ii)=plot(0,0,'o','color',newcolors(ii,:),'MarkerSize',10,'MarkerFaceColor',newcolors(ii,:));
+            scat(ii)=plot(ax1,0,0,'o','color',newcolors(ii,:),'MarkerSize',10,'MarkerFaceColor',newcolors(ii,:));
         end
 
         if numel(cycles_to_plot)==2   
-            s(9)=plot(0,0,'ok','markersize',10);
-            s(10)=plot(0,0,'sk','markersize',10);
-            legend([s(1:4) s(9) s(10)],{'Calving','Ice Shelf thickness','Ice thickness','Calving + Ice thickness','no spinup','with spinup'},...
+            scat(9)=plot(ax1,0,0,'ok','markersize',10);
+            scat(10)=plot(ax1,0,0,'sk','markersize',10);
+            legend(ax1,[scat(1:4) scat(9) scat(10)],{'Calving','Ice Shelf thickness','Ice thickness','Calving + Ice thickness','no spinup','with spinup'},...
             'NumColumns',2,'Location','northwest');
         else
-            legend(s(1:4),{'Calving','Ice Shelf thickness','Ice thickness','Calving + Ice thickness'},...
+            legend(ax1,scat(1:4),{'Calving','Ice Shelf thickness','Ice thickness','Calving + Ice thickness'},...
             'NumColumns',2,'Location','northwest');
         end
 
-        
-        
-        xlabel(parameter_to_plot); ylabel(yaxislabel);
-        ax=gca;
+        xlabel(ax1,parameter_to_plot); ylabel(ax1,yaxislabel);
         
         if ismember(diagnostic_to_plot,["gsA","gsC","gaA","gaC"])
-            ax.XScale='log';
+            ax1.XScale='log';
         end
-        ax.YScale='log';
-        grid on;
-        box on;
+        ax1.YScale='log';
+        grid(ax1,"on")
+        box(ax1,"on");
+        ax1_ylim = ylim(ax1);
+        yticks(ax1,[10:10:100 200:100:1000]);
+        yticklabels(ax1,["10","","","","","","","","","100","","","","","","","","","1000"]);
+        set(ax1,"YMinorGrid","off");
+        title(ax1,"Ua perturbation experiments");
+
+        % histogram
+        [N,edges] = histcounts(dq,25,"Normalization","percentage");
+        barh(ax2,0.5*(edges(1:end-1)+edges(2:end)),N);
+        h=plot(ax2,[0 100],[100 100],'--k','linewidth',1.5); %change in dicharge (Gt/yr) according to Rignot 2019
+        ax2.YScale='log';
+        grid(ax2,"on")
+        box(ax2,"on");
+        xlabel(ax2,"Percentage");
+        yticklabels(ax2,"");
+        ylim(ax2,ax1_ylim);
+        xlim(ax2,[0,15])
+        yticks(ax2,[10:10:100 200:100:1000]);
+        set(ax2,"YMinorGrid","off");
+        legend(ax2,h,"Rignot et al. 2019","location","southeast");
+        title(ax2,"'Measured' change");
+
+        % Save
+        pos = get(H,"Position");
+        set(H,"PaperPositionMode","Auto","PaperUnits","Inches","PaperSize",[pos(3),pos(4)]);
+        fname = "./Figures/"+diagnostic_to_plot+"_"+parameter_to_plot;
+        print(H,fname,"-dpng","-r400");
 
 
     case "Delta_u"
@@ -270,39 +377,97 @@ switch diagnostic_to_plot
 
         for cc=cycles_to_plot
 
-            figure(cc*999);
-            tlo=tiledlayout(2,numel(fields_to_plot),'TileSpacing','tight','TileIndexing', 'columnmajor');
+            H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
+
+            tlo(cc*999)=tiledlayout(H,2,numel(fields_to_plot)+1,'TileSpacing','none','TileIndexing', 'columnmajor');
 
             for ff=1:numel(fields_to_plot)
 
-                deltau_av = mean(Delta_u.(fields_to_plot{ff}).map(:,:,cc),1);
-                deltau_std = std(Delta_u.(fields_to_plot{ff}).map(:,:,cc),1);
+                deltau_av = mean(Delta_u.(fields_to_plot{ff}).map(:,:,cc),1,"omitmissing");
+                deltau_std = std(Delta_u.(fields_to_plot{ff}).map(:,:,cc),1,"omitmissing");
 
-                nexttile;
-                PlotNodalBasedQuantities_JDR(gca,MUA.connectivity,MUA.coordinates,deltau_av(:),CtrlVar);
-                colormap(othercolor('RdYlBu8'));
-                title(fields_to_plot{ff});
-                axis tight; axis off;
-                caxis([-1000 1000]);
+                if contains(fields_to_plot{ff},'Calv')
+                    MUA = MUA_2018;
+                    MUA2 = MUA_2000;
+                else
+                    MUA = MUA_2000;
+                    MUA2 = MUA_2018;
+                end
+                xmin = min(MUA.coordinates(:,1)); xmax = max(MUA.coordinates(:,1));
+                ymin = min(MUA.coordinates(:,2)); ymax = max(MUA.coordinates(:,2));
 
-                for ff=1:numel(fields_to_plot)
-                     cb=colorbar; cb.Layout.Tile='east'; %cb.Ylabel.String="average";
+                %% ensemble-average change in speed
+                ax(ff)=nexttile(tlo(cc*999)); hold on;
+                log_deltau_av = deltau_av(:);
+                log_deltau_av(log_deltau_av<0)=nan;
+                log_deltau_av = log10(log_deltau_av);
+                %log_deltau_av(isnan(log_deltau_av))
+                PlotNodalBasedQuantities_JDR(ax(ff),MUA.connectivity,MUA.coordinates,log_deltau_av(:),CtrlVar);
+                plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k');
+                plot(MUA2.Boundary.x/CtrlVar.PlotXYscale,MUA2.Boundary.y/CtrlVar.PlotXYscale,'--k');
+                %PlotGroundingLines(CtrlVar,MUA,GF);
+                CM = flipdim(othercolor('RdYlBu8',15),1);
+                %CM1 = othercolor('RdYlBu8',3);
+                %CM = CM([15 19:40],:);
+                colormap(ax(ff),CM);
+                title(ax(ff),fields_to_plot{ff},"Interpreter","none");
+                axis(ax(ff),"off");
+                caxis(ax(ff),[-0.25 3.5]);
+                xlim(ax(ff),[xmin xmax]/CtrlVar.PlotXYscale);
+                ylim(ax(ff),[ymin ymax]/CtrlVar.PlotXYscale);
+                axis(ax(ff),"equal");
+
+                %% standard deviation 
+                ax(numel(fields_to_plot)+ff)=nexttile(tlo(cc*999)); hold on;
+                PlotNodalBasedQuantities_JDR(ax(numel(fields_to_plot)+ff),MUA.connectivity,MUA.coordinates,log10(deltau_std(:)+eps),CtrlVar);
+                plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k');
+                plot(MUA2.Boundary.x/CtrlVar.PlotXYscale,MUA2.Boundary.y/CtrlVar.PlotXYscale,'--k');
+                %CM = turbo(13); CM(1,:)=[1 1 1];
+                colormap(ax(numel(fields_to_plot)+ff),CM);
+                axis(ax(numel(fields_to_plot)+ff),"off");
+                caxis(ax(numel(fields_to_plot)+ff),[-0.25 3.5]);
+                xlim(ax(numel(fields_to_plot)+ff),[xmin xmax]/CtrlVar.PlotXYscale);
+                ylim(ax(numel(fields_to_plot)+ff),[ymin ymax]/CtrlVar.PlotXYscale);
+                axis(ax(numel(fields_to_plot)+ff),"equal");
+
+                if ff==numel(fields_to_plot)
+                     cb=colorbar(ax(2*numel(fields_to_plot))); cb.Label.String="Ensemble standard deviation of log_{10}(\Deltau) [m/yr]";
                 end
 
-                nexttile;
-                PlotNodalBasedQuantities_JDR(gca,MUA.connectivity,MUA.coordinates,deltau_std(:),CtrlVar);
-                colormap(othercolor('RdYlBu8'));
-                axis tight; axis off;
-                caxis([-100 100]);
-
-                for ff=1:numel(fields_to_plot)
-                     cb=colorbar; cb.Layout.Tile='east'; %cb.Ylabel.String="std";
-                end
             end
 
+            % observed change in velocity
+            load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED","Fus","Fvs");
+            u2000 = hypot(Fus(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)),Fvs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)));
+            load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_2018-2019_MeaSUREs_ITSLIVE_Velocities_EXTRUDED","Fus","Fvs");
+            u2018 = hypot(Fus(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)),Fvs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)));
+            dspeed = u2018-u2000; dspeed(dspeed<0)=nan;
+
+            ax(numel(fields_to_plot)+1)=nexttile(tlo(cc*999)); hold on;
+            PlotNodalBasedQuantities_JDR(ax(numel(fields_to_plot)+1),MUA_2018.connectivity,MUA_2018.coordinates,log10(dspeed+eps),CtrlVar);
+            plot(MUA_2018.Boundary.x/CtrlVar.PlotXYscale,MUA_2018.Boundary.y/CtrlVar.PlotXYscale,'-k');
+            plot(MUA_2000.Boundary.x/CtrlVar.PlotXYscale,MUA_2000.Boundary.y/CtrlVar.PlotXYscale,'--k');
+            %CM = turbo(13); CM(1,:)=[1 1 1];
+            colormap(ax(numel(fields_to_plot)+1),CM);
+            title(ax(numel(fields_to_plot)+1),"Observations");
+            axis(ax(numel(fields_to_plot)+1),"off");
+            caxis(ax(numel(fields_to_plot)+1),[-0.25 3.5]);
+            xlim(ax(numel(fields_to_plot)+1),[xmin xmax]/CtrlVar.PlotXYscale);
+            ylim(ax(numel(fields_to_plot)+1),[ymin ymax]/CtrlVar.PlotXYscale);
+            axis(ax(numel(fields_to_plot)+1),"equal");
+
+            cb2=colorbar(ax(numel(fields_to_plot)+1)); cb2.Label.String="Log_{10} change in speed [m/yr]";
+
+            title(tlo(cc*999),"Cycle "+num2str(cc));
+
+            % Save
+            pos = get(H,"Position");
+            set(H,"PaperPositionMode","Auto","PaperUnits","Inches","PaperSize",[pos(3),pos(4)]);
+            fname = "./Figures/"+diagnostic_to_plot+"cycle"+string(cc);
+            print(H,fname,"-dpng","-r400");
+
+
         end
-    
-       
 
     otherwise 
 

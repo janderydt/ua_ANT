@@ -4,8 +4,8 @@ only_finished=0;
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 5 8])+".csv";
-UserVar.idrange = [3000,3999;6000,6999;9000,9999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 4 5 8])+".csv";
+UserVar.idrange = [3000,3999;5000,5999;6000,6999;9000,9999];
 
 addpath("/mnt/md0/Ua/cases/ANT/");
 
@@ -15,6 +15,10 @@ else
     data=[];    
     inverse_experiments_analyzed = [];
 end
+
+filename = 'basins_IMBIE_v2.mat'; 
+B = load(filename);
+B = RemoveSmallIceRisesAndIslands(B);
 
 for tt=1:numel(UserVar.Table)
 
@@ -61,9 +65,14 @@ for tt=1:numel(UserVar.Table)
 
             if exist(restartfile,"file")
 
-                load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");    
-                GL=FluxAcrossGroundingLine(CtrlVarInRestartFile,MUA,F.GF,F.ub,F.vb,F.ud,F.vd,F.h,F.rho);
-                qGL = sum(GL);
+                load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");   
+                
+                [B,~] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
+                % Sum values of SMB, qGL and qOB for each basin
+                for bb=1:numel(B.x) 
+                    B.qGL_tot{bb} = sum(B.qGL{bb},'omitmissing')/1e12;   
+                end
+                qGL = cell2mat(B.qGL_tot);
 
                 data(data_ind).InverseExpID = ExpID(Ind(ii));
                 data(data_ind).cycle(cc) = cc;
@@ -77,7 +86,7 @@ for tt=1:numel(UserVar.Table)
                 data(data_ind).startgeometry = RunTable{Ind(ii),"startGeometry"};
                 data(data_ind).niter(cc) = UserVarInRestartFile.Inverse.IterationsDone;
                 data(data_ind).misfit(cc) = InvFinalValues.I;
-                data(data_ind).qGL(cc) = qGL;
+                data(data_ind).qGL(:,cc) = qGL(:);
 
                 
                 % Obtain Ua fluxes across the grounding line (qGL) into floating areas

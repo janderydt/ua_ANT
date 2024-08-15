@@ -28,8 +28,13 @@ if __name__ == "__main__":
             inputselected = 1
             runinfo = '> CHECKING DIAGNOSTIC RUNS'
             os.chdir('./ANT_Diagnostic')
+        elif runtype == 3:
+            runtype = 'Transient'
+            inputselected = 1
+            runinfo = '> CHECKING TRANSIENT RUNS'
+            os.chdir('./ANT_Transient')
         else:
-            print('Runtype does not exist. Choose 1 or 2.')
+            print('Runtype does not exist. Choose 1, 2 or 3.')
 
     # Check how many runs should be submitted
     inputselected = 0

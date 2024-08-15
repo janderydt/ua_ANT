@@ -40,11 +40,11 @@ for ii=1:numel(Bfields)
 end
 
 % load mesh for interpolation of speed
-tmp = load(UserVar.home+"ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_2018_meshmin5000_meshmax100000_extrudemesh0_variableboundaryres1.mat");
-MUA_coarse = tmp.MUA;
-
-% identify basin id of each MUA node
-[MUA_coarse.basins,~] = Define_Quantity_PerBasin(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2),B,0);
+% tmp = load(UserVar.home+"ANT_Data/ANT_Ua_BaseMeshGeneration/ANT_basemesh_2018_meshmin5000_meshmax100000_extrudemesh0_variableboundaryres1.mat");
+% MUA_coarse = tmp.MUA;
+% 
+% % identify basin id of each MUA node
+% [MUA_coarse.basins,~] = Define_Quantity_PerBasin(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2),B,0);
 
 if exist("perturbationdata.mat","file")
     load("perturbationdata.mat");
@@ -220,4 +220,4 @@ for tt=1:numel(UserVar.Table)
     end
 end
 
-save("perturbationdata.mat","data","perturbation_experiments_analyzed","MUA_coarse","-v7.3");
+save("perturbationdata.mat","data","perturbation_experiments_analyzed","-v7.3");

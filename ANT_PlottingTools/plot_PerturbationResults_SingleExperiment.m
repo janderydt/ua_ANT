@@ -1,16 +1,18 @@
-function plot_Perturbations
+function plot_PerturbationResults_SingleExperiment
 
 addpath(getenv("froot_tools"));
 
 froot_ua = getenv("froot_ua")+"/cases/ANT/";
 
-baseline = 1814; % n=3, m=3, It1 (refined mesh), 2000
+baseline = 27592; % n=3, m=3, It1 (refined mesh), 2000
 
-target = 1278; % n=3, m=3, It1 (refined mesh), 2018
+target = 27592; % n=3, m=3, It1 (refined mesh), 2018
 
-perturbations = [1905 1126 1632 1097]; %n=3, m=3, It1 (refined mesh), 2018
+perturbations = [27763 24143 22182 22515]; %n=3, m=3, It1 (refined mesh), 2018
 
-Table = readtable("../ANT_Diagnostic/RunTable.csv");
+domain = "ANT_nsmbl";
+
+Table = readtable("../ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_2.csv");
 
 %% basins from C Greene
 filename = 'basins_IMBIE_v2.mat'; 
@@ -18,7 +20,7 @@ B = load(filename);
 B = RemoveSmallIceRisesAndIslands(B);
 
 %% load data baseline simulation
-load(froot_ua+"/ANT_Diagnostic/ANT_Diagnostic_"+string(baseline)+"/ANT_Diagnostic_"+string(baseline)+"-RestartFile.mat");
+load(froot_ua+"/ANT_Diagnostic/cases/"+domain+"_Diagnostic_"+string(baseline)+"/"+domain+"_Diagnostic_"+string(baseline)+"-RestartFile.mat");
 
 Fbaseline.speed = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb));
 Fbaseline.h = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.h);
@@ -42,7 +44,7 @@ for ii=1:numel(Bbaseline.x)
 end
 
 %% load data target simulation
-load(froot_ua+"/ANT_Diagnostic/ANT_Diagnostic_"+string(target)+"/ANT_Diagnostic_"+string(target)+"-RestartFile.mat");
+load(froot_ua+"/ANT_Diagnostic/cases/"+domain+"_Diagnostic_"+string(target)+"/"+domain+"_Diagnostic_"+string(target)+"-RestartFile.mat");
 
 Ftarget.speed = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb));
 Ftarget.h = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.h);
@@ -69,7 +71,7 @@ np = numel(perturbations);
 
 %% load data diagnostic geometry perturbation experiments
 for pp = 1:np
-    load(froot_ua+"/ANT_Diagnostic/ANT_Diagnostic_"+string(perturbations(pp))+"/ANT_Diagnostic_"+string(perturbations(pp))+"-RestartFile.mat");
+    load(froot_ua+"/ANT_Diagnostic/cases/"+domain+"_Diagnostic_"+string(perturbations(pp))+"/"+domain+"_Diagnostic_"+string(perturbations(pp))+"-RestartFile.mat");
     
     Fperturb(pp).speed = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb));
     Fperturb(pp).h = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.h);

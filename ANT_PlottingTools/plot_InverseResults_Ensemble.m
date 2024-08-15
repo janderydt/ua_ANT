@@ -176,6 +176,12 @@ for ii=1:numel(s)
     s(ii).MarkerFaceAlpha='flat';
 end
 
+% Save
+pos = get(H,"Position");
+set(H,"PaperPositionMode","Auto","PaperUnits","Inches","PaperSize",[pos(3),pos(4)]);
+fname = "./Figures/ParameterDistribution_"+variable_to_plot;
+print(H,fname,"-dpng","-r400");
+
 %% histogram
 figure; hold on;
 bins = linspace(min(plotdata),max(plotdata),20);

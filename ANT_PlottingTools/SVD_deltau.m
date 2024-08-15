@@ -3,6 +3,7 @@ function [U,S,V] = SVD_deltau(data,doplots)
 if nargin==0
     load("Delta_u");
     data=Delta_u.Calv_dh.map(:,:,1);
+    MUA=MUA_2018;
     %data=Delta_u.dhIS.map(:,:,1);
     doplots=1;
 elseif nargin==1
@@ -22,7 +23,6 @@ end
 data(isnan(data))=0;
 
 [U,S,V] = svd(data,'econ');
-
 
 if doplots
 
@@ -52,7 +52,7 @@ if doplots
         PlotNodalBasedQuantities_JDR(gca,MUA.connectivity,MUA.coordinates,U(:,ii),CtrlVar);
         colormap(othercolor('RdYlBu8'));
         variance =100*[cumulative_variance(1); cumulative_variance(2:end)-cumulative_variance(1:end-1)];
-        title(['mode',num2str(ii),' (',num2str(variance(ii),'%2.2f'),'%)']); caxis([-0.05 0.05]);
+        title(['mode',num2str(ii),' (',num2str(variance(ii),'%2.2f'),'%  /  ',num2str(100*cumulative_variance(ii),'%2.2f'),'%)']); caxis([-0.03 0.03]);
         axis tight; axis off;
     
         %cb=colormap; cb.visible='off';
