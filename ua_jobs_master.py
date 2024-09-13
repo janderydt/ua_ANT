@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     while inputselected == 0:
         
-        runtype = input("Choose runtype (1. Inverse, 2. Diagnostic): ")
+        runtype = input("Choose runtype (1. Inverse, 2. Diagnostic, 3. Transient): ")
         runtype = int(runtype)
 
         if runtype == 1:

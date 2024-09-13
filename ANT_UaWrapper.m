@@ -59,7 +59,7 @@ if nargin > 3
     expid_new = round(double(expid_new));
 end
     
-if ~isempty(ua_config)
+if ua_config~=""
     % read inputs from config file
     configfile = UserVar.home+"/"+ua_config;
     if ~exist(configfile,"file")
@@ -128,7 +128,7 @@ RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
 
 if ~isempty(RunTable)
     Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}==0);
-    if ~isempty(Iexisting) & ~isempty(row_number)
+    if ~isempty(Iexisting) & row_number~=""
         % check if row_number is an existing simulation
         if ismember(row_number,Iexisting)
             Iexisting = row_number;
@@ -313,7 +313,7 @@ else
     RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
     if ~isempty(RunTable)
         Inew = find(RunTable{:,'ExpID'}==0);
-        if ~isempty(Inew) & ~isempty(row_number)
+        if ~isempty(Inew) & row_number~=""
             % check if row_number is a new simulation
             if ismember(row_number,Inew)
                 Inew = row_number;
