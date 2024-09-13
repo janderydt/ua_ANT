@@ -1,2 +1,2 @@
-Domain,pgid,ExpID,Submitted,SubmissionTime,Running,Error,ErrorTime,Finished,FinishedTime,Restart,BaseMesh,InverseA,InverseCycleA,InverseC,InverseCycleC,Calv,ISthick,InverseCycleIS,GIthick,InverseCycleGI,Comments
-ANT,0,0,0,01-Jan-2024 10:23:11,0,0,01-Jan-2000 00:00:00,0,01-Jan-2000 00:00:00,0,2000_2009_2014_2018_meshmin3000_meshmax100000_refined,1111,1,1111,1,1111,1111,1,1111,1,
+Domain,pgid,ExpID,Submitted,SubmissionTime,Running,Error,ErrorTime,Finished,FinishedTime,Restart,AdaptMesh,Geometry,InverseA,InverseCycleA,InverseC,InverseCycleC,SMB,BasalMelt,PICO_C1,PICO_gam,LQ_gam,OceForcing
+ANT_nsmbl,0,0,0,2000-01-01 00:00:00,0,0,2000-01-01 00:00:00,0,2000-01-01 00:00:00,0,0,2000,0,1,0,1,MAR,PICO,10000000,0.00006,75000,ismip6
