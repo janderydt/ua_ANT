@@ -22,7 +22,7 @@ if isempty(FA) & exist(AGlenFile,"file")
     n2 = n; % new
 
     if n1 ~= n2
-        velfile = "../"+erase(AGlenFile,"_AGlen-Estimate.mat")+"/"+strrep(AGlenFile,"_AGlen-Estimate.mat","-RestartFile.mat");
+        velfile = "../"+erase(AGlenFile,"_AGlen-Estimate.mat")+"/"+strrep(AGlenFile,"_AGlen-Estimate.mat","-RestartFile_InverseCycle1.mat");
         tmp = load(velfile,'MUA','F');
         [~,~,~,exxInt,eyyInt,exyInt] = calcStrainRatesEtaInt(CtrlVar,tmp.MUA,tmp.F.ub,tmp.F.vb,tmp.F.AGlen,tmp.F.n);
         [exx,eyy,exy]=ProjectFintOntoNodes(tmp.MUA,exxInt,eyyInt,exyInt);

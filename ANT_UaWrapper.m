@@ -129,7 +129,7 @@ RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
 if ~isempty(RunTable)
     Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}==0);
     if ~isempty(Iexisting)
-        if row_number~=""
+        if string(row_number)~=""
             % check if row_number is an existing simulation
             if ismember(row_number,Iexisting)
                 Iexisting = row_number;
@@ -316,7 +316,7 @@ else
     if ~isempty(RunTable)
         Inew = find(RunTable{:,'ExpID'}==0);
         if ~isempty(Inew)
-            if row_number~=""
+            if string(row_number)~=""
                 % check if row_number is a new simulation
                 if ismember(row_number,Inew)
                     Inew = row_number;
