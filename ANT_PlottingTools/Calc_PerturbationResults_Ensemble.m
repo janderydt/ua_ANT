@@ -23,8 +23,10 @@ basins_to_analyze = {'A-Ap',...  % Queen Maud Land
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Diagnostic";
-UserVar.Table = UserVar.home+"ANT_Diagnostic/"+["RunTable_ARCHER2_Diagnostic_2.csv"];
-UserVar.idrange = [20000 29999];
+UserVar.Table = UserVar.home+"ANT_Diagnostic/"+["RunTable_ARCHER2_Diagnostic_3.csv"];
+UserVar.idrange = [30000 39999];
+inversiondata_filename = "inversiondata_Umbi.mat";
+perturbationdata_filename = "perturbationdata_Umbi.mat";
 
 % load basins
 filename = 'basins_IMBIE_v2.mat'; 
@@ -46,13 +48,13 @@ end
 % % identify basin id of each MUA node
 % [MUA_coarse.basins,~] = Define_Quantity_PerBasin(MUA_coarse.coordinates(:,1),MUA_coarse.coordinates(:,2),B,0);
 
-if exist("perturbationdata.mat","file")
-    load("perturbationdata.mat");
+if exist(perturbationdata_filename,"file")
+    load(perturbationdata_filename);
 else
     data=[];    
     perturbation_experiments_analyzed = [];
 end
-tmp = load("inversiondata.mat");
+tmp = load(inversiondata_filename);
 data_inverse = tmp.data;
 
 for tt=1:numel(UserVar.Table)
@@ -158,6 +160,10 @@ for tt=1:numel(UserVar.Table)
             if contains(expinfo,"Original")
                 year = RunTable{Ind(ii),"Calv"};   
                 fieldname = 'Original';
+                if ~exist("MUA_2000","var")
+                    MUA_2000=MUA;
+                    GF_2000=F.GF;
+                end
             elseif contains(expinfo,"Ice front geometry")
                 year = RunTable{Ind(ii),"Calv"};
                 fieldname = 'Calv';
@@ -170,6 +176,10 @@ for tt=1:numel(UserVar.Table)
             elseif contains(expinfo,"Ice front and thickness")
                 year = RunTable{Ind(ii),"Calv"};
                 fieldname = 'Calv_dh';
+                if ~exist("MUA_2018","var")
+                    MUA_2018=MUA;
+                    GF_2018=F.GF;
+                end
             else
                 error("Unknown experiment info "+expinfo);
             end
@@ -220,4 +230,4 @@ for tt=1:numel(UserVar.Table)
     end
 end
 
-save("perturbationdata.mat","data","perturbation_experiments_analyzed","-v7.3");
+save(perturbationdata_filename,"data","perturbation_experiments_analyzed","MUA_2000","MUA_2018","GF_2000","GF_2018","-v7.3");

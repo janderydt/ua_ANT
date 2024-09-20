@@ -7,7 +7,8 @@ rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
 GradientCalc = "Adjoint"; % options: FixPoint or Adjoint
-SlidingLaw = "Weertman"; 
+SlidingLaw = "Umbi"; 
+SampleSize = 1000;
 Enrich = 0; % enriches the existing Latin Hypercube
 EnrichSampleSize = 180;
 
@@ -26,29 +27,29 @@ switch GradientCalc
         Input.Marginals(ind).Name = 'gsC';
         %Input.Marginals(ind).Parameters = log10([25e3 50e3]); %v1: [50e3 1000e3]
         %Input.Marginals(ind).Bounds = log10([25e3 50e3]); %v1: [50e3 1000e3]
-        Input.Marginals(ind).Parameters = [0 (log(50e3)-log(1e3))/log(2)];
-        Input.Marginals(ind).Bounds = [0 (log(50e3)-log(1e3))/log(2)];
+        Input.Marginals(ind).Parameters = [0 (log(100e3)-log(1e2))/log(2)];
+        Input.Marginals(ind).Bounds = [0 (log(100e3)-log(1e2))/log(2)];
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gsA';
         %Input.Marginals(ind).Parameters = log10([25e3 50e3]);  %v1: [50e3 1000e3]
         %Input.Marginals(ind).Bounds = log10([25e3 50e3]); %v1: [50e3 1000e3]
-        Input.Marginals(ind).Parameters = [0 (log(50e3)-log(1e3))/log(2)];
-        Input.Marginals(ind).Bounds =[0 (log(50e3)-log(1e3))/log(2)];
+        Input.Marginals(ind).Parameters = [0 (log(100e3)-log(1e2))/log(2)];
+        Input.Marginals(ind).Bounds =[0 (log(100e3)-log(1e2))/log(2)];
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gaC';
         %Input.Marginals(ind).Parameters = log10([1 100]);
         %Input.Marginals(ind).Bounds = log10([1 100]);
-        Input.Marginals(ind).Parameters = [0 (log(100)-log(0.1))/log(2)];
-        Input.Marginals(ind).Bounds = [0 (log(100)-log(0.1))/log(2)];
+        Input.Marginals(ind).Parameters = [0 (log(200)-log(0.1))/log(2)];
+        Input.Marginals(ind).Bounds = [0 (log(200)-log(0.1))/log(2)];
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gaA';
         %Input.Marginals(ind).Parameters = log10([1 250]); % parameters are bounds
         %Input.Marginals(ind).Bounds = log10([1 250]);
-        Input.Marginals(ind).Parameters = [0 (log(250)-log(0.1))/log(2)];
-        Input.Marginals(ind).Bounds = [0 (log(250)-log(0.1))/log(2)];
+        Input.Marginals(ind).Parameters = [0 (log(200)-log(0.1))/log(2)];
+        Input.Marginals(ind).Bounds = [0 (log(200)-log(0.1))/log(2)];
         ind = ind + 1;
         
         %% Sliding law
@@ -81,7 +82,7 @@ switch GradientCalc
         uq_print(myInput);
         
         uq_selectInput(myInput);
-        X = uq_getSample(numel(Input.Marginals)*30,'LHS');
+        X = uq_getSample(SampleSize,'LHS');
 
         X(:,1) = 1e3.*2.^X(:,1);
         X(:,2) = 1e3.*2.^X(:,2); 
@@ -142,6 +143,10 @@ if Enrich
 end
 
 T=array2table(X,'VariableNames',{Input.Marginals(:).Name});
+
+filename = "./UQ_input_GradientCalc_"+GradientCalc+"_SlidingLaw_"+...
+    SlidingLaw+"_SampleSize_"+string(SampleSize)+"_Enrich_"+string(Enrich)+".mat";
+save(filename,"myInput","T");
 
 ANT_GenerateRunTable(T,GradientCalc,SlidingLaw,Enrich);
 

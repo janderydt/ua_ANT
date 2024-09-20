@@ -1,16 +1,21 @@
 function Calc_InverseResults_Ensemble
 
+addpath("/mnt/md0/Ua/cases/ANT/");
+addpath(getenv("froot_tools"));
+
 only_finished=0;
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 4 5 8])+".csv";
-UserVar.idrange = [3000,3999;5000,5999;6000,6999;9000,9999];
+%UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 4 5 8])+".csv";
+%UserVar.idrange = [3000,3999;5000,5999;6000,6999;9000,9999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([6])+".csv";
+UserVar.idrange = [7000,7999];
 
-addpath("/mnt/md0/Ua/cases/ANT/");
+inversiondata_filename = "inversiondata_Umbi.mat";
 
-if exist("inversiondata.mat","file")
-    load("inversiondata.mat");
+if exist(inversiondata_filename,"file")
+    load(inversiondata_filename);
 else
     data=[];    
     inverse_experiments_analyzed = [];
@@ -45,7 +50,6 @@ for tt=1:numel(UserVar.Table)
     %% Gather data
     for ii=1:numel(Ind)
 
-        inverse_experiments_analyzed(end+1) = ExpID(Ind(ii));
         folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/ANT_nsmbl_Inverse_"+ExpID(Ind(ii));
         
         % store in data array
@@ -60,19 +64,43 @@ for tt=1:numel(UserVar.Table)
         end
 
         for cc=1:2
+
             restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(Ind(ii))+"-RestartFile_InverseCycle"+...
                 string(cc)+".mat";
 
             if exist(restartfile,"file")
 
-                load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");   
+                inverse_experiments_analyzed(end+1) = ExpID(Ind(ii));
+
+                load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");
                 
                 [B,~] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
+                B = Calc_UaOBFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
                 % Sum values of SMB, qGL and qOB for each basin
                 for bb=1:numel(B.x) 
                     B.qGL_tot{bb} = sum(B.qGL{bb},'omitmissing')/1e12;   
+                    B.qOB_tot{bb} = sum(B.qOB{bb},'omitmissing')/1e12;   
                 end
                 qGL = cell2mat(B.qGL_tot);
+                qOB = cell2mat(B.qOB_tot);
+                % 
+                % 
+                ab = CalcIceShelfMeltRates(CtrlVarInRestartFile,MUA,F.ub,F.vb,F.s,F.b,F.S,F.B,F.rho,F.rhow,0*F.ub,F.as,0*F.ub);
+                x = MUA.coordinates(:,1);
+                y = MUA.coordinates(:,2);
+                for bb=1:numel(B.x)
+                    xB = B.x{bb};
+                    yB = B.y{bb};
+                    ab_tot = 0;
+                    Indnan = [0; find(isnan(xB)); numel(xB)+1];
+                    for nn=1:numel(Indnan)-1
+                        if ~isempty([Indnan(nn)+1:Indnan(nn+1)-1])
+                            Indpoly = find(inpoly([x y],[xB(Indnan(nn)+1:Indnan(nn+1)-1) yB(Indnan(nn)+1:Indnan(nn+1)-1)]));
+                            ab_tot = ab_tot + sum(ab(Indpoly));
+                        end
+                    end
+                    BalancedMelt(bb) = ab_tot;
+                end
 
                 data(data_ind).InverseExpID = ExpID(Ind(ii));
                 data(data_ind).cycle(cc) = cc;
@@ -87,8 +115,10 @@ for tt=1:numel(UserVar.Table)
                 data(data_ind).niter(cc) = UserVarInRestartFile.Inverse.IterationsDone;
                 data(data_ind).misfit(cc) = InvFinalValues.I;
                 data(data_ind).qGL(:,cc) = qGL(:);
-
-                
+                data(data_ind).qOB(:,cc) = qOB(:);
+                data(data_ind).TotalBalancedMelt(:,cc) = BalancedMelt(:);
+                data(data_ind).BalancedMeltMap(:,cc) = ab(:);
+   
                 % Obtain Ua fluxes across the grounding line (qGL) into floating areas
                 %[B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
                 % qGL(ii) = 0;
@@ -102,11 +132,13 @@ for tt=1:numel(UserVar.Table)
         end
 
         fprintf("done %s our of %s.\n",string(ii),string(numel(Ind)));
-        
+
     end
+        
 end
 
-save("inversiondata.mat","data","inverse_experiments_analyzed");
+GF = F.GF;
+save(inversiondata_filename,"data","inverse_experiments_analyzed","MUA","GF","-v7.3");
 
 
 

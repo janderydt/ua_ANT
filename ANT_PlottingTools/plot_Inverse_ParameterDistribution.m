@@ -3,6 +3,7 @@ function plot_Inverse_ParameterDistribution
 addpath("..");
 
 RunTable = "RunTable_ARCHER2_"+string([2 5 8])+".csv";
+%RunTable = "RunTable_ARCHER2_"+string([6])+".csv";
 
 gaA=[]; gaC=[]; gsA=[]; gsC=[]; m=[]; n=[]; finished=[]; error=[];
 Ind_finished=[]; Ind_error=[];

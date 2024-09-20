@@ -7,12 +7,13 @@ if nargin==0
     diagnostic_to_plot = 'Delta_u'; % Delta_qGL, Delta_qOB, Delta_u
     parameter_to_plot = 'm'; % m, n, gaA, gaC, gsA, gsC
     cycles_to_plot = [1 2]; %[1 2]
+    slidinglaws = ["Umbi"];
 end
 
 basins_to_analyze = {'F-G',...  % Getz
     'G-H',...  % PIG, Thwaites
     'H-Hp'}; % Abbott
-file_with_perturbation_data_to_read = "perturbationdata.mat";
+file_with_perturbation_data_to_read = "perturbationdata_"+slidinglaws+".mat";
 CtrlVar=Ua2D_DefaultParameters; 
 
 %% load basins
@@ -80,11 +81,15 @@ end
 
 %% load data
 if exist(file_with_perturbation_data_to_read,"file")
-    load(file_with_perturbation_data_to_read);
+    load(file_with_perturbation_data_to_read,"data","perturbation_experiments_analyzed","GF_2000","GF_2018");
+    original_node_numbers = MUA_2000.k(find(~isnan(MUA_2000.k)));
+    GF_2000.node=GF_2000.node(original_node_numbers);
+    original_node_numbers = MUA_2018.k(find(~isnan(MUA_2018.k)));
+    GF_2018.node=GF_2018.node(original_node_numbers);
 else
     error(file_with_perturbation_data_to_read+" does not exist");
 end
-tmp = load("inversiondata.mat");
+tmp = load("inversiondata_"+slidinglaws+".mat");
 data_inverse = tmp.data;
 
 % available drainage basins
@@ -375,7 +380,71 @@ switch diagnostic_to_plot
         
         fields_to_plot = fields(Delta_u);
 
+        % observed change in velocity
+        load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED","Fus","Fvs","Fxerr","Fyerr");
+        ux2000 = Fus(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));
+        uxerr2000 = Fxerr(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));
+        uy2000 = Fvs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));
+        uyerr2000 = Fyerr(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));
+        u2000 = hypot(ux2000,uy2000);
+        uerr2000 = sqrt((ux2000.^2.*uxerr2000.^2+uy2000.^2.*uyerr2000.^2)./(ux2000.^2+uy2000.^2+eps));
+        load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_2018-2019_MeaSUREs_ITSLIVE_Velocities_EXTRUDED","Fus","Fvs","Fxerr","Fyerr");
+        ux2018 = Fus(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));
+        uxerr2018 = Fxerr(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));
+        uy2018 = Fvs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));
+        uyerr2018 = Fyerr(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));
+        u2018 = hypot(ux2018,uy2018);
+        uerr2018 = sqrt((ux2018.^2.*uxerr2018.^2+uy2018.^2.*uyerr2018.^2)./(ux2018.^2+uy2018.^2+eps));
+
+        dspeed_meas = u2018-u2000; %dspeed(dspeed<0)=nan;
+        dspeed_meas_err = hypot(uerr2000,uerr2018);       
+
         for cc=cycles_to_plot
+
+            %% plot distribution of misfit between modelled perturbation in speed and measured change in speed
+            % prep data
+
+            dspeed_meas_clean = dspeed_meas; 
+            dspeed_meas_clean(abs(dspeed_meas)<1 | dspeed_meas<=0) = nan;
+
+            mask = ones(MUA_2018.Nnodes,1);
+
+            area_floating = FEintegrate2D(CtrlVar,MUA_2018,1-GF_2018.node); 
+            area_grounded = FEintegrate2D(CtrlVar,MUA_2018,GF_2018.node); 
+
+            for nn=1:size(Delta_u.Calv_dh.map,1)
+                dspeed_mod = squeeze(Delta_u.Calv_dh.map(nn,:,cc))';
+                dspeed_mod_clean = dspeed_mod;
+                dspeed_mod_clean(abs(dspeed_mod)<1 | dspeed_mod<=0) = nan;
+
+                dspeed_log_err = 1./(dspeed_mod_clean*log(10)).*dspeed_meas_err;
+                
+                misfit_tmp = abs(log10(dspeed_mod_clean) - log10(dspeed_meas_clean));%./(dspeed_log_err+eps)).^2;
+
+                x = MUA_2018.coordinates(:,1);
+                y = MUA_2018.coordinates(:,2);
+                PIG_interestregion = find(x>-1.59e6 & x<-1.57e6 & y>-2.3e5 & y<-2.14e5);
+                misfit_tmp_PIG(nn) = sum(misfit_tmp(PIG_interestregion));
+
+                misfit_floating_tmp = FEintegrate2D(CtrlVar,MUA_2018,(1-GF_2018.node).*misfit_tmp);
+                misfit_grounded_tmp = FEintegrate2D(CtrlVar,MUA_2018,GF_2018.node.*misfit_tmp);
+
+                misfit_floating(nn) = sum(misfit_floating_tmp,"all","omitmissing")/sum(area_floating,"all","omitmissing");
+                misfit_grounded(nn) = sum(misfit_grounded_tmp,"all","omitmissing")/sum(area_grounded,"all","omitmissing");
+
+                disp("done "+num2str(nn)+" out of "+num2str(size(Delta_u.Calv_dh.map,1)));
+            end
+            
+            H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
+
+
+            figure; scatter([data(:).m],misfit_tmp_PIG)
+            figure; scatter([data(:).m],misfit_grounded)
+            figure; scatter([data(:).n],misfit_grounded)
+            figure; scatter([data(:).m],misfit_floating)
+            figure; scatter([data(:).n],misfit_floating)
+            
+            
 
             H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
 
@@ -405,7 +474,7 @@ switch diagnostic_to_plot
                 PlotNodalBasedQuantities_JDR(ax(ff),MUA.connectivity,MUA.coordinates,log_deltau_av(:),CtrlVar);
                 plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k');
                 plot(MUA2.Boundary.x/CtrlVar.PlotXYscale,MUA2.Boundary.y/CtrlVar.PlotXYscale,'--k');
-                %PlotGroundingLines(CtrlVar,MUA,GF);
+                PlotGroundingLines(CtrlVar,MUA_2018,GF_2018,[],[],[],'-k','linewidth',1);
                 CM = flipdim(othercolor('RdYlBu8',15),1);
                 %CM1 = othercolor('RdYlBu8',3);
                 %CM = CM([15 19:40],:);
@@ -422,6 +491,7 @@ switch diagnostic_to_plot
                 PlotNodalBasedQuantities_JDR(ax(numel(fields_to_plot)+ff),MUA.connectivity,MUA.coordinates,log10(deltau_std(:)+eps),CtrlVar);
                 plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k');
                 plot(MUA2.Boundary.x/CtrlVar.PlotXYscale,MUA2.Boundary.y/CtrlVar.PlotXYscale,'--k');
+                PlotGroundingLines(CtrlVar,MUA_2018,GF_2018,[],[],[],'-k','linewidth',1);
                 %CM = turbo(13); CM(1,:)=[1 1 1];
                 colormap(ax(numel(fields_to_plot)+ff),CM);
                 axis(ax(numel(fields_to_plot)+ff),"off");
@@ -434,19 +504,13 @@ switch diagnostic_to_plot
                      cb=colorbar(ax(2*numel(fields_to_plot))); cb.Label.String="Ensemble standard deviation of log_{10}(\Deltau) [m/yr]";
                 end
 
-            end
-
-            % observed change in velocity
-            load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED","Fus","Fvs");
-            u2000 = hypot(Fus(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)),Fvs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)));
-            load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_2018-2019_MeaSUREs_ITSLIVE_Velocities_EXTRUDED","Fus","Fvs");
-            u2018 = hypot(Fus(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)),Fvs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)));
-            dspeed = u2018-u2000; dspeed(dspeed<0)=nan;
+            end          
 
             ax(numel(fields_to_plot)+1)=nexttile(tlo(cc*999)); hold on;
-            PlotNodalBasedQuantities_JDR(ax(numel(fields_to_plot)+1),MUA_2018.connectivity,MUA_2018.coordinates,log10(dspeed+eps),CtrlVar);
+            PlotNodalBasedQuantities_JDR(ax(numel(fields_to_plot)+1),MUA_2018.connectivity,MUA_2018.coordinates,log10(dspeed_meas+eps),CtrlVar);
             plot(MUA_2018.Boundary.x/CtrlVar.PlotXYscale,MUA_2018.Boundary.y/CtrlVar.PlotXYscale,'-k');
             plot(MUA_2000.Boundary.x/CtrlVar.PlotXYscale,MUA_2000.Boundary.y/CtrlVar.PlotXYscale,'--k');
+            PlotGroundingLines(CtrlVar,MUA_2018,GF_2018,[],[],[],'-k','linewidth',1);
             %CM = turbo(13); CM(1,:)=[1 1 1];
             colormap(ax(numel(fields_to_plot)+1),CM);
             title(ax(numel(fields_to_plot)+1),"Observations");

@@ -23,22 +23,31 @@ RunTable = ANT_ReadWritetable(UserVar,UserVar.Table,[],'read');
 for ind=1:size(X,1)
 
     startMesh = "2000_2009_2014_2018_meshmin3000_meshmax100000_refined";
-    
-    taub = 80; m = round(X.m(ind)*100)/100; ub = 100;%X(ind,6);
-    priorC = ub/taub^m;
-    muk = 0.5;
-    
-    tau = 80; n = round(X.n(ind)*100)/100; eps = 0.0026;%X(ind,8);
-    priorAGlen = eps/tau^n;
 
+    m = round(X.m(ind)*100)/100;
+    n = round(X.n(ind)*100)/100; 
     gsC = round(X.gsC(ind)*10)/10;         %gsC
     gsA = round(X.gsA(ind)*10)/10;         %gsA
     gaC = round(X.gaC(ind)*10)/10;         %gaC
     gaA = round(X.gaA(ind)*10)/10;         %gaA
+
+    taub = 80;  
+    ub = 100;%X(ind,6);
+    priorC = ub/taub^m;
+    muk = 0.5;
     
-    % If GradientCalc=Adjoint, find Fixpoint inversion with nearest (m,n)
-    % pair as start value. The code will rescale C and AGlen depending on m and n 
-    if GradientCalc == "Adjoint" && Enrich == 0
+    tau = 80; 
+    eps = 0.0026;%X(ind,8);
+    priorAGlen = eps/tau^n;
+   
+    % If GradientCalc=Adjoint, and SlidingLaw=Weertman and Enrich=0 then 
+    % use Fixpoint inversion with nearest (m,n) pair as start value. 
+    % The code will rescale C and AGlen depending on m and n.
+    % If GradientCalc=Adjoint, and SlidingLaw=Umbi and/or Enrich=1 then 
+    % use finished Weertman inversion with nearest (m,n,gsA,gsC,gaA,gaC) 
+    % as start value. The code will rescale C and AGlen depending on m and
+    % n.
+    if GradientCalc == "Adjoint" && Enrich == 0 && SlidingLaw == "Weertman"
         if ind == 1
             UserVar2.type = "Inverse";
             UserVar2.home = pwd; 
@@ -55,23 +64,31 @@ for ind=1:size(X,1)
         iterations = "15000+1000";
         spinupyears = "1";
         invertfor = "-logC-logA-";
-    elseif GradientCalc == "Adjoint" && Enrich == 1
+     elseif GradientCalc == "Adjoint" && (Enrich == 1 || SlidingLaw == "Umbi")
+        
         if ind == 1
+            Start = []; ExpID_Start=[];
             UserVar2.type = "Inverse";
             UserVar2.home = pwd; 
-            UserVar2.Table = input("Path of run table with experiments for startAGlen and startC: ","s");
-            RunTable_Start = ANT_ReadWritetable(UserVar2,UserVar2.Table,[],'read');
-            % scan table for ExpID, m and n
-            ExpID_Start = RunTable_Start{:,'ExpID'};
-            gaC_Start = RunTable_Start{:,'gaC'};
-            gaA_Start = RunTable_Start{:,'gaA'};
-            gsC_Start = RunTable_Start{:,'gsC'};
-            gsA_Start = RunTable_Start{:,'gsA'};
-            m_Start = RunTable_Start{:,'m'};
-            n_Start = RunTable_Start{:,'n'};
-            ItDone_Start = RunTable_Start{:,'InverseIterationsDone'};
-            Start = [gaC_Start(:) gaA_Start(:) gsC_Start(:) gsA_Start(:) m_Start(:) n_Start(:)];
-            Start = Start(ItDone_Start>=15e3,:);
+            RunTablesToRead = uigetfile(".csv","Select run tables with experiments for startAGlen and startC","MultiSelect","on");
+            for tt=1:numel(RunTablesToRead)
+                UserVar2.Table = RunTablesToRead{tt};
+                RunTable_Start = ANT_ReadWritetable(UserVar2,UserVar2.Table,[],'read');
+                % scan table for ExpID, m and n                
+                gaC_Start = RunTable_Start{:,'gaC'};
+                gaA_Start = RunTable_Start{:,'gaA'};
+                gsC_Start = RunTable_Start{:,'gsC'};
+                gsA_Start = RunTable_Start{:,'gsA'};
+                m_Start = RunTable_Start{:,'m'};
+                n_Start = RunTable_Start{:,'n'};
+                Finished = RunTable_Start{:,'Finished'};
+                Start_tmp = [gaC_Start(:) gaA_Start(:) gsC_Start(:) gsA_Start(:) m_Start(:) n_Start(:)];
+                Start_tmp = Start_tmp(Finished==1,:);
+                Start = [Start; Start_tmp];
+                ExpID_tmp = RunTable_Start{:,'ExpID'};
+                ExpID_tmp = ExpID_tmp(Finished==1);
+                ExpID_Start = [ExpID_Start; ExpID_tmp];            
+            end   
         end
         [Idx,D] = knnsearch(Start,[gaC gaA gsC gsA m n],"Distance","seuclidean");
         startC = ExpID_Start(Idx);

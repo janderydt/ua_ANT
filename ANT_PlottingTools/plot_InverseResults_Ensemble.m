@@ -1,64 +1,159 @@
 function plot_InverseResults_Ensemble
 
-variable_to_plot = 'misfit'; %options: qGL, niter, misfit
+variable_to_plot = 'BalancedMelt'; %options: qGL, niter, misfit, qOB, BalancedMelt
 
-load("inversiondata.mat");
+slidinglaws = ["Umbi"];
+file_with_inversion_data_to_read = "inversiondata_"+slidinglaws+".mat";
+
+%% load data
+for nn=1:numel(file_with_inversion_data_to_read)
+    if exist(file_with_inversion_data_to_read(nn),"file")
+        tmp=load(file_with_inversion_data_to_read(nn));
+        if nn==1
+            data = tmp.data;
+            inverse_experiments_analyzed = tmp.inverse_experiments_analyzed(:);
+        else
+            data = [data, tmp.data];
+            inverse_experiments_analyzed = [inverse_experiments_analyzed; tmp.inverse_experiments_analyzed(:)];
+        end  
+        MUA = tmp.MUA;
+        GF = tmp.GF;
+    else
+        error(file_with_inversion_data_to_read(nn)+" does not exist");
+    end
+end
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.cycle = 1;
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 5 8])+".csv";
-UserVar.idrange = [3000,3999;6000,6999;9000,9999];
+UserVar.cycle = 2;
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 5 6 8])+".csv";
+UserVar.idrange = [3000,3999;6000,6999;7000,7999;9000,9999];
 
 % define size for markers: resize with misfit
 for ii=1:numel(data)
-    misfit(ii) = data(ii).misfit(UserVar.cycle);
-    ind_finished(ii) = ismember(data(ii).niter(UserVar.cycle),[5000,15000]);
+    if numel(data(ii).misfit)>=UserVar.cycle
+        misfit(ii) = data(ii).misfit(UserVar.cycle);
+        ind_finished(ii) = ismember(data(ii).niter(UserVar.cycle),[5000,15000,16000]);
+    else
+        misfit(ii) = nan;
+        ind_finished(ii) = 0;
+    end
 end 
 misfit = misfit(:);
-N = misfit-min(misfit);
-N = N./max(N);
+N = misfit-min(misfit,[],"omitmissing");
+N = N./max(N,[],"omitmissing");
 alphavalue = 1-N;
-marker_size = 50*alphavalue+eps;
+marker_size = 50*alphavalue(:)+eps;
+plotdata = nan*misfit;
 
 %% Plotting
-H=fig('units','inches','width',120*12/72.27,'height',80*12/72.27,'fontsize',14,'font','Helvetica');
-
 switch variable_to_plot
     case 'qGL'
-        for ii=1:numel(data)
-            plotdata(ii,:) = data(ii).qGL(:)'/1e12;  
+        for ii=find(ind_finished==1)
+            %dims = numel(data(ii).qGL(:));
+            %plotdata(ii,:) = [data(ii).qGL(:)'/1e12 nan*ones(1,2-dims)];
+            plotdata(ii) = sum(data(ii).qGL(:,UserVar.cycle)'/1e12);
         end
         cmin = 1000;
         cmax = 3000;
         cbLabel = "Grounding line flux [Gt/yr]";
+    case 'qOB'
+        for ii=find(ind_finished==1)
+            %dims = numel(data(ii).qGL(:));
+            %plotdata(ii,:) = [data(ii).qGL(:)'/1e12 nan*ones(1,2-dims)];
+            plotdata(ii) = sum(data(ii).qOB(:,UserVar.cycle)'/1e12);
+        end
+        cmin = 1000;
+        cmax = 3000;
+        cbLabel = "Open Boundary flux [Gt/yr]";   
     case 'niter' 
-        for ii=1:numel(data)
-            plotdata(ii,:) = data(ii).niter(:)';  
+        for ii=find(ind_finished==1)
+            plotdata(ii) = data(ii).niter(:,UserVar.cycle)';  
         end       
         cmin = 0;
         cmax = max(niter(:));
         cbLabel = "Number of iterations";
     case 'misfit'
-        for ii=1:numel(data)
-            plotdata(ii,:) = data(ii).misfit(:)';  
+        for ii=find(ind_finished==1)
+            plotdata(ii) = data(ii).misfit(:,UserVar.cycle)';  
         end 
-        cmin = 0;
-        cmax = 1000;
+        cmin = 1e4;
+        cmax = 1e5;
         cbLabel = "Misfit";
+    case 'BalancedMelt'
+        for ii=find(ind_finished==1)
+            ab(ii,:) = data(ii).BalancedMeltMap(:,UserVar.cycle)';  
+            plotdata(ii) = -sum(data(ii).TotalBalancedMelt(:,UserVar.cycle)');
+        end
+        ab_av = mean(ab,1,"omitmissing");
+        ab_std = std(ab,1,"omitmissing");
+        cmin = 0;
+        cmax = 2e5;
+        cbLabel = "Balanced melt";
 end
-m = [data(:).m];
-n = [data(:).n];
-gaA = [data(:).gaA];
-gaC = [data(:).gaC];
-gsA = [data(:).gsA];
-gsC = [data(:).gsC];
 
-plotdata = plotdata(:,UserVar.cycle);
+m = [data(:).m]; m = m(:);
+n = [data(:).n]; n = n(:);
+gaA = [data(:).gaA]; gaA = gaA(:);
+gaC = [data(:).gaC]; gaC = gaC(:);
+gsA = [data(:).gsA]; gsA = gsA(:);
+gsC = [data(:).gsC]; gsC = gsC(:);
+
+if variable_to_plot == "BalancedMelt"
+
+    H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
+
+    tlo=tiledlayout(H,1,2,TileSpacing="tight");
+
+    xmin = min(MUA.coordinates(:,1)); xmax = max(MUA.coordinates(:,1));
+    ymin = min(MUA.coordinates(:,2)); ymax = max(MUA.coordinates(:,2));
+    CtrlVar.PlotXYscale = 1e3;
+
+    %% ensemble-average change in balanced melt
+    ax(1)=nexttile(tlo); hold on;
+    ab_av(abs(ab_av)<eps)=nan;
+    PlotNodalBasedQuantities_JDR(ax(1),MUA.connectivity,MUA.coordinates,ab_av(:),CtrlVar);
+    plot(ax(1),MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k');
+    PlotGroundingLines(CtrlVar,MUA,GF,[],[],[],'color','k','LineWidth',1);             
+    CM1 = othercolor('RdYlBu8',50);
+    CM2 = othercolor('BuPu9',5);
+    CM = [CM1;CM2];
+    %CM1 = othercolor('RdYlBu8',3);
+    %CM = CM([15 19:40],:);
+    colormap(ax(1),CM);
+    title(ax(1),"Balanced melt","Interpreter","none");
+    axis(ax(1),"off");
+    caxis(ax(1),[-50 5]);
+    xlim(ax(1),[xmin xmax]/CtrlVar.PlotXYscale);
+    ylim(ax(1),[ymin ymax]/CtrlVar.PlotXYscale);
+    axis(ax(1),"equal");
+    cb1=colorbar(ax(1)); cb1.Label.String="Ensemble mean balanced melt rate [m/yr]";
+
+    %% standard deviation 
+    ax(2)=nexttile(tlo); hold on;
+    PlotNodalBasedQuantities_JDR(ax(2),MUA.connectivity,MUA.coordinates,ab_std(:),CtrlVar);
+    plot(ax(2),MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k');
+    PlotGroundingLines(CtrlVar,MUA,GF,[],[],[],'color','k','LineWidth',1);             
+    %CM1 = othercolor('RdYlBu8',3);
+    %CM = CM([15 19:40],:);
+    colormap(ax(2),CM);
+    title(ax(2),"Balanced melt","Interpreter","none");
+    axis(ax(2),"off");
+    caxis(ax(2),[-10 10]);
+    xlim(ax(2),[xmin xmax]/CtrlVar.PlotXYscale);
+    ylim(ax(2),[ymin ymax]/CtrlVar.PlotXYscale);
+    axis(ax(2),"equal");
+    cb=colorbar(ax(2)); cb.Label.String="Ensemble standard deviation of balanced melt [m/yr]";
+
+end
+
+H=fig('units','inches','width',120*12/72.27,'height',80*12/72.27,'fontsize',14,'font','Helvetica');
+
+%plotdata = plotdata(:,UserVar.cycle);
 dummydata = nan*plotdata;
 
 %plotdata(plotdata<cmin)=cmin; 
-%plotdata(plotdata>cmax)=cmax; 
+%plotdata(plotdata>cmax)=nan; 
 
 colormap('jet');
 
