@@ -396,8 +396,16 @@ switch diagnostic_to_plot
         u2018 = hypot(ux2018,uy2018);
         uerr2018 = sqrt((ux2018.^2.*uxerr2018.^2+uy2018.^2.*uyerr2018.^2)./(ux2018.^2+uy2018.^2+eps));
 
+        % observed change in ice-sheet geometry
+        load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXTRUDED","Fs","Fb");
+        h2000 = Fs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)) - Fb(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));
+        load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2018_EXTRUDED","Fs","Fb");
+        h2018 = Fs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)) - Fb(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));       
+
+
         dspeed_meas = u2018-u2000; %dspeed(dspeed<0)=nan;
-        dspeed_meas_err = hypot(uerr2000,uerr2018);       
+        dspeed_meas_err = hypot(uerr2000,uerr2018);    
+        dh_meas = h2018-h2000;
 
         for cc=cycles_to_plot
 
@@ -436,6 +444,63 @@ switch diagnostic_to_plot
             end
             
             H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
+
+            tlo_fig = tiledlayout(1,1,"TileSpacing","compact"); 
+            ax(1) = nexttile(tlo_fig); hold on;
+
+            PlotNodalBasedQuantities_JDR(ax(1),MUA_2018.connectivity,MUA_2018.coordinates,dh_meas,CtrlVar);
+            plot(MUA_2018.Boundary.x/CtrlVar.PlotXYscale,MUA_2018.Boundary.y/CtrlVar.PlotXYscale,'-k');
+            plot(MUA_2000.Boundary.x/CtrlVar.PlotXYscale,MUA_2000.Boundary.y/CtrlVar.PlotXYscale,'--k');
+            PlotGroundingLines(CtrlVar,MUA_2018,GF_2018,[],[],[],'-k','linewidth',1);
+            %CM = turbo(13); CM(1,:)=[1 1 1];
+            CM = othercolor('RdBu11',15);
+            colormap(ax(1),CM);
+            %title(ax(numel(fields_to_plot)+1),"Observations");
+            axis(ax(1),"off");
+            caxis(ax(1),[-100 100]);
+            xlim(ax(1),[xmin xmax]/CtrlVar.PlotXYscale);
+            ylim(ax(1),[ymin ymax]/CtrlVar.PlotXYscale);
+            axis(ax(1),"equal");
+
+            cb2=colorbar(ax(1)); cb2.Label.String="Change in ice thickness [m]";H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
+
+            tlo_fig = tiledlayout(1,1,"TileSpacing","compact"); 
+            ax(1) = nexttile(tlo_fig); hold on;
+
+            PlotNodalBasedQuantities_JDR(ax(1),MUA_2018.connectivity,MUA_2018.coordinates,dh_meas,CtrlVar);
+            plot(MUA_2018.Boundary.x/CtrlVar.PlotXYscale,MUA_2018.Boundary.y/CtrlVar.PlotXYscale,'-k');
+            plot(MUA_2000.Boundary.x/CtrlVar.PlotXYscale,MUA_2000.Boundary.y/CtrlVar.PlotXYscale,'--k');
+            PlotGroundingLines(CtrlVar,MUA_2018,GF_2018,[],[],[],'-k','linewidth',1);
+            %CM = turbo(13); CM(1,:)=[1 1 1];
+            CM = othercolor('RdBu11',15);
+            colormap(ax(1),CM);
+            %title(ax(numel(fields_to_plot)+1),"Observations");
+            axis(ax(1),"off");
+            caxis(ax(1),[-100 100]);
+            xlim(ax(1),[xmin xmax]/CtrlVar.PlotXYscale);
+            ylim(ax(1),[ymin ymax]/CtrlVar.PlotXYscale);
+            axis(ax(1),"equal");
+
+            cb2=colorbar(ax(1)); cb2.Label.String="Change in ice thickness [m]";H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
+
+            tlo_fig = tiledlayout(1,1,"TileSpacing","compact"); 
+            ax(1) = nexttile(tlo_fig); hold on;
+
+            PlotNodalBasedQuantities_JDR(ax(1),MUA_2018.connectivity,MUA_2018.coordinates,dh_meas,CtrlVar);
+            plot(MUA_2018.Boundary.x/CtrlVar.PlotXYscale,MUA_2018.Boundary.y/CtrlVar.PlotXYscale,'-k');
+            plot(MUA_2000.Boundary.x/CtrlVar.PlotXYscale,MUA_2000.Boundary.y/CtrlVar.PlotXYscale,'--k');
+            PlotGroundingLines(CtrlVar,MUA_2018,GF_2018,[],[],[],'-k','linewidth',1);
+            %CM = turbo(13); CM(1,:)=[1 1 1];
+            CM = othercolor('RdBu11',15);
+            colormap(ax(1),CM);
+            %title(ax(numel(fields_to_plot)+1),"Observations");
+            axis(ax(1),"off");
+            caxis(ax(1),[-100 100]);
+            xlim(ax(1),[xmin xmax]/CtrlVar.PlotXYscale);
+            ylim(ax(1),[ymin ymax]/CtrlVar.PlotXYscale);
+            axis(ax(1),"equal");
+
+            cb2=colorbar(ax(1)); cb2.Label.String="Change in ice thickness [m]";
 
 
             figure; scatter([data(:).m],misfit_tmp_PIG)
