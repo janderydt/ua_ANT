@@ -9,8 +9,8 @@ UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
 %UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 4 5 8])+".csv";
 %UserVar.idrange = [3000,3999;5000,5999;6000,6999;9000,9999];
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([6])+".csv";
-UserVar.idrange = [7000,7999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([10 11 12 13])+".csv";
+UserVar.idrange = [10000,13999];
 
 inversiondata_filename = "inversiondata_Umbi.mat";
 

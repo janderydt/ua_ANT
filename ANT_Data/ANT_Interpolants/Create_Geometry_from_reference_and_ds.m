@@ -30,6 +30,37 @@ mask = Fmask_ref.Values;
 
 [X,Y] = ndgrid(x,y);
 
+if ~exist("dhdt_"+string(targettime)+".mat","file")
+
+    fprintf("Calculating surface elevation change.\n");
+
+    [dhdt,dhdt_CPOM,dhdt_err,dhdt_err_CPOM,dhdt_source] = Calc_ITSLIVE_CPOM_Paolo2023_dhdt(X,Y,targettime);
+
+    if CreateGeotiff
+    
+        fprintf('Writing GeoTiff files \n');
+        
+        R = maprefcells([x(1) x(end)],[y(1) y(end)],[numel(x),numel(y)]);
+        geotiffwrite("./GeoTiffFiles/dhdt_"+string(targettime)+".tif",dhdt',R,'CoordRefSysCode','EPSG:3031');
+        geotiffwrite("./GeoTiffFiles/dhdt_err_"+string(targettime)+".tif",dhdt_err',R,'CoordRefSysCode','EPSG:3031');
+       
+        fprintf('done.\n');
+
+    end
+
+    save("dhdt_"+string(targettime)+".mat","x","y","dhdt","dhdt_CPOM","dhdt_err","dhdt_err_CPOM","dhdt_source");
+
+else
+
+    fprintf("Loading existing dhdt for %s...",string(targettime));
+    
+    load("dhdt_"+string(targettime)+".mat");
+    
+    fprintf('done.\n');
+
+end
+
+
 if ~exist("ds_"+string(targettime)+".mat","file")
 
     fprintf("Calculating surface correction.\n");
@@ -41,7 +72,7 @@ if ~exist("ds_"+string(targettime)+".mat","file")
     referencetime(source==4) = datetime(2004,01,01); % Bamber2009
     referencetime(source==5) = datetime(1990,01,01); % RAMP2 best guess
     
-    [ds,ds_err,ds_source] = Calc_ITSLIVE_CPOM_Paolo2023_Deltas(X,Y,referencetime,targettime);
+    [ds,ds_err,ds_source] = Calc_ITSLIVE_CPOM_Paolo2023_Deltas(X,Y,referencetime,targettime);    
 
     if CreateGeotiff
     

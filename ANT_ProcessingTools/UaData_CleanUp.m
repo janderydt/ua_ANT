@@ -34,7 +34,7 @@ for ii=1:numel(folders)
                         tmp = files_to_delete(I(jj)).folder+"/"+files_to_delete(I(jj)).name;
                         fprintf("Deleting %s\n",tmp);
                         delete(tmp);
-                        pause(1);
+                        pause(3);
                     end   
                 end
             end
