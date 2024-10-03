@@ -34,11 +34,26 @@ for i in range(data_global.shape[0]):
        expfolder = os.getcwd()+'/cases/'+data_global['Domain'].values[i]+'_'+runtype.strip().strip("\"")+'_'+str(ExpID)+'/'
        exptable = 'RunTable_'+data_global['Domain'].values[i]+'_'+runtype.strip().strip("\"")+'_'+str(ExpID)+'.csv'
        if os.path.isfile(expfolder+exptable):
-          #print('Reading data from '+exptable)
+          print('Reading data from '+exptable)
           data_exp = read_runinfo(expfolder+exptable,runtype)
           data_global.loc[i]=data_exp.loc[0]
        else:
           print('Cannot find '+exptable+', no changes to global run table.')
 
-# save updated global runtable
+# save intermediate version of updated global runtable
+save_runinfo(data_global, runtable_global+".tmp")
+
+# now check for rows with pgid~=0. These are experiments that did not finished cleanly before the end of the walltime.
+# we set pgid=0, error=1, restart=1
+for i in range(data_global.shape[0]):
+   pgid = data_global['pgid'].values[i]
+   if pgid ~= 0
+       data_global.at['pgid',i]=0
+       data_global.at['Error',i]=1
+       data_global.at['Restart',i]=0
+       data_global.at['Running',i]=0
+       data_global.at['Submitted',i]=0
+
+
+# save modified version of the global runtable
 save_runinfo(data_global, runtable_global)
