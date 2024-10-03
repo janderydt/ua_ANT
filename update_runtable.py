@@ -47,7 +47,7 @@ save_runinfo(data_global, runtable_global+".tmp")
 # we set pgid=0, error=1, restart=1
 for i in range(data_global.shape[0]):
    pgid = data_global['pgid'].values[i]
-   if pgid != 0
+   if pgid != 0:
        data_global.at['pgid',i]=0
        data_global.at['Error',i]=1
        data_global.at['Restart',i]=0
