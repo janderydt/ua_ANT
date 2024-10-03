@@ -48,11 +48,11 @@ save_runinfo(data_global, runtable_global+".tmp")
 for i in range(data_global.shape[0]):
    pgid = data_global['pgid'].values[i]
    if pgid != 0:
-       data_global.at['pgid',i]=0
-       data_global.at['Error',i]=1
-       data_global.at['Restart',i]=0
-       data_global.at['Running',i]=0
-       data_global.at['Submitted',i]=0
+       data_global.at[i,'pgid']=0
+       data_global.at[i,'Error']=1
+       data_global.at[i,'Restart']=0
+       data_global.at[i,'Running']=0
+       data_global.at[i,'Submitted']=0
 
 
 # save modified version of the global runtable
