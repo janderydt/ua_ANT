@@ -22,7 +22,7 @@ def read_runinfo (table,runtype):
     if "Inverse" in runtype:
         data = data.astype({"pgid": int, "ExpID": int, "Submitted": int, "Running": int, "Error": int, "Finished": int,
                             "Restart": int, "InverseIterationsDone": int, "Velocity": int, "startGeometry": int, "startC": int, "startAglen": int})
-        data = data.astype({"gsC": float, "gsA": float, "gaC": float, "gaA": float, "SpinupYearsDone": float, 
+        data = data.astype({"gsC": float, "gsA": float, "gaC": float, "gaA": float, "dhdt_err": float, "SpinupYearsDone": float, 
                             "m": float, "muk": float, "priorC": float, "n": float, "priorAGlen": float})
         data = data.astype({"Domain": str, "InverseIterations": str, "SpinupYears": str, "InvertFor": str, "GradientCalc": str, 
                             "Measurements": str, "SlidingLaw": str,

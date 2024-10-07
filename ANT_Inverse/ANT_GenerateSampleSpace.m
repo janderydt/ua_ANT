@@ -7,10 +7,11 @@ rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
 GradientCalc = "Adjoint"; % options: FixPoint or Adjoint
-SlidingLaw = "Umbi"; 
+SlidingLaw = "Weertman";
 SampleSize = 1000;
 Enrich = 0; % enriches the existing Latin Hypercube
 EnrichSampleSize = 180;
+UseCatalogue=1;
 
 Input.Name = 'Parameter array for inverse simulations';
 ind = 1;
@@ -21,7 +22,7 @@ ind = 1;
 switch GradientCalc
     case "Adjoint"
 
-        Input.Marginals = uq_Marginals(6,'Uniform',[0]);
+        Input.Marginals = uq_Marginals(7,'Uniform',[0]);
 
         %% Regularization
         Input.Marginals(ind).Name = 'gsC';
@@ -50,6 +51,14 @@ switch GradientCalc
         %Input.Marginals(ind).Bounds = log10([1 250]);
         Input.Marginals(ind).Parameters = [0 (log(200)-log(0.1))/log(2)];
         Input.Marginals(ind).Bounds = [0 (log(200)-log(0.1))/log(2)];
+        ind = ind + 1;
+
+        %% dhdt Errors
+        Input.Marginals(ind).Name = 'dhdt_err';
+        %Input.Marginals(ind).Parameters = log10([1 250]); % parameters are bounds
+        %Input.Marginals(ind).Bounds = log10([1 250]);
+        Input.Marginals(ind).Parameters = [0.25 1];
+        Input.Marginals(ind).Bounds = [0.25 1];
         ind = ind + 1;
         
         %% Sliding law
@@ -89,9 +98,9 @@ switch GradientCalc
         X(:,3) = 0.1.*2.^X(:,3);
         X(:,4) = 0.1.*2.^X(:,4);
         figure; hold on;
-        for ii=1:6
-            for jj=1:6
-                subplot(6,6,(ii-1)*6+jj);
+        for ii=1:ind
+            for jj=1:ind
+                subplot(ind,ind,(ii-1)*ind+jj);
                 if ii==jj
                     histogram(X(:,ii),15)
                 else
@@ -119,6 +128,10 @@ switch GradientCalc
         gaA = 1;
         ind = ind + 1;
 
+        %% dhdt: does not matter here, but need to provide some numbers
+        Input.Marginals(ind).Name = 'gaA';
+        dhdt_err = 1;
+        ind = ind + 1;
 
         %% Sliding law      
         Input.Marginals(ind).Name = 'm';
@@ -148,7 +161,7 @@ filename = "./UQ_input_GradientCalc_"+GradientCalc+"_SlidingLaw_"+...
     SlidingLaw+"_SampleSize_"+string(SampleSize)+"_Enrich_"+string(Enrich)+".mat";
 save(filename,"myInput","T");
 
-ANT_GenerateRunTable(T,GradientCalc,SlidingLaw,Enrich);
+ANT_GenerateRunTable(T,GradientCalc,SlidingLaw,Enrich,UseCatalogue);
 
 return
 %% ------------------ %%

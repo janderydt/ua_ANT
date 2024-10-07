@@ -160,6 +160,12 @@ switch UserVar.Velocity
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
 end
 
+%% dhdt interpolants
+if contains(UserVar.Inverse.Measurements,"dhdt")
+    UserVar.dhdtInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_dhdt_01-Jun-"+num2str(UserVar.Geometry)+".mat";
+    UserVar.dhdt_err = RunTable{ind,"dhdt_err"};
+end
+
 %% sliding law
 UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
 UserVar.Inverse.priorC = RunTable{ind,"priorC"};
@@ -211,7 +217,7 @@ end
 function UserVar = ANT_GetUserVar_FirstInverseRun(RunTable,ind,UserVar)
 
 %% Read inversion parameters from Runtable
-UserVar.Inverse.Measurements = RunTable{ind,"Measurements"}{:};
+UserVar.Inverse.Measurements = "-uv-"; % don't use dhdt in first inverse cycle  
 UserVar.Inverse.GradientCalculation = RunTable{ind,"GradientCalc"}{:};
 UserVar.Inverse.InvertFor = RunTable{ind,"InvertFor"}{:};
 UserVar.Inverse.logC.gs = RunTable{ind,"gsC"};

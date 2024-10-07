@@ -44,9 +44,13 @@ years = floor(timeo);
 Iwindow = find(years==year(targettime));
 
 [Xo,Yo]=ndgrid(double(xo(:,1)),double(yo(1,:)));
-dhdto = squeeze(dhdto(Iwindow,:,:));
+% average over 3 windows: average over 9 years total
+dhdto = squeeze((dhdto(Iwindow,:,:)+ ...
+    dhdto(Iwindow+3,:,:))/2);
 Fdhdto = griddedInterpolant(Xo,Yo,dhdto,'linear','none');
-Fdhdto_std = Fdhdto; Fdhdto_std.Values = squeeze(dhdto_std(Iwindow,:,:));
+Fdhdto_std = Fdhdto; 
+Fdhdto_std.Values = squeeze(1/2*sqrt(dhdto_std(Iwindow,:,:).^2+...
+    dhdto_std(Iwindow+3,:,:).^2));
 dhdto_ref = Fdhdto(X,Y);
 dhdto_err_ref = Fdhdto_std(X,Y);
 %

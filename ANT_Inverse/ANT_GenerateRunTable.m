@@ -1,4 +1,4 @@
-function ANT_GenerateRunTable(X,GradientCalc,SlidingLaw,Enrich)
+function ANT_GenerateRunTable(X,GradientCalc,SlidingLaw,Enrich,UseCatalogue)
 
 %% INPUTS:
 % -> X is the runtable created by ANT_GenerateRunTable or
@@ -30,6 +30,7 @@ for ind=1:size(X,1)
     gsA = round(X.gsA(ind)*10)/10;         %gsA
     gaC = round(X.gaC(ind)*10)/10;         %gaC
     gaA = round(X.gaA(ind)*10)/10;         %gaA
+    dhdt_err = round(X.dhdt_err(ind)*100)/100;
 
     taub = 80;  
     ub = 100;%X(ind,6);
@@ -47,7 +48,8 @@ for ind=1:size(X,1)
     % use finished Weertman inversion with nearest (m,n,gsA,gsC,gaA,gaC) 
     % as start value. The code will rescale C and AGlen depending on m and
     % n.
-    if GradientCalc == "Adjoint" && Enrich == 0 && SlidingLaw == "Weertman"
+    if GradientCalc == "Adjoint" && Enrich == 0 && UseCatalogue == 0
+
         if ind == 1
             UserVar2.type = "Inverse";
             UserVar2.home = pwd; 
@@ -64,7 +66,8 @@ for ind=1:size(X,1)
         iterations = "15000+1000";
         spinupyears = "1";
         invertfor = "-logC-logA-";
-     elseif GradientCalc == "Adjoint" && (Enrich == 1 || SlidingLaw == "Umbi")
+
+     elseif GradientCalc == "Adjoint" && (Enrich == 1 || UseCatalogue == 1)
         
         if ind == 1
             Start = []; ExpID_Start=[];
@@ -93,9 +96,10 @@ for ind=1:size(X,1)
         [Idx,D] = knnsearch(Start,[gaC gaA gsC gsA m n],"Distance","seuclidean");
         startC = ExpID_Start(Idx);
         startAGlen = ExpID_Start(Idx);
-        iterations = "5000+1000";
-        spinupyears = "1";
+        iterations = "1000+5000";
+        spinupyears = "3";
         invertfor = "-logC-logA-";
+
     else % no start values
         startC = -9999;
         startAGlen = 0;
@@ -125,7 +129,8 @@ for ind=1:size(X,1)
         gsA,...                             %gsA
         gaC,...                             %gaC
         gaA,...                             %gaA
-        "-uv-",...                          %Measurements
+        "-uv-dhdt-",...                     %Measurements
+        dhdt_err,...                        %dhdt error scaling
         2000,...                            %Velocity
         2000,...                            %startGeometry
         startMesh,...                       %startMesh

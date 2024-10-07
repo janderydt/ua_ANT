@@ -8,7 +8,31 @@ x = MUA.coordinates(:,1); y = MUA.coordinates(:,2);
 
 if strfind(CtrlVar.Inverse.Measurements,'dhdt')
     
-     load(UserVar.dhdtInterpolant);
+    % to speed up the dhdt assembly, we check if the fields have
+    % previously been constructed for the same mesh. If not, we read the
+    % interpolants and construct a new file for this particular mesh.
+    filename_dhdtfields = UserVar.dhdtInterpolants;
+    filename_dhdtfields = erase(filename_dhdtfields,["GriddedInterpolants_","ScatteredInterpolants_",".mat"]);
+    filename_dhdtfields = filename_dhdtfields + "_mesh_Nnodes" + string(MUA.Nnodes) + "_Nele" + string(MUA.Nele) + ".mat";
+
+    fprintf('Loading dhdt fields for grounded ice.\n');
+
+    fprintf('Trying to read fields from %s...',filename_dhdtfields);
+
+    if exist(filename_dhdtfields,"file")
+
+        load(filename_dhdtfields);
+
+    else
+
+        load(UserVar.dhdtInterpolants);
+        dhdtMeas=Fdhdt_CPOM(x,y);
+        dhdtError=Fdhdt_err_CPOM(x,y);
+
+        save(filename_dhdtfields,"dhdtMeas","dhdtError");
+
+
+    end
      
 %     if strfind(CtrlVar.Experiment,'GL')
 %         % small errors for dhdt at GL and on floating parts
@@ -20,8 +44,21 @@ if strfind(CtrlVar.Inverse.Measurements,'dhdt')
 %         I = find(GF.node<1);
 %         dhdtError([I(:);ID(:)])=1e-1;
 %     end
+
+    % set zero values and high errors for floating areas
+    dhdtMeas(GF.node<0.5) = 0;
+    dhdtError(GF.node<0.5) = 1e10;
      
      Meas.dhdt=dhdtMeas;
+
+     % Apply scaling of the dhdt errors and set minimum value of the error 
+     % to 0.1. This is a somewhat arbitrary number, but previous 
+     % experiments have shown that for smaller errors, the inversion tends 
+     % to overly constrain dhdt, which leads to 'noisy' AGlen and C fields,
+     % and a larger misfit to the surface velocities. It is questionable 
+     % anyhow if dhdt_err<0.1m can be achieved by satellite instruments.
+     dhdtError = max(UserVar.Inverse.dhdt_err*dhdtError,0.1);
+
      Meas.dhdtCov=sparse(1:MUA.Nnodes,1:MUA.Nnodes,dhdtError.^2,MUA.Nnodes,MUA.Nnodes);
      if any(isnan(dhdtError))
          error('NaN in dhdtError'); 

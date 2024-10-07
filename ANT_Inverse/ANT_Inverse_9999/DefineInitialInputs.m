@@ -25,6 +25,10 @@ if UserVar.InverseCycle
     CtrlVar.doInverseStep=1;
     CtrlVar.NRitmax=50;
 elseif UserVar.SpinupCycle
+    %CtrlVar.ExplicitEstimationMethod="-dhdt-" ;
+    %CtrlVar.GuardAgainstWildExtrapolationInExplicit_uvh_Step=1;
+    %CtrlVar.ATSdtMin=1e-10;
+    %CtrlVar.NRitmax=25;
     CtrlVar.TimeDependentRun=1; 
     CtrlVar.doInverseStep=0;
     CtrlVar.TotalNumberOfForwardRunSteps=inf; % an arbitrary large number
@@ -32,7 +36,7 @@ elseif UserVar.SpinupCycle
     if ~UserVar.Spinup.Restart
         CtrlVar.time=0;
         CtrlVar.ResetTime=1;
-        CtrlVar.dt = 1e-3;
+        CtrlVar.dt = 1e-6;
         CtrlVar.ResetTimeStep=1; 
         CtrlVar.RestartTime=0;  
     end          
@@ -103,13 +107,15 @@ if UserVar.InverseCycle
     CtrlVar.Inverse.SaveAGlenEstimateInSeperateFile=true;
     CtrlVar.NameOfFileForSavingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
     CtrlVar.NameOfFileForSavingAGlenEstimate=UserVar.NameOfFileForSavingAGlenEstimate;
-else
-    CtrlVar.InfoLevelNonLinIt=1;
-    CtrlVar.InfoLevel=1;
+else    
+    CtrlVar.InfoLevelBackTrack=1;
+    CtrlVar.InfoLevelNonLinIt=10;
+    CtrlVar.InfoLevel=10;
     CtrlVar.DefineOutputsDt=1;
     CtrlVar.WriteRestartFile = 1;
     CtrlVar.WriteRestartFileInterval = 100;
     CtrlVar.NameOfRestartFiletoWrite = UserVar.NameOfRestartFiletoRead;
+
 end
 CtrlVar.CreateOutputsEndOfRun=1;
 
@@ -180,6 +186,6 @@ CtrlVar.Cmin=1e-150;  CtrlVar.Cmax=1e150;
 %% Minimum ice thickness
 CtrlVar.ThicknessConstraints=0;
 CtrlVar.ResetThicknessToMinThickness=1;  % change this later on
-CtrlVar.ThickMin=1;
+CtrlVar.ThickMin=10;
 
 end
