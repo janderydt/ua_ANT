@@ -10,8 +10,11 @@ function ANT_GenerateRunTable(X,GradientCalc,SlidingLaw,Enrich,UseCatalogue)
 
 addpath('../');
 
+MaxTableLength = 270;
 UserVar.home = pwd;
-UserVar.Table = "NewTable_"+GradientCalc+"_"+SlidingLaw+"_Enriched"+string(Enrich)+".csv";
+DT=datetime;
+DT.Format="dd-MM-yyyy";
+UserVar.Table = "NewTable_"+GradientCalc+"_"+SlidingLaw+"_Enriched"+string(Enrich)+"_"+string(DT)+".csv";
 UserVar.type = "Inverse";
 
 if ~exist(UserVar.Table,"file")
@@ -150,3 +153,9 @@ for ind=1:size(X,1)
 end
 
 [~] = ANT_ReadWritetable(UserVar,UserVar.Table,RunTable,'write');
+for nn = 1:ceil(height(RunTable)/MaxTableLength)
+    IndexRange = (nn-1)*MaxTableLength+1:min(nn*MaxTableLength,height(RunTable));
+    RunTable_tmp = RunTable(IndexRange,:);
+    TableName = erase(UserVar.Table,".csv")+"_"+string(nn)+".csv";
+    [~] = ANT_ReadWritetable(UserVar,TableName,RunTable_tmp,'write');
+end

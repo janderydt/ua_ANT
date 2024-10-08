@@ -11,7 +11,7 @@ SlidingLaw = "Weertman";
 SampleSize = 1000;
 Enrich = 0; % enriches the existing Latin Hypercube
 EnrichSampleSize = 180;
-UseCatalogue=1;
+UseCatalogueOfFinishedSimulations=1;
 
 Input.Name = 'Parameter array for inverse simulations';
 ind = 1;
@@ -57,8 +57,8 @@ switch GradientCalc
         Input.Marginals(ind).Name = 'dhdt_err';
         %Input.Marginals(ind).Parameters = log10([1 250]); % parameters are bounds
         %Input.Marginals(ind).Bounds = log10([1 250]);
-        Input.Marginals(ind).Parameters = [0.25 1];
-        Input.Marginals(ind).Bounds = [0.25 1];
+        Input.Marginals(ind).Parameters = [0.1 1];
+        Input.Marginals(ind).Bounds = [0.1 1];
         ind = ind + 1;
         
         %% Sliding law
@@ -161,7 +161,7 @@ filename = "./UQ_input_GradientCalc_"+GradientCalc+"_SlidingLaw_"+...
     SlidingLaw+"_SampleSize_"+string(SampleSize)+"_Enrich_"+string(Enrich)+".mat";
 save(filename,"myInput","T");
 
-ANT_GenerateRunTable(T,GradientCalc,SlidingLaw,Enrich,UseCatalogue);
+ANT_GenerateRunTable(T,GradientCalc,SlidingLaw,Enrich,UseCatalogueOfFinishedSimulations);
 
 return
 %% ------------------ %%

@@ -31,7 +31,6 @@ if strfind(CtrlVar.Inverse.Measurements,'dhdt')
 
         save(filename_dhdtfields,"dhdtMeas","dhdtError");
 
-
     end
      
 %     if strfind(CtrlVar.Experiment,'GL')
@@ -49,7 +48,7 @@ if strfind(CtrlVar.Inverse.Measurements,'dhdt')
     dhdtMeas(GF.node<0.5) = 0;
     dhdtError(GF.node<0.5) = 1e10;
      
-     Meas.dhdt=dhdtMeas;
+    Meas.dhdt=dhdtMeas;
 
      % Apply scaling of the dhdt errors and set minimum value of the error 
      % to 0.1. This is a somewhat arbitrary number, but previous 
@@ -58,7 +57,7 @@ if strfind(CtrlVar.Inverse.Measurements,'dhdt')
      % and a larger misfit to the surface velocities. It is questionable 
      % anyhow if dhdt_err<0.1m can be achieved by satellite instruments.
      dhdtError = max(UserVar.Inverse.dhdt_err*dhdtError,0.1);
-
+    
      Meas.dhdtCov=sparse(1:MUA.Nnodes,1:MUA.Nnodes,dhdtError.^2,MUA.Nnodes,MUA.Nnodes);
      if any(isnan(dhdtError))
          error('NaN in dhdtError'); 
