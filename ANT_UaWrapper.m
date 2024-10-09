@@ -58,9 +58,9 @@ if nargin > 3
     row_number = round(double(row_number));
     expid_new = round(double(expid_new));
 end
-    
-if ua_config~=""
-    % read inputs from config file
+
+% read inputs from config file
+if ua_config~=""    
     configfile = UserVar.home+"/"+ua_config;
     if ~exist(configfile,"file")
         error("Config file "+configfile+" does not exist.");
@@ -88,6 +88,8 @@ if ua_config~=""
                     runtable = UserVar.home+"/"+string(erase(tline,["runtable"," ","=",""""]));
                 elseif contains(tline,'idrange=')
                     idrange = str2double(split(string(erase(tline,["idrange"," ","=","""","[","]"])),":"));
+                elseif contains(tline,'debug=')
+                    debug = str2double(string(erase(tline,["debug"," ","=","""","[","]"])));
                 end
             end
         end
@@ -102,6 +104,7 @@ else
     walltime_remaining = walltime;
     runtable = UserVar.home+"/RunTable_"+UserVar.hostname+".csv";
     idrange = [1 999];
+    debug = 0;
 end
 
 % check that all inputs are now available
@@ -116,6 +119,7 @@ else
     UserVar.walltime_remaining = walltime_remaining;
     UserVar.runtable_global = string(runtable);
     UserVar.idrange = idrange;
+    UserVar.debug = debug;
 end
 
 %% initialize global log file

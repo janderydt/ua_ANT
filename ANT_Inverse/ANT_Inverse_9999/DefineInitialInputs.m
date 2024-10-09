@@ -1,5 +1,7 @@
 function [UserVar,CtrlVar,MeshBoundaryCoordinates]=DefineInitialInputs(UserVar,CtrlVar)
 
+%% DEBUG OPTIONS ARE AT THE END OF THIS SCRIPT %%
+
 %% Keep track of walltime
 % These lines define a UI to keep track of the remaining walltime.
 % If the walltime expires, the UI is set to false, which is picked
@@ -25,10 +27,6 @@ if UserVar.InverseCycle
     CtrlVar.doInverseStep=1;
     CtrlVar.NRitmax=50;
 elseif UserVar.SpinupCycle
-    %CtrlVar.ExplicitEstimationMethod="-dhdt-" ;
-    %CtrlVar.GuardAgainstWildExtrapolationInExplicit_uvh_Step=1;
-    %CtrlVar.ATSdtMin=1e-10;
-    %CtrlVar.NRitmax=25;
     CtrlVar.TimeDependentRun=1; 
     CtrlVar.doInverseStep=0;
     CtrlVar.TotalNumberOfForwardRunSteps=inf; % an arbitrary large number
@@ -93,13 +91,13 @@ CtrlVar.SlidingLaw = UserVar.SlidingLaw;
 
 %% Output options
 if UserVar.InverseCycle
-    CtrlVar.InfoLevelInverse=10; % Overall level of information (inverse runs). 
+    CtrlVar.InfoLevelInverse=1; % Overall level of information (inverse runs). 
                                 % Note: generally good to combine with CtrlVar.InfoLevelNonLinIt=0;
-                                % CtrlVar.InfoLevel=0; to suppress information related to the forward step. 
-    CtrlVar.InfoLevelBackTrack=10; 
-    CtrlVar.Inverse.InfoLevelBackTrack=10;  % info on backtracking within inverse step
-    CtrlVar.InfoLevelNonLinIt=1;
-    CtrlVar.InfoLevel=1;
+                                % CtrlVar.InfoLevel=0; to suppress information related to the forward step.   
+    CtrlVar.Inverse.InfoLevelBackTrack=1;  % info on backtracking within inverse step
+    CtrlVar.InfoLevel=0;
+    CtrlVar.InfoLevelBackTrack=0;
+    CtrlVar.InfoLevelNonLinIt=0;  
     CtrlVar.Inverse.WriteRestartFile=1;  % always a good idea to write a restart file. 
     CtrlVar.Inverse.NameOfRestartInputFile = UserVar.NameOfRestartFiletoRead;
     CtrlVar.Inverse.NameOfRestartOutputFile = UserVar.NameOfRestartFiletoRead;
@@ -108,9 +106,9 @@ if UserVar.InverseCycle
     CtrlVar.NameOfFileForSavingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
     CtrlVar.NameOfFileForSavingAGlenEstimate=UserVar.NameOfFileForSavingAGlenEstimate;
 else    
+    CtrlVar.InfoLevel=1;
     CtrlVar.InfoLevelBackTrack=1;
-    CtrlVar.InfoLevelNonLinIt=10;
-    CtrlVar.InfoLevel=10;
+    CtrlVar.InfoLevelNonLinIt=1;  
     CtrlVar.DefineOutputsDt=1;
     CtrlVar.WriteRestartFile = 1;
     CtrlVar.WriteRestartFileInterval = 100;
@@ -186,6 +184,20 @@ CtrlVar.Cmin=1e-150;  CtrlVar.Cmax=1e150;
 %% Minimum ice thickness
 CtrlVar.ThicknessConstraints=0;
 CtrlVar.ResetThicknessToMinThickness=1;  % change this later on
-CtrlVar.ThickMin=10;
+CtrlVar.ThickMin=1;
+
+%% Debugging options
+if UserVar.debug == 1
+    %CtrlVar.ExplicitEstimationMethod="-dhdt-" ;
+    %CtrlVar.GuardAgainstWildExtrapolationInExplicit_uvh_Step=1;
+    %CtrlVar.ATSdtMin=1e-10;
+    %CtrlVar.NRitmax=25;
+    CtrlVar.InfoLevel=100;
+    CtrlVar.InfoLevelBackTrack=10;
+    CtrlVar.InfoLevelNonLinIt=100;
+    CtrlVar.doplots=1;   
+    CtrlVar.PlotGLs=1;
+    %CtrlVar.ThickMin=1;
+end
 
 end
