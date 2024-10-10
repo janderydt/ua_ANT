@@ -118,7 +118,7 @@ if __name__ == "__main__":
             run_counter+=1
             
             if capacity>1:
-                time.sleep(600)
+                time.sleep(120)
             
         else:
             

@@ -54,7 +54,7 @@ end
 if nargin > 1
     pgid = str2double(pgid);
 end
-if nargin > 3
+if nargin == 5
     row_number = round(double(row_number));
     expid_new = round(double(expid_new));
 end
@@ -165,18 +165,18 @@ if ~isempty(Iexisting)
         UserVar.ExpID = RunTable{ind,'ExpID'};
         UserVar.Experiment = UserVar.Domain+"_"+UserVar.type+"_"+string(UserVar.ExpID);
 
-        % initialize experiment log and error files
-        logfile = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+".log";
-        
-        fid = fopen(logfile,'a+');
-        UserVar.fid_experimentlog = fid;
-        errorfile = UserVar.home+"/stderr_jobid"+string(UserVar.pgid)+"_expid"+string(UserVar.ExpID)+".out";
-        UserVar.fid_experror = fopen(errorfile,'a+');
-
         % check if not submitted, not running, not finished
         indnsnr = RunTable{ind,'Submitted'}==0 & RunTable{ind,'Running'}==0 & RunTable{ind,'Finished'}==0;
         
         if indnsnr
+
+            % initialize experiment log and error files
+            logfile = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+".log";
+            
+            fid = fopen(logfile,'a+');
+            UserVar.fid_experimentlog = fid;
+            errorfile = UserVar.home+"/stderr_jobid"+string(UserVar.pgid)+"_expid"+string(UserVar.ExpID)+".out";
+            UserVar.fid_experror = fopen(errorfile,'a+');
 
             fprintf(UserVar.fid_experimentlog,'============================\n');
             fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");    
@@ -334,7 +334,7 @@ else
             end            
         end
     else
-        fprintf(UserVar.fid_masterlog,"Empty RunTable - stop job and quit./n");
+        fprintf(UserVar.fid_masterlog,"Empty RunTable - stop job and quit.\n");
         quit;
     end
 end
@@ -351,12 +351,16 @@ if ~isempty(Inew)
         while ismember(ExpID,existingID) 
             ExpID = randi([UserVar.idrange(1) UserVar.idrange(2)]);
         end   
-        RunTable{ind,"ExpID"} = ExpID;
-        RunTable{ind,'pgid'} = pgid;
+        RunTable{ind,"ExpID"} = ExpID; UserVar.ExpID = ExpID;
+        RunTable{ind,"pgid"} = pgid;
+        RunTable{ind,"Submitted"} = 1;
+        RunTable{ind,"SubmissionTime"} = string(datetime("now","format","yyyy-MM-dd HH:mm:ss"));
+        fprintf(UserVar.fid_masterlog,"   ...Writing global RunTable %s...",UserVar.runtable_global);     
         [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_global,RunTable,'write');
+        fprintf(UserVar.fid_masterlog,"done.\n");
     else
         RunTable{ind,"ExpID"} = ExpID;
-        RunTable{ind,'pgid'} = pgid;
+        RunTable{ind,"pgid"} = pgid;
     end
 
     % initialize some UserVars

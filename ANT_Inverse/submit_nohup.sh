@@ -17,6 +17,6 @@ fi
 
 $(
 
-/usr/local/MATLAB/R2023b/bin/matlab -nodisplay -r "$start; quit;";
+/usr/local/MATLAB/R2024b/bin/matlab -nodisplay -r "$start; quit;";
 
 )&

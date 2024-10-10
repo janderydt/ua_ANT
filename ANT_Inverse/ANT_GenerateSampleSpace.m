@@ -7,7 +7,7 @@ rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
 GradientCalc = "Adjoint"; % options: FixPoint or Adjoint
-SlidingLaw = "Weertman";
+SlidingLaw = "Umbi";
 SampleSize = 1000;
 Enrich = 0; % enriches the existing Latin Hypercube
 EnrichSampleSize = 180;

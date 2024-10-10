@@ -99,7 +99,7 @@ for ind=1:size(X,1)
         [Idx,D] = knnsearch(Start,[gaC gaA gsC gsA m n],"Distance","seuclidean");
         startC = ExpID_Start(Idx);
         startAGlen = ExpID_Start(Idx);
-        iterations = "1000+5000";
+        iterations = "5000+5000";
         spinupyears = "3";
         invertfor = "-logC-logA-";
 
