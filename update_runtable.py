@@ -48,12 +48,16 @@ save_runinfo(data_global, runtable_global+".tmp")
 for i in range(data_global.shape[0]):
    pgid = data_global['pgid'].values[i]
    if pgid != 0:
-       data_global.at[i,'pgid']=0
-       data_global.at[i,'Error']=1
-       data_global.at[i,'Restart']=0
-       data_global.at[i,'Running']=0
-       data_global.at[i,'Submitted']=0
-
+      print('non-zero pgid found:')
+      print(data_global.loc[[i]])
+      correct = input("Would you like to set pgid=0, error=1, restart=0 in the Runtable? yes=1, no=0: ")
+      correct= int(correct)
+      if correct == 1:
+         data_global.at[i,'pgid']=0
+         data_global.at[i,'Error']=1
+         data_global.at[i,'Restart']=0
+         data_global.at[i,'Running']=0
+         data_global.at[i,'Submitted']=0
 
 # save modified version of the global runtable
 save_runinfo(data_global, runtable_global)
