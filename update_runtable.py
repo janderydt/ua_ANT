@@ -43,8 +43,8 @@ for i in range(data_global.shape[0]):
 # save intermediate version of updated global runtable
 save_runinfo(data_global, runtable_global+".tmp")
 
-# now check for rows with pgid~=0. These are experiments that did not finished cleanly before the end of the walltime.
-# we set pgid=0, error=1, restart=1
+# now check for rows with pgid~=0. These are experiments that did not finish cleanly before the end of the walltime.
+# we set pgid=0, error=1, restart=0
 for i in range(data_global.shape[0]):
    pgid = data_global['pgid'].values[i]
    if pgid != 0:
