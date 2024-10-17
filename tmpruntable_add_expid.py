@@ -25,7 +25,7 @@ with open(config_file, "r") as fi: # Open the file in read mode
 data_global = read_runinfo(runtable_global+".tmp",runtype)
 
 # update experiment info within required range
-data_global['ExpID'].values[row_number]=expid
+data_global.at[row_number,'ExpID']=expid
 
 # save updated global runtable to temporary file
 save_runinfo(data_global, runtable_global+".tmp")
