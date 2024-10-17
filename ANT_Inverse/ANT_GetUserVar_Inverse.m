@@ -163,7 +163,7 @@ end
 %% dhdt interpolants
 if contains(UserVar.Inverse.Measurements,"dhdt")
     UserVar.dhdtInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_dhdt_01-Jun-"+num2str(UserVar.Geometry)+".mat";
-    UserVar.dhdt_err = RunTable{ind,"dhdt_err"};
+    UserVar.Inverse.dhdt_err = RunTable{ind,"dhdt_err"};
 end
 
 %% sliding law

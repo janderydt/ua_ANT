@@ -130,6 +130,7 @@ UserVar.fid_masterlog = fid;
 %% read run table
 RunTable = ANT_ReadWritetable(UserVar,UserVar.runtable_global,[],'read');
 
+%% if row_number is specified as input, check whether it is an existing simulation
 if ~isempty(RunTable)
     Iexisting = find(RunTable{:,'ExpID'}~=0 & RunTable{:,'Error'}==0);
     if ~isempty(Iexisting)

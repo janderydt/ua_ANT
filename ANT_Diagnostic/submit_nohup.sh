@@ -3,7 +3,6 @@
 pid=$$;
 pgid=$(ps -p $pid -o pgid --no-headers);
 pgid=$(echo $pgid | sed 's/ //g');
-echo $pgid;
 
 host=$(hostname)
 

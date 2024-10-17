@@ -2,7 +2,7 @@ function UaData_CleanUp
 
 exptype = "Inverse";
 domain = "ANT_nsmbl";
-idrange = [2000,9999];
+idrange = [10000,18000];
 delims = ["_It","_Yrs"];
 suffix_to_delete = "-RestartFile"+delims;% "NewMeshFile.mat"
 
@@ -30,7 +30,7 @@ for ii=1:numel(folders)
                 end
                 [~,I] = sort(filenums,"ascend");
                 if numel(I)>1
-                    for jj=1:I(end-1) % do not delete the last restart file
+                    for jj=I(1):I(end-1) % do not delete the last restart file
                         tmp = files_to_delete(I(jj)).folder+"/"+files_to_delete(I(jj)).name;
                         fprintf("Deleting %s\n",tmp);
                         delete(tmp);

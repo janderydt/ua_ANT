@@ -4,7 +4,8 @@ addpath("..");
 
 %RunTable = "RunTable_ARCHER2_"+string([2 5 8])+".csv";
 %RunTable = "RunTable_ARCHER2_"+string([6])+".csv";
-RunTable = "RunTable_ARCHER2_"+string([10 11 12 13])+".csv";
+RunTable = "RunTable_ARCHER2_10-10-2024_"+string([10 11 12 13])+".csv";
+%RunTable = "RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
 
 gaA=[]; gaC=[]; gsA=[]; gsC=[]; m=[]; n=[]; finished=[]; error=[]; running=[];
 Ind_finished=[]; Ind_error=[]; Ind_running=[];
