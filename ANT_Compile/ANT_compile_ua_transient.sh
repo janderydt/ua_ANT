@@ -14,6 +14,8 @@ UA_WRAPPER_FILES=$REPO_DIR/ANT_Transient
 UA_CASE_UPDATES=$REPO_DIR/ANT_Transient/ANT_Transient_9999
 # Path to Ua source directory (default use the one inside UaMITgcm)
 UA_SOURCE=/mnt/md0/Ua/UaSource_beta
+# Path to the PICO source coude
+PICO_SOURCE=/mnt/md0/Ua/UaPICO_master
 
 if [ -e $UA_BUILD ]; then
     # Empty the directory
@@ -23,8 +25,9 @@ else
     mkdir $UA_BUILD
 fi
 
-# Copy all Matlab files from UaSource
+# Copy all Matlab files from UaSource and PICOSource
 cp $UA_SOURCE/*.m $UA_BUILD
+cp $PICO_SOURCE/*.m $UA_BUILD
 # Need to collapse a couple of subdirectories for more Matlab files
 cp `find $UA_SOURCE/UaUtilities/ -name "*.m"` $UA_BUILD
 cp `find $UA_SOURCE/NewestVertexBisection/ -name "*.m"` $UA_BUILD

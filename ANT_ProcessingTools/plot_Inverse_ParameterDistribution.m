@@ -4,10 +4,11 @@ addpath("..");
 
 %RunTable = "RunTable_ARCHER2_"+string([2 5 8])+".csv";
 %RunTable = "RunTable_ARCHER2_"+string([6])+".csv";
-RunTable = "RunTable_ARCHER2_10-10-2024_"+string([10 11 12 13])+".csv";
-%RunTable = "RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
+%RunTable = "RunTable_ARCHER2_10-10-2024_"+string([10 11 12 13])+".csv";
+RunTable = "RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
 
-gaA=[]; gaC=[]; gsA=[]; gsC=[]; m=[]; n=[]; finished=[]; error=[]; running=[];
+gaA=[]; gaC=[]; gsA=[]; gsC=[]; m=[]; n=[]; dhdt=[];
+finished=[]; error=[]; running=[]; ExpID=[];
 Ind_finished=[]; Ind_error=[]; Ind_running=[];
 
 for tt=1:numel(RunTable)
@@ -24,6 +25,8 @@ for tt=1:numel(RunTable)
     gsC = [gsC; RunTable_tmp{:,'gsC'}];
     m = [m; RunTable_tmp{:,'m'}];
     n = [n; RunTable_tmp{:,'n'}];
+    dhdt = [dhdt; RunTable_tmp{:,'dhdt_err'}];
+    ExpID = [ExpID; RunTable_tmp{:,'ExpID'}];
 
     finished_tmp = RunTable_tmp{:,'Finished'};
     finished = [finished; finished_tmp];
@@ -121,5 +124,16 @@ counts(3,:)=histc(n(Ind_running),binrng);
 b = bar(binrng,counts,"stacked",'EdgeColor','none');
 title("n (min: "+string(min(n))+", max: "+string(max(n))+")");
 xlabel('n'); ylabel('count');
+grid on; box on;
+legend(b,["error","finished","running"],'Location','northwest');
+
+figure;  hold on;
+binrng = linspace(min(dhdt),max(dhdt),50);
+counts(1,:)=histc(dhdt(Ind_error),binrng);
+counts(2,:)=histc(dhdt(Ind_finished),binrng);
+counts(3,:)=histc(dhdt(Ind_running),binrng);
+b = bar(binrng,counts,"stacked",'EdgeColor','none');
+title("dhdt_{err} (min: "+string(min(dhdt))+", max: "+string(max(dhdt))+")");
+xlabel('dhdt_{err}'); ylabel('count');
 grid on; box on;
 legend(b,["error","finished","running"],'Location','northwest');

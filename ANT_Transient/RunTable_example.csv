@@ -1,2 +1,2 @@
-Domain,pgid,ExpID,Submitted,SubmissionTime,Running,Error,ErrorTime,Finished,FinishedTime,Restart,AdaptMesh,Geometry,InverseA,InverseCycleA,InverseC,InverseCycleC,SMB,BasalMelt,PICO_C1,PICO_gam,LQ_gam,OceForcing
-ANT_nsmbl,0,0,0,2000-01-01 00:00:00,0,0,2000-01-01 00:00:00,0,2000-01-01 00:00:00,0,0,2000,0,1,0,1,MAR,PICO,10000000,0.00006,75000,ismip6
+Domain,pgid,ExpID,Submitted,SubmissionTime,Running,Error,ErrorTime,Finished,FinishedTime,Restart,AdaptMesh,StartYear,Inverse,InverseCycle,SMB,BasalMelt,PICO_C1,PICO_gam,LQ_gam,OceForcing,Comments
+ANT,0,0,0,2000-01-01 00:00:00,0,0,0,0,2000-01-01 00:00:00,0,0,2000,3568,2,MAR,PICO,3000000,0.00009,75000,ismip6,

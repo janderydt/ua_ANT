@@ -3,16 +3,18 @@ function Calc_InverseResults_Ensemble
 addpath("/mnt/md0/Ua/cases/ANT/");
 addpath(getenv("froot_tools"));
 
-only_finished=0;
+only_finished=1;
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
 %UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 4 5 8])+".csv";
 %UserVar.idrange = [3000,3999;5000,5999;6000,6999;9000,9999];
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([10 11 12 13])+".csv";
-UserVar.idrange = [10000,10999; 11000, 11999; 12000, 12999; 13000, 13999];
+%UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([10 11 12 13])+".csv";
+%UserVar.idrange = [10000,10999; 11000, 11999; 12000, 12999; 13000, 13999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
+UserVar.idrange = [14000,14999; 15000, 15999; 16000, 16999; 17000, 17999];
 
-inversiondata_filename = "inversiondata_Umbi.mat";
+inversiondata_filename = "inversiondata_Weertman.mat";
 
 if exist(inversiondata_filename,"file")
     load(inversiondata_filename);
