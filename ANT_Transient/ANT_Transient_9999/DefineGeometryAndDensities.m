@@ -1,5 +1,7 @@
 function [UserVar,s,b,S,B,rho,rhow,g]=DefineGeometryAndDensities(UserVar,CtrlVar,MUA,F,FieldsToBeDefined)
 
+persistent Ftmp MUAtmp
+
 if nargin<5
     FieldsToBeDefined='sbSBrho';
 end
@@ -18,42 +20,49 @@ fprintf('Loading geometry and density fields %s.\n',FieldsToBeDefined);
 x=MUA.coordinates(:,1); y=MUA.coordinates(:,2);
 S = 0*x;
 
-if exist(UserVar.RestartFile,"file")
-    tmp=load(FieldsToBeDefined,"MUA");
+if exist(UserVar.InverseRestartFile,"file")
+
+    if contains(FieldsToBeDefined,["B","s","b","rho"]) & isempty(Ftmp)
+        tmp = load(UserVar.InverseRestartFile,"F","MUA");
+        Ftmp = tmp.F;
+        MUAtmp = tmp.MUA;
+    end
+
     if contains(FieldsToBeDefined,"B")
-        load(UserVar.RestartFile,"B");
-        if tmp.MUA.Nnodes ~= MUA.Nnodes % Nnodes in restartfile does not equal number of nodes in new mesh. Interpolate.
+        B = Ftmp.B;
+        if numel(B) ~= MUA.Nnodes % Nnodes in restartfile does not equal number of nodes in new mesh. Interpolate.
             CtrlVar.MapOldToNew.method = "ShapeAndScattered"; 
-            [~,B] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,0,B);
+            [~,B] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],MUAtmp,MUA,0,B);
         end
     end
+
     if contains(FieldsToBeDefined,"b")   
-        load(UserVar.RestartFile,"b");
-        if tmp.MUA.Nnodes ~= MUA.Nnodes % Nnodes in restartfile does not equal number of nodes in new mesh. Interpolate.
+        b = Ftmp.b;
+        if numel(b) ~= MUA.Nnodes % Nnodes in restartfile does not equal number of nodes in new mesh. Interpolate.
             CtrlVar.MapOldToNew.method = "ShapeAndScattered"; 
-            [~,b] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,0,b);
+            [~,b] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],MUAtmp,MUA,0,b);
         end
     end
+
     if contains(FieldsToBeDefined,"s")
-        load(UserVar.RestartFile,"s");
-        if tmp.MUA.Nnodes ~= MUA.Nnodes % Nnodes in restartfile does not equal number of nodes in new mesh. Interpolate.
+        s = Ftmp.s;
+        if numel(s) ~= MUA.Nnodes % Nnodes in restartfile does not equal number of nodes in new mesh. Interpolate.
             CtrlVar.MapOldToNew.method = "ShapeAndScattered"; 
-            [~,s] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,0,s);
+            [~,s] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],MUAtmp,MUA,0,s);
         end
     end
-    
-    
-    load(UserVar.RestartFile,"rho");
-    if tmp.MUA.Nnodes ~= MUA.Nnodes % Nnodes in restartfile does not equal number of nodes in new mesh. Interpolate.
+
+    rho = Ftmp.rho;
+    if numel(rho) ~= MUA.Nnodes % Nnodes in restartfile does not equal number of nodes in new mesh. Interpolate.
             CtrlVar.MapOldToNew.method = "ShapeAndScattered"; 
             [~,rho] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,917,rho);
     end
     
-    fprintf('Using fields from %s. Done.\n',UserVar.RestartFile);
+    fprintf('Using fields from %s. Done.\n',UserVar.InverseRestartFile);
 
 else
 
-    fprintf('%s does not exist, try interpolants instead...',UserVar.RestartFile);
+    fprintf('%s does not exist, try interpolants instead...',UserVar.InverseRestartFile);
 
     if exist(UserVar.GeometryInterpolants,"file")
 
@@ -78,7 +87,7 @@ else
 
     else
 
-        error("Neither "+UserVar.RestartFile+" nor "+UserVar.GeometryInterpolants+" exist"+...
+        error("Neither "+UserVar.InverseRestartFile+" nor "+UserVar.GeometryInterpolants+" exist"+...
             " so I don't know what geometry fields to use. Breaking out.");
 
     end
@@ -89,13 +98,13 @@ else
         clearvars Frho;
     else
 
-        error("Neither "+UserVar.RestartFile+" nor "+UserVar.DesnityInterpolant+" exist"+...
+        error("Neither "+UserVar.InverseRestartFile+" nor "+UserVar.DensityInterpolant+" exist"+...
             " so I don't know what ice density to use. Breaking out.");
     end
 
     %save(filename_geometryfields,"B","b","S","s","rho");
     fprintf('done.\n');
-    fprintf('Used geometry interpolants from %s for grounded ice.\n',UserVar.GIGeometryInterpolants);
+    fprintf('Used geometry interpolants from %s for grounded ice.\n',UserVar.GeometryInterpolants);
 
 end
 

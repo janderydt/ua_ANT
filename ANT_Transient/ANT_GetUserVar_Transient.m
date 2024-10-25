@@ -5,23 +5,26 @@ function UserVar = ANT_GetUserVar_Transient(RunTable,ind,UserVar)
 %%% qing.qin@northumbria.ac.uk %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+UserVar.StartYear = RunTable{ind,"StartYear"};
+UserVar.Inverse = RunTable{ind,"Inverse"};
+UserVar.InverseCycle = RunTable{ind,"InverseCycle"};
+UserVar.InverseRestartFile = UserVar.datafolder+"/ANT_InputsForTransientSimulations/ANT_nsmbl_Inverse_"+...
+    string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+...
+    string(UserVar.InverseCycle)+".mat";
+
+%% mesh variables
+UserVar.InitialMeshFileName = UserVar.InverseRestartFile;
+UserVar.MeshBoundaryCoordinatesFile = "MeshBoundaryCoordinates.mat";
+
 %% geometry interpolants: only needed for bedrock geometry
-UserVar.GeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.BedGeometry)+"_EXTRUDED.mat";
+UserVar.GeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.StartYear)+"_EXTRUDED.mat";
 
 %% density interpolant: same file as geometry interpolants
 UserVar.DensityInterpolant = UserVar.GeometryInterpolants;  
 
-UserVar.Inverse = RunTable{ind,"Inverse"};
-UserVar.InverseCycle =RunTable{ind,"InverseCycle"};
-UserVar.InitialMeshFileName = UserVar.datafolder+"/ANT_InputsForTransientSimulations/ANT_nsmbl_Inverse_"+...
-    string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+...
-    string(UserVar.InverseCycle)+".mat"; 
-
 %% sliding law and rheology
 % extract information from the relevant (inversion) restart file   
-NameOfFiletoRead = UserVar.datafolder+"/ANT_InputsForTransientSimulations/ANT_nsmbl_Inverse_"+...
-    string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+...
-    string(UserVar.InverseCycle)+".mat";
+NameOfFiletoRead = UserVar.InverseRestartFile;
 
 if exist(NameOfFiletoRead,"file")
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
@@ -34,7 +37,7 @@ if exist(NameOfFiletoRead,"file")
     
     % copy AGlen field
     AGlen = F.AGlen; n = F.n;
-    UserVar.NameOfFileForReadingAGlenEstimate = "ANT_Inverse_"+string(UserVar.InverseA)+"_AGlen-Estimate.mat";
+    UserVar.NameOfFileForReadingAGlenEstimate = "ANT_Inverse_"+string(UserVar.Inverse)+"_AGlen-Estimate.mat";
     save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,"MUA","AGlen","n");
     
 else
@@ -58,7 +61,7 @@ switch UserVar.BasalMelt
 end
 
 %% SMB
-UserVar.smb = RunTable{ind,"SMB"};
+UserVar.SMB = string(RunTable{ind,"SMB"});
 
 %% outputs
 UserVar.UaOutputDirectory = './ResultsFiles';

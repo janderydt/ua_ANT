@@ -25,6 +25,18 @@ CtrlVar.ReadInitialMesh=1;
 CtrlVar.ReadInitialMeshFileName=UserVar.InitialMeshFileName;
 CtrlVar.RefineMeshOnStart=0;
 
+%% Define domain boundary
+if exist(UserVar.MeshBoundaryCoordinatesFile,"file")
+    load(UserVar.MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
+elseif exist(CtrlVar.ReadInitialMeshFileName,"file")
+    tmp=load(CtrlVar.ReadInitialMeshFileName,"MUA");
+    MeshBoundaryCoordinates = [tmp.MUA.Boundary.x(:) tmp.MUA.Boundary.y(:)];
+    save(UserVar.MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
+else
+    error("Do not know what the domain boundary is. Could not find "+UserVar.MeshBoundaryCoordinatesFile+...
+        " or "+CtrlVar.ReadInitialMeshFileName);
+end
+
 if UserVar.AdaptMesh ==1
 
     CtrlVar.InfoLevelAdaptiveMeshing=1;  
@@ -44,10 +56,6 @@ if UserVar.AdaptMesh ==1
     CtrlVar.AdaptMeshRunStepInterval=200 ; % remesh whenever mod(Itime,CtrlVar.AdaptMeshInterval)==0
     %CtrlVar.doAdaptMeshPlots=1; 
 end
-
-
-%% Boundary
-load(UserVar.MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
 
 %% Physics
 CtrlVar.SlidingLaw = UserVar.SlidingLaw;
@@ -72,8 +80,8 @@ CtrlVar.PlotXYscale=1;
 CtrlVar.Cmin=1e-150;  CtrlVar.Cmax=1e150;                                                  
 
 %% Other
-CtrlVar.ThicknessConstraints=1;
-CtrlVar.ResetThicknessToMinThickness=0;  % change this later on
+CtrlVar.ThicknessConstraints=0;
+CtrlVar.ResetThicknessToMinThickness=1;  % change this later on
 CtrlVar.ThickMin=1;
 
 end

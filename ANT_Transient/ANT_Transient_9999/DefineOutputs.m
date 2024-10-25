@@ -72,8 +72,9 @@ if contains(plots,'-save-')
         mkdir(UserVar.UaOutputDirectory) ;
     end
        
-    FileName=sprintf("%s/ResultsFile-%s.mat",...
-            UserVar.UaOutputDirectory,string(UserVar.ExpID));
+    FileName=sprintf("%s/ResultsFile-%s-0101%s-%s.mat",...
+            UserVar.UaOutputDirectory,UserVar.Experiment,...
+            string(UserVar.StartYear),num2str(round(time*365.25),'%06.f'));
     fprintf(' Saving data in %s \n',FileName)
     save(FileName,'UserVar','CtrlVar','MUA','F');
     
