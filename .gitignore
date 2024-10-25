@@ -37,4 +37,4 @@ ANT_Inverse_tmp/
 ANT_Diagnostic/ANT_Diagnostic_1*
 ANT_Compile/UA_BUILD
 ANT_Data/ANT_Interpolants/GeoTiffFiles/
-ANT_Data/ANT_InputsForTransientSimulations/
+ANT_Data/ANT_InputsForTransientSimulations/*
