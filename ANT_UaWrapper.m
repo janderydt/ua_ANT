@@ -148,8 +148,12 @@ end
 %% launch jobs
 % initialize some variables
 UserVar.configfile = ua_config;
-UserVar.casefolder = UserVar.home + "/cases/";
 UserVar.datafolder = UserVar.home + "/../ANT_Data/";
+UserVar.casefolder = UserVar.home + "/cases/";
+if ~exist(UserVar.casefolder,"dir")
+    cmd = "mkdir "+UserVar.casefolder;
+    system(cmd,"-echo");
+end
 UserVar.Restart = 0;
 something_submitted = 0; kk=1;
 
@@ -380,7 +384,21 @@ if ~isempty(Inew)
     if exist(newfolder,"dir") == 7
         movefile(newfolder,newfolder+"_old/");
     else
-        copyfile(sourcefolder,newfolder+"/"); 
+        % The MATLAB copyfile command frequently (but not always) 
+        % caused an error: MATLAB:COPYFILE:OSError
+        % We therefore use a system command instead, which seems to be more
+        % reliable
+        cmd = "mkdir "+newfolder;
+        [status,cmdout] = system(cmd,"-echo");
+        %fprintf(UserVar.fid_masterlog,cmd+"\n");
+        %fprintf(UserVar.fid_masterlog,string(status)+"\n");
+        %fprintf(UserVar.fid_masterlog,string(cmdout)+"\n"); 
+
+        cmd = "cp "+sourcefolder+"/* "+newfolder+"/";  
+        [status,cmdout] = system(cmd,"-echo");
+        %fprintf(UserVar.fid_masterlog,cmd+"\n");
+        %fprintf(UserVar.fid_masterlog,string(status)+"\n");
+        %fprintf(UserVar.fid_masterlog,string(cmdout)+"\n"); 
     end
     % rename RunTable file
     movefile(newfolder+"/RunTable_ANT_"+UserVar.type+"_9999.csv",UserVar.runtable_exp);
