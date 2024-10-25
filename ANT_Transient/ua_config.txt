@@ -14,3 +14,6 @@ runtable=RunTable_ARCHER2_Transient.csv
 # Specify range for ExpID - this needs to be a 2 element vector with lower
 # and upper limits, seperated by a colon
 idrange=[10000:19999]
+
+# Debug mode?
+debug=0

@@ -11,8 +11,10 @@ switch UserVar.BasalMelt
  
     case "PICO"
     
-         %addpath(genpath('/home/qingqin/Documents/PICO_Ua-master/'))
-         
+         if UserVar.hostname ~= "ARCHER2"
+             addpath(genpath('/home/qingqin/Documents/PICO_Ua-master/'))
+         end
+
          load(UserVar.datafolder+"/ANT_InputsForTransientSimulations/Basal_Melt/BasinsInterpolant.mat");
     
          % Check if the file loaded successfully by checking the structure fields
