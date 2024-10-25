@@ -1,6 +1,9 @@
 function UserVar = ANT_GetUserVar_Transient(RunTable,ind,UserVar)
 
-%%% Qing Qin - October 2024
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% © Qing Qin    October 2024 %%%
+%%% qing.qin@northumbria.ac.uk %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% geometry interpolants: only needed for bedrock geometry
 UserVar.GeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.BedGeometry)+"_EXTRUDED.mat";
@@ -10,11 +13,11 @@ UserVar.DensityInterpolant = UserVar.GeometryInterpolants;
 
 UserVar.Inverse = RunTable{ind,"Inverse"};
 UserVar.InverseCycle =RunTable{ind,"InverseCycle"};
-UserVar.InitialMeshFileName = [UserVar.datafolder+"./ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+string(UserVar.InverseCycle)+".mat"]; 
+UserVar.InitialMeshFileName = UserVar.datafolder+"./ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+string(UserVar.InverseCycle)+".mat"; 
 
 %% sliding law and rheology
 % extract information from the relevant (inversion) restart file   
-NameOfFiletoRead=[UserVar.datafolder+"./ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+string(UserVar.InverseCycle)+".mat"];
+NameOfFiletoRead = UserVar.datafolder+"./ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+string(UserVar.InverseCycle)+".mat";
 
 if exist(NameOfFiletoRead,"file")
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");

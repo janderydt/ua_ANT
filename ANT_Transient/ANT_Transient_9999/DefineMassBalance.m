@@ -1,6 +1,9 @@
 function [UserVar,as,ab]=DefineMassBalance(UserVar,CtrlVar,MUA,time,s,b,h,S,B,rho,rhow,GF)
 
-%%% Qing Qin - October 2024
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% © Qing Qin    October 2024 %%%
+%%% qing.qin@northumbria.ac.uk %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 switch UserVar.BasalMelt
  

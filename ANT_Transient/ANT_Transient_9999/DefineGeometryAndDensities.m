@@ -4,13 +4,14 @@ if nargin<5
     FieldsToBeDefined='sbSBrho';
 end
 
-s=[]; b=[]; S=[]; B=[]; rho=[];
+s=[]; b=[]; B=[]; rho=[];
 g=9.81/1000;
 rhow = 1027;
 
 % If remeshing is required, we read the bed geometry from the restart file
-% This is to speed up the geometry assembly, and minimize the memory requirements
-%% THIS NEEDS TO BE IMPROVED
+% This is to speed up the geometry assembly, and minimize the memory
+% requirements on ARCHER2
+%% THIS METHOD IGNORES AVAILABLE BED DATA AND COULD BE IMPROVED
 
 fprintf('Loading geometry and density fields %s.\n',FieldsToBeDefined);
 
@@ -53,7 +54,9 @@ if exist(UserVar.RestartFile,"file")
 else
 
     fprintf('%s does not exist, try interpolants instead...',UserVar.RestartFile);
-    if exist(UserVar.GeometryInterpolants)
+
+    if exist(UserVar.GeometryInterpolants,"file")
+
         if contains(FieldsToBeDefined,"B")
             load(UserVar.GeometryInterpolants,'FB');
             B = FB(x,y);
@@ -72,27 +75,29 @@ else
             clearvars Fb;
             b = inpaint_nans(b,4);
         end
-        
-	load(UserVar.DensityInterpolant,'Frho');
+
+    else
+
+        error("Neither "+UserVar.RestartFile+" nor "+UserVar.GeometryInterpolants+" exist"+...
+            " so I don't know what geometry fields to use. Breaking out.");
+
+    end
+
+    if exist(UserVar.DensityInterpolants,"file")
+	    load(UserVar.DensityInterpolant,'Frho');
         rho = Frho(x,y);
         clearvars Frho;
-        
-        %save(filename_geometryfields,"B","b","S","s","rho");
-        fprintf('done.\n');
-        fprintf('Used geometry interpolants from %s for grounded ice.\n',UserVar.GIGeometryInterpolants);
     else
-        error("File with interpolants ("+UserVar.GeometryInterpolants+") does not exist. Breaking out.");
+
+        error("Neither "+UserVar.RestartFile+" nor "+UserVar.DesnityInterpolant+" exist"+...
+            " so I don't know what ice density to use. Breaking out.");
     end
+
+    %save(filename_geometryfields,"B","b","S","s","rho");
+    fprintf('done.\n');
+    fprintf('Used geometry interpolants from %s for grounded ice.\n',UserVar.GIGeometryInterpolants);
+
 end
 
 rho(rho<100)=100;
 rho(rho>917)=917;
-
-%% where is the grounding line?
-h = s-b;
-[b,s,h,GF]=Calc_bs_From_hBS(CtrlVar,MUA,h,S,B,rho,rhow);
-
-%% find floating nodes that are not lakes
-[GF,~,~,~]=IceSheetIceShelves(CtrlVar,MUA,GF);
-[LakeNodes,~,~,~] = LakeOrOcean3(CtrlVar,MUA,GF);
-ISnodes = find(GF.node<0.5 & GF.NodesDownstreamOfGroundingLines & ~LakeNodes);

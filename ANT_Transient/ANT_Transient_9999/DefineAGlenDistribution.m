@@ -2,7 +2,7 @@ function [UserVar,AGlen,n]=DefineAGlenDistribution(UserVar,CtrlVar,MUA,time,s,b,
 
 AGlenFile = UserVar.NameOfFileForReadingAGlenEstimate;
 
-fprintf("Using AGlen from file %s\n",AGlenFile);
+fprintf("Using AGlen from file %s.\n",AGlenFile);
 
 tmp = load(AGlenFile,'MUA','AGlen','n'); % load results from inversion
 n = tmp.n(1);
