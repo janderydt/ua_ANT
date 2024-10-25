@@ -19,7 +19,7 @@ Ua
 datetime
 logging
 *job_submitted
-!/ANT_Data/ANT_InputsForTransientSimulations/README.md
+!ANT_Data/ANT_InputsForTransientSimulations/README.md
 
 #ignore all hidden files
 .*
