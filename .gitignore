@@ -19,7 +19,6 @@ Ua
 datetime
 logging
 *job_submitted
-!ANT_Data/ANT_InputsForTransientSimulations/README.md
 
 #ignore all hidden files
 .*
@@ -38,3 +37,4 @@ ANT_Diagnostic/ANT_Diagnostic_1*
 ANT_Compile/UA_BUILD
 ANT_Data/ANT_Interpolants/GeoTiffFiles/
 ANT_Data/ANT_InputsForTransientSimulations/*
+!ANT_Data/ANT_InputsForTransientSimulations/README.md
