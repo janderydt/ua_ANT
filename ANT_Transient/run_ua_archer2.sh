@@ -23,7 +23,7 @@ CASEDIR=$WORK/ua/cases/ANT
 export PYTHONPATH=$PWD:$CASEDIR:$PYTHONPATH
 
 # Make MCR available
-MCR=$WORK/MCR_2023b/R2023b/
+MCR=$WORK/MCR_2024b/R2024b/
 
 # Shorter variable name
 JOBID=$SLURM_JOB_ID
