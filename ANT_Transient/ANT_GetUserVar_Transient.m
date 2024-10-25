@@ -13,11 +13,15 @@ UserVar.DensityInterpolant = UserVar.GeometryInterpolants;
 
 UserVar.Inverse = RunTable{ind,"Inverse"};
 UserVar.InverseCycle =RunTable{ind,"InverseCycle"};
-UserVar.InitialMeshFileName = UserVar.datafolder+"./ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+string(UserVar.InverseCycle)+".mat"; 
+UserVar.InitialMeshFileName = UserVar.datafolder+"/ANT_InputsForTransientSimulations/ANT_nsmbl_Inverse_"+...
+    string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+...
+    string(UserVar.InverseCycle)+".mat"; 
 
 %% sliding law and rheology
 % extract information from the relevant (inversion) restart file   
-NameOfFiletoRead = UserVar.datafolder+"./ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+string(UserVar.InverseCycle)+".mat";
+NameOfFiletoRead = UserVar.datafolder+"/ANT_InputsForTransientSimulations/ANT_nsmbl_Inverse_"+...
+    string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+...
+    string(UserVar.InverseCycle)+".mat";
 
 if exist(NameOfFiletoRead,"file")
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");

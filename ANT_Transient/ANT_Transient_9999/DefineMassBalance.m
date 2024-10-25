@@ -11,7 +11,7 @@ switch UserVar.BasalMelt
     
          %addpath(genpath('/home/qingqin/Documents/PICO_Ua-master/'))
          
-         load(UserVar.datafolder+"/Basal_Melt/BasinsInterpolant.mat");
+         load(UserVar.datafolder+"/ANT_InputsForTransientSimulations/Basal_Melt/BasinsInterpolant.mat");
     
          % Check if the file loaded successfully by checking the structure fields
          if isempty(Fbasins)
@@ -37,7 +37,7 @@ switch UserVar.BasalMelt
          % ----------------oceanic forcing data for PICO-----------------------
          switch UserVar.OceForcing
              case "ismip6"
-               ISMIP6_obs = load(UserVar.datafolder+"/Basal_Melt/obs_oceanic_forcing_ISMIP6.mat");
+               ISMIP6_obs = load(UserVar.datafolder+"/ANT_InputsForTransientSimulations/Basal_Melt/obs_oceanic_forcing_ISMIP6.mat");
                PICO_opts.Sbasins = ISMIP6_obs.salt_ID_30;
                PICO_opts.Tbasins = ISMIP6_obs.temp_ID_30;
          end
@@ -54,7 +54,7 @@ switch UserVar.BasalMelt
          % ------------read Local Quadratic parameter from Runtable----------------
          gamma0 = UserVar.LQgam;
          % ------------------------------------------------------------------------
-         ncfile = UserVar.datafolder+"/Basal_Melt/coeff_gamma0_DeltaT_quadratic_local_median.nc";
+         ncfile = UserVar.datafolder+"/ANT_InputsForTransientSimulations/Basal_Melt/coeff_gamma0_DeltaT_quadratic_local_median.nc";
          deltaT_basin = ncread(ncfile,'deltaT_basin');
 
          x = double(ncread(ncfile,'x')); % units kms, projection: 
@@ -72,7 +72,7 @@ switch UserVar.BasalMelt
          % ------------- oceanic forcing data for LQ-----------------------
          switch UserVar.OceForcing
              case "ismip6"
-                  ISMIP6_obs_tf= load(UserVar.datafolder+"/Basal_Melt/TF_climatology_ISMIP6.mat");
+                  ISMIP6_obs_tf= load(UserVar.datafolder+"/ANT_InputsForTransientSimulations/Basal_Melt/TF_climatology_ISMIP6.mat");
                   thermal_forcing = ISMIP6_obs_tf.TF([MUA.coordinates b]);
          end
          % ------------------------------------------------------------------------
@@ -94,7 +94,7 @@ switch UserVar.smb
 
     case "MAR"
     
-	    ncfile = UserVar.datafolder+"SMB/year-MAR_NorESM-1980-2100_zen.nc2";
+	    ncfile = UserVar.datafolder+"/ANT_InputsForTransientSimulations/SMB/year-MAR_NorESM-1980-2100_zen.nc2";
 	    fprintf(" Reading MAR SMB data from file %s \n",ncfile);
 
 	    x = double(ncread(ncfile,'X')); % units kms, projection: 
