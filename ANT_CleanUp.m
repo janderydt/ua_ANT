@@ -37,10 +37,12 @@ elseif UserVar.Finished==0 && UserVar.Restart==0 && UserVar.Error==0
     RunTable{ind,"Restart"} = 0;
     RunTable{ind,"FinishedTime"} = string(datetime("now","format","yyyy-MM-dd HH:mm:ss"));
 
-    if UserVar.InverseCycle==1
-	    fprintf(UserVar.fid_experimentlog,'> ANT_CleanUp: ExpID %s FINISHED INVERSE CYCLE.\n',string(UserVar.ExpID));
-    else
+    if isfield(UserVar,'InverseCycle')
+        if UserVar.InverseCycle==1
+	        fprintf(UserVar.fid_experimentlog,'> ANT_CleanUp: ExpID %s FINISHED INVERSE CYCLE.\n',string(UserVar.ExpID));
+        else
             fprintf(UserVar.fid_experimentlog,'> ANT_CleanUp: ExpID %s FINISHED SPINUP CYCLE.\n',string(UserVar.ExpID));
+        end
     end
     fprintf(UserVar.fid_experimentlog,'============================\n');
 

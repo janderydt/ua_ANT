@@ -60,9 +60,12 @@ function UserVar=DefineOutputs(UserVar,CtrlVar,MUA,BCs,F,l,GF,InvStartValues,Inv
 %
 %%
 v2struct(F);
-time=CtrlVar.time;
+
+UserVar.YearsCompleted = CtrlVar.time-UserVar.StartTime_DecimalYears;
+
 plots='-save-';
 
+%% SAVE outputs
 if contains(plots,'-save-')
     
     % save data in files with running names
@@ -80,81 +83,25 @@ if contains(plots,'-save-')
     
 end
 
-if contains(plots,'-plot-')
+%% At the END of the simulation:
+if strcmp(CtrlVar.DefineOutputsInfostring,'Last call') % the string "last call" is only set for a transient simulation, not for an inverse simulation
+    % calculate total number of years over all spinup cycles 
     
-    figsWidth=1000 ; figHeights=300;
-    GLgeo=[]; xGL=[] ; yGL=[];
-    %%
-    
-    FindOrCreateFigure("FourPlots") ; % ,[50 50 figsWidth 3*figHeights]) ;
-
-    subplot(4,1,1)
-    PlotMeshScalarVariable(CtrlVar,MUA,F.s); title(sprintf('s at t=%g',time))
-    hold on    
-    [xGL,yGL,GLgeo]=PlotGroundingLines(CtrlVar,MUA,GF,GLgeo,xGL,yGL);
-    %Plot_sbB(CtrlVar,MUA,s,b,B) ; title(sprintf('time=%g',time))
-    
-    
-    subplot(4,1,2)
-    QuiverColorGHG(MUA.coordinates(:,1),MUA.coordinates(:,2),F.ub,F.vb,CtrlVar);
-    hold on
-    [xGL,yGL,GLgeo]=PlotGroundingLines(CtrlVar,MUA,GF,GLgeo,xGL,yGL);
-    hold off
-    
-    subplot(4,1,3)
-    PlotMeshScalarVariable(CtrlVar,MUA,F.dhdt);   title(sprintf('dhdt at t=%g',time))
-    hold on
-    [xGL,yGL,GLgeo]=PlotGroundingLines(CtrlVar,MUA,GF,GLgeo,xGL,yGL);
-    
-    subplot(4,1,4)
-    PlotMeshScalarVariable(CtrlVar,MUA,ab);   title(sprintf('ab at t=%g',time))
-    hold on
-    
-    [xGL,yGL,GLgeo]=PlotGroundingLines(CtrlVar,MUA,GF,GLgeo,xGL,yGL);
-    hold off
-    
-    
-    x=MUA.coordinates(:,1);
-    y=MUA.coordinates(:,2);
-    
-    Fb=scatteredInterpolant(x,y,b);
-    Fs=Fb ; Fs.Values=s;
-    
-    xProfile=min(x):1000:max(x);
-    
-    yCentre=40e3+xProfile*0;
-    sProfile=Fs(xProfile,yCentre);
-    bProfile=Fb(xProfile,yCentre);
-    
-    BProfile=MismBed(xProfile,yCentre);
-    
-        
-    FindOrCreateFigure("Profile") ; 
-    plot(xProfile/1000,sProfile,'b')
-    hold on
-    plot(xProfile/1000,bProfile,'b')
-    plot(xProfile/1000,BProfile,'k')
-    title(sprintf('t=%g',time))
-    hold off
-    
-    
-    FindOrCreateFigure("Mesh and grounding line") ; 
-    PlotMuaMesh(CtrlVar,MUA);
-    hold on 
-    
-    [xGL,yGL,GLgeo]=PlotGroundingLines(CtrlVar,MUA,GF,GLgeo,xGL,yGL,'r','LineWidth',2);
-    title(sprintf('t=%g',time))
-    hold off
-    
-    drawnow
-    %%
-end
-
-
-if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')
-    UserVar.Finished = 1;
-    % clean up some files from the run folder
-    delete ANT_Inverse*.mat *-RestartFile.mat Fields_to_extrude*.mat NewMeshFile.mat ANT_*_InitialMesh.mat ANT_*_MeshBoundaryCoordinates.mat
+    if UserVar.stoppedduetowalltime == 1
+        fprintf(CtrlVar.fidlog,['Simulation stopped due to walltime constraints. Done %s years instead of %s. ',...
+        		'Writing restart file.\n'],num2str(UserVar.YearsDone),num2str(CtrlVar.TotalTime));         
+        UserVar.Restart = 1;   
+        UserVar.Finished = 0;     
+    else
+        fprintf(CtrlVar.fidlog,'Simulation reached expected number of %s years.\n',num2str(CtrlVar.TotalTime));
+        UserVar.Restart = 0; 
+        UserVar.Finished = 1;
+    end
+    UserVar.Error = 0;    
+    UserVar.Breakout = 1;
+    WriteForwardRunRestartFile(UserVar,CtrlVar,MUA,BCs,F,GF,l,RunInfo);  
+    NameOfRestartOutputFile = erase(CtrlVar.NameOfRestartFiletoWrite,".mat")+"_Yrs"+strrep(string(CtrlVar.time),".","k")+".mat";
+    copyfile(CtrlVar.NameOfRestartFiletoWrite,NameOfRestartOutputFile);
 end
 
 

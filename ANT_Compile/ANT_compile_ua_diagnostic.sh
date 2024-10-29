@@ -2,8 +2,8 @@
 
 # USER VARIABLES
 # Path to correct version of MATLAB
-# Setup below has been tested on ARCHER2 for MATLAB v2021a 
-MATLAB_PATH=/usr/local/MATLAB/R2023b
+# Setup below has been tested on ARCHER2 for MATLAB v2021a, v2023b and v2024b  
+MATLAB_PATH=/usr/local/MATLAB/R2024b
 # Path to Ua_ANT repository
 REPO_DIR=/mnt/md0/Ua/cases/ANT
 # Path to Ua build directory (will be created if it doesn't exist)

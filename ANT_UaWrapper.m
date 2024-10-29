@@ -220,11 +220,23 @@ if ~isempty(Iexisting)
                 something_submitted=1;
                 Inew = [];
 
-                % run info
+                % initialize User variables
                 UserVar = ANT_GetUserVar_Transient(RunTable,ind,UserVar);
 
                 % launch Ua job
                 UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
+
+                %adjust Runtable
+                RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read');
+                ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+                RunTable{ind,"YearsCompleted"} = UserVar.YearsCompleted;  
+
+                [~] = ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable,'write');
+
+                fprintf(UserVar.fid_experimentlog,'============================\n');
+                fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");                        
+                fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: %s: End transient simulation.\n",UserVar.Experiment);
+
     
             elseif type=="Inverse"
 
@@ -433,6 +445,17 @@ if ~isempty(Inew)
 
         % launch Ua job
         UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
+
+        %adjust Runtable
+        RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read');
+        ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
+        RunTable{ind,"YearsCompleted"} = UserVar.YearsCompleted;  
+
+        [~] = ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable,'write');
+
+        fprintf(UserVar.fid_experimentlog,'============================\n');
+        fprintf(UserVar.fid_experimentlog,string(datetime("now"))+"\n");                        
+        fprintf(UserVar.fid_experimentlog,"> ANT_UaWrapper: %s: End transient simulation.\n",UserVar.Experiment);
 
     elseif type=="Inverse"
 

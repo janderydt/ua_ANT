@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
 #SBATCH --distribution=block:block
-
+#SBATCH --signal=B:SIGUSR1@120
 #SBATCH --partition=standard
 #SBATCH --qos=standard
 
@@ -18,12 +18,27 @@
 # -A n02-xxxxx is the budget code
 ###########################################################################################'##################
 
+## Handle function ##
+# Function executed 120s before the end of the time limit
+function sig_handler_USR1()
+{
+    echo " > Function sig_handler_USR1 called 120s before end of walltime" >> jobs_master_ARCHER2.log
+    for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
+        scancel ${JOBID}.${i}
+    done
+    exit 2
+}
+
+## Handle function association ##
+# associate the function "sig_handler_USR1" with the USR1 signal
+trap 'sig_handler_USR1' SIGUSR1
+
 # Add top directory to python path (this makes the utils.py file visible to this script)
 CASEDIR=$WORK/ua/cases/ANT
 export PYTHONPATH=$PWD:$CASEDIR:$PYTHONPATH
 
 # Make MCR available
-MCR=$WORK/MCR_2023b/R2023b/
+MCR=$WORK/MCR_2024b/R2024b/
 
 # Shorter variable name
 JOBID=${SLURM_JOB_ID}

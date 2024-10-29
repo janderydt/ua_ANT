@@ -8,8 +8,9 @@ function [UserVar,CtrlVar,MeshBoundaryCoordinates]=DefineInitialInputs(UserVar,C
 % up by the fmincon minimization algorithm or DefineRunStopCriterion.m and 
 % used as a stopping % criteria to break out of the inversion or spinup.
 % We apply a generous 60min buffer to allow fmincon and the runstep to 
-% cleanly finish the current iteration.
-UserVar.walltime_remaining = UserVar.walltime_remaining-3600;
+% cleanly finish the current iteration. The remaining walltime should never 
+% be negative, so we set it to a minimum value of 600s.
+UserVar.walltime_remaining = max(UserVar.walltime_remaining-3600,600);
 setappdata(0,'UAstopFlag',false); %stopping flag is false
 T = timer('startdelay',UserVar.walltime_remaining,'timerfcn',@(src,evt)setappdata(0,'UAstopFlag',true)); %initialize timer to change value of uastopflag after wallclocktime
 t0 = tic(); 

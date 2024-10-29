@@ -117,8 +117,14 @@ elseif UserVar.type == "Diagnostic"
 
 elseif UserVar.type == "Transient"
 
-    % none to correct
-
+    I=find(contains(opts.VariableNames,'ExpStartDate'));
+    opts.VariableTypes(I)={'string'};
+    I=find(contains(opts.VariableNames,'ExpEndDate'));
+    opts.VariableTypes(I)={'string'};
+    I=find(contains(opts.VariableNames,'YearsCompleted'));
+    opts.VariableTypes(I)={'double'};
+    I=find(contains(opts.VariableNames,'Comments'));
+    opts.VariableTypes(I)={'char'};
 end
 
 end

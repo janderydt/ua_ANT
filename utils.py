@@ -34,9 +34,11 @@ def read_runinfo (table,runtype):
         data = data.astype({"Domain": str, "BaseMesh": str, "Comments": str})
     elif "Transient" in runtype:
         data = data.astype({"pgid": int, "ExpID": int, "Submitted": int, "Running": int, "Error": int, "Finished": int,
-                            "Restart": int, "AdaptMesh": int, "StartYear": int, "Inverse": int, "InverseCycle":int})
-        data = data.astype({"PICO_C1": float, "PICO_gam": float, "LQ_gam": float})
+                            "Restart": int, "AdaptMesh": int, "Inverse": int, "InverseCycle": int})
+        data = data.astype({"YearsCompleted": float, "PICO_C1": float, "PICO_gam": float, "LQ_gam": float})
         data = data.astype({"Domain": str, "SMB": str, "BasalMelt": str, "OceForcing": str, "Comments": str})
+        data['ExpStartDate'] = pd.to_datetime(data['ExpStartDate'],errors='coerce')
+        data['ExpEndDate'] = pd.to_datetime(data['ExpEndDate'],errors='coerce')
     else:
         log.info('   ...Unknown run type')
 

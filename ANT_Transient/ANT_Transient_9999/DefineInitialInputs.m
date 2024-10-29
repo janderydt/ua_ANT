@@ -1,20 +1,39 @@
 function [UserVar,CtrlVar,MeshBoundaryCoordinates]=DefineInitialInputs(UserVar,CtrlVar)
 
+%% DEBUG OPTIONS ARE AT THE END OF THIS SCRIPT %%
+
+%% Keep track of walltime
+% These lines define a UI to keep track of the remaining walltime.
+% If the walltime expires, the UI is set to false, which is picked
+% up by the fmincon minimization algorithm or DefineRunStopCriterion.m and 
+% used as a stopping % criteria to break out of the inversion or spinup.
+% We apply a generous 60min buffer to allow fmincon and the runstep to 
+% cleanly finish the current iteration. The remaining walltime should never 
+% be negative, so we set it to a minimum value of 600s.
+UserVar.walltime_remaining = max(UserVar.walltime_remaining-3600,600);
+setappdata(0,'UAstopFlag',false); %stopping flag is false
+T = timer('startdelay',UserVar.walltime_remaining,'timerfcn',@(src,evt)setappdata(0,'UAstopFlag',true)); %initialize timer to change value of uastopflag after wallclocktime
+t0 = tic(); 
+start(T); %start the timer
+remainingTime = round(UserVar.walltime_remaining-toc(t0));
+fprintf(UserVar.fid_experimentlog,"> At %s: remaining time on wallclock timer is %ss. Ua will be stopped when this time has been exceeded.\n",string(datetime("now")),num2str(remainingTime));
+
+%%
 CtrlVar.Experiment = UserVar.Experiment;
 
 %% Type of run
 %
 CtrlVar.TimeDependentRun=1; 
 CtrlVar.InverseRun=0;
-
-CtrlVar.TotalNumberOfForwardRunSteps=inf;
-
-CtrlVar.Restart=0;%UserVar.Restart;
-
-CtrlVar.time=0 ; % start time
+CtrlVar.Restart=UserVar.Restart;
+%
+CtrlVar.time=UserVar.StartTime_DecimalYears ; % start time
 CtrlVar.dt=0.001; % time step
 CtrlVar.TotalNumberOfForwardRunSteps=1e10;  
-CtrlVar.TotalTime=1; % in years
+CtrlVar.TotalTime=UserVar.TotalTime; % in years
+%
+UserVar.stoppedduetowalltime = 0;
+CtrlVar.UseUserDefinedRunStopCriterion=1;
 
 %% Grid options
 CtrlVar.TriNodes=3;
@@ -84,4 +103,18 @@ CtrlVar.ThicknessConstraints=0;
 CtrlVar.ResetThicknessToMinThickness=1;  % change this later on
 CtrlVar.ThickMin=1;
 
+end
+
+%% Debugging options
+if UserVar.debug == 1
+    %CtrlVar.ExplicitEstimationMethod="-dhdt-" ;
+    %CtrlVar.GuardAgainstWildExtrapolationInExplicit_uvh_Step=1;
+    %CtrlVar.ATSdtMin=1e-10;
+    %CtrlVar.NRitmax=25;
+    CtrlVar.InfoLevel=100;
+    CtrlVar.InfoLevelBackTrack=10;
+    CtrlVar.InfoLevelNonLinIt=100;
+    CtrlVar.doplots=1;   
+    CtrlVar.PlotGLs=1;
+    %CtrlVar.ThickMin=1;
 end

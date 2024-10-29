@@ -5,12 +5,23 @@ function UserVar = ANT_GetUserVar_Transient(RunTable,ind,UserVar)
 %%% qing.qin@northumbria.ac.uk %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-UserVar.StartYear = RunTable{ind,"StartYear"};
+%% time variables
+UserVar.StartTime = datetime(RunTable{ind,"ExpStartDate"},format="yyyy-MM-dd"); % physical time (in yyyy-MM-dd) when the simulation should start
+UserVar.EndTime = datetime(RunTable{ind,"ExpEndDate"},format="yyyy-MM-dd"); % physical time (in yyyy-MM-dd) when the simulation should end)
+DeltaSeconds = seconds(UserVar.EndTime-UserVar.StartTime); % interval between end and start year in seconds
+UserVar.TotalTime = double(DeltaSeconds/(365.25*24*60*60)); % to be consistent with Ua units, convert from seconds to years
+UserVar.StartTime_DecimalYears = year(UserVar.StartTime)+years(UserVar.StartTime-dateshift(UserVar.StartTime,'start','year')); % start time in Ua units (decimal years)
+
+%% information about inverse simulation to start from
 UserVar.Inverse = RunTable{ind,"Inverse"};
 UserVar.InverseCycle = RunTable{ind,"InverseCycle"};
 UserVar.InverseRestartFile = UserVar.datafolder+"/ANT_InputsForTransientSimulations/ANT_nsmbl_Inverse_"+...
     string(UserVar.Inverse)+"/ANT_nsmbl_Inverse_"+string(UserVar.Inverse)+"-RestartFile_InverseCycle"+...
     string(UserVar.InverseCycle)+".mat";
+
+%% is this a restart?
+UserVar.YearsCompleted = RunTable{ind,"YearsCompleted"};
+UserVar.Restart = RunTable{ind,"Restart"};
 
 %% mesh variables
 UserVar.InitialMeshFileName = UserVar.InverseRestartFile;
