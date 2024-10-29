@@ -26,7 +26,7 @@ export PYTHONPATH=$PWD:$CASEDIR:$PYTHONPATH
 MCR=$WORK/MCR_2023b/R2023b/
 
 # Shorter variable name
-JOBID=$SLURM_JOB_ID
+JOBID=${SLURM_JOB_ID}
 
 # Make sure MCR cache (as defined in Ua_MCR.sh) exists
 # If you want the cache in a different location, modify it here AND in ua_run/Ua_MCR.sh
@@ -84,7 +84,8 @@ then
     # define job counter
     jobs_submitted=0
     pids=()
-
+    stepids=()
+    
     # Loop over the nodes assigned to the job
     for nodeid in $nodelist
     do
@@ -110,7 +111,10 @@ then
 		$MCR $UA_CONFIG ${SLURM_JOB_ID} "" ${RowNb[$jobs_submitted]} ${ExpID[$jobs_submitted]} \
 		& pids+=($!) 
 
-		# add expid to temporary copy of global runtable (not that RowNb follows MATLAB syntax: number of first row is 1 \
+                # add id of current job step to array
+		stepids+=${SLURM_STEP_ID}
+
+		# add expid to temporary copy of global runtable (note that RowNb follows MATLAB syntax: number of first row is 1 \
 		# so we offset the indices by 1 to comply with python numbering convetions)
 		python ../tmpruntable_add_expid.py $UA_CONFIG $((${RowNb[$jobs_submitted]}-1)) ${ExpID[$jobs_submitted]}
 
@@ -127,18 +131,22 @@ then
     echo "---------------------------------------------------" >> jobs_master_ARCHER2.log
     rm global_log_active
 
-    # Wait for all subjobs to finish and gather exit codes
+    # Wait for all jobsteps to finish and gather exit codes
     rets=()
     for pid in ${pids[*]}; do
         wait $pid
 	rets+=($?)
     done
 
-    # gather information about job
+    # gather information about each step
     currenttime=$(date +"%d-%b-%Y %H:%M:%S")
     timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
-    EJ=$(sstat -j ${JOBID} --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
-    MaxRSS=$(sstat -j ${JOBID} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage 
+    EJ=()
+    MaxRSS=()
+    for stepid in ${stepids[*]}; do
+        EJ+=$(sstat --jobs=${JOBID}.$stepid --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
+        MaxRSS+=$(sstat --jobs=${JOBID}.$stepid --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage 
+    done
     exitflag=0
 
     # Find non-empty error files
@@ -152,6 +160,10 @@ then
     touch global_log_active
        
     echo "${currenttime} || ENDING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
+    echo " > Energy and maximum memory usage:" >> jobs_master_ARCHER2.log
+    for i in ${stepids[*]}; do
+        echo "      ExpID ${ExpID[$i]}        Energy usage: ${EJ[$i]} || Maximum memory usage: ${MaxRSS[$i]}" >> jobs_master_ARCHER2.log
+    done 
     echo " > Exit codes (if different from zero):" >> jobs_master_ARCHER2.log 
     for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
         if [ ${rets[$i]} -ne 0 ]; then

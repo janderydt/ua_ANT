@@ -46,18 +46,26 @@ if strfind(CtrlVar.Inverse.Measurements,'dhdt')
 
     % set zero values and high errors for floating areas
     dhdtMeas(GF.node<0.5) = 0;
-    dhdtError(GF.node<0.5) = 1e10;
-     
+    dhdtError(GF.node<0.5) = nan;
+
+    I=find(dhdtMeas>-0.1); 
+    dhdtMeas(I)=0; % remove any positive and small negative dhdt values
+
+    I2=find(dhdtError>=abs(dhdtMeas)); % identify areas where error is larger than or equal to the signal
+    dhdtMeas(I2)=0;
+
     Meas.dhdt=dhdtMeas;
 
-     % Apply scaling of the dhdt errors and set minimum value of the error 
-     % to 0.1. This is a somewhat arbitrary number, but previous 
-     % experiments have shown that for smaller errors, the inversion tends 
-     % to overly constrain dhdt, which leads to 'noisy' AGlen and C fields,
-     % and a larger misfit to the surface velocities. It is questionable 
-     % anyhow if dhdt_err<0.1m can be achieved by satellite instruments.
-     dhdtError = max(UserVar.Inverse.dhdt_err*dhdtError,0.1);
-    
+    % set corresponding errors to large values
+    dhdtError(I)=nan; 
+    dhdtError(I2)=nan; 
+
+    % Change any remaining areas where dhdtError>cutoff to dhdtError=cutoff
+    I3 = find(dhdtError>UserVar.Inverse.dhdt_err & ~isnan(dhdtError));
+    dhdtError(I3) = UserVar.Inverse.dhdt_err;
+
+    dhdtError(isnan(dhdtError))=1e10;
+
      Meas.dhdtCov=sparse(1:MUA.Nnodes,1:MUA.Nnodes,dhdtError.^2,MUA.Nnodes,MUA.Nnodes);
      if any(isnan(dhdtError))
          error('NaN in dhdtError'); 
