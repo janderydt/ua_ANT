@@ -7,8 +7,8 @@
 #SBATCH --hint=nomultithread
 #SBATCH --distribution=block:block
 
-#SBATCH --partition=highmem
-#SBATCH --qos=highmem
+#SBATCH --partition=standard
+#SBATCH --qos=standard
 
 ##############################################################################################################
 # Run multiple instances of UA
@@ -84,7 +84,6 @@ then
     # define job counter
     jobs_submitted=0
     pids=()
-    stepids=()
     
     # Loop over the nodes assigned to the job
     for nodeid in $nodelist
@@ -106,13 +105,10 @@ then
                 # units can be specified. If you do not know how much memory to specify, we
                 # recommend that you specify `--mem=1500M` (1,500 MiB).
                 srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
-                --exact --mem-per-cpu=3000M --output /dev/null \
+                --exact --mem-per-cpu=1500M --output /dev/null \
                 --error stderr_jobid${JOBID}_expid${ExpID[$jobs_submitted]}.out ./Ua_MCR.sh \
 		$MCR $UA_CONFIG ${SLURM_JOB_ID} "" ${RowNb[$jobs_submitted]} ${ExpID[$jobs_submitted]} \
 		& pids+=($!) 
-
-                # add id of current job step to array
-		stepids+=${SLURM_STEP_ID}
 
 		# add expid to temporary copy of global runtable (note that RowNb follows MATLAB syntax: number of first row is 1 \
 		# so we offset the indices by 1 to comply with python numbering convetions)
@@ -138,15 +134,11 @@ then
 	rets+=($?)
     done
 
-    # gather information about each step
+    sleep 5
+
+    # gather information about runtime
     currenttime=$(date +"%d-%b-%Y %H:%M:%S")
     timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
-    EJ=()
-    MaxRSS=()
-    for stepid in ${stepids[*]}; do
-        EJ+=$(sstat --jobs=${JOBID}.$stepid --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
-        MaxRSS+=$(sstat --jobs=${JOBID}.$stepid --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage 
-    done
     exitflag=0
 
     # Find non-empty error files
@@ -160,9 +152,11 @@ then
     touch global_log_active
        
     echo "${currenttime} || ENDING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
-    echo " > Energy and maximum memory usage:" >> jobs_master_ARCHER2.log
-    for i in ${stepids[*]}; do
-        echo "      ExpID ${ExpID[$i]}        Energy usage: ${EJ[$i]} || Maximum memory usage: ${MaxRSS[$i]}" >> jobs_master_ARCHER2.log
+    echo " > Energy Consumption and maximum memory usage:" >> jobs_master_ARCHER2.log
+    for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
+        EJ=$(sacct --jobs=${JOBID}.${i} --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
+        MaxRSS=$(sacct --jobs=${JOBID}.${i} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage  
+	echo "      ExpID ${ExpID[$i]}        Energy usage [J]: ${EJ} || Maximum memory usage [bytes]: ${MaxRSS}" >> jobs_master_ARCHER2.log
     done 
     echo " > Exit codes (if different from zero):" >> jobs_master_ARCHER2.log 
     for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
@@ -173,12 +167,10 @@ then
     done
     echo " > Non-empty error log files: ${nonempty_error_files}" >> jobs_master_ARCHER2.log
     if [ ${nonempty_error_files} -gt 0 ]; then
-        echo "      $(find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -type f ! -size 0)" >> jobs_master_ARCHER2.log
+        find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -type f ! -size 0 -exec echo "      {}" \; >> jobs_master_ARCHER2.log
         exitflag=1
     fi
     echo " > Time elapsed: ${timeelapsed}" >> jobs_master_ARCHER2.log
-    echo " > Energy Consumption [J]: ${EJ}" >> jobs_master_ARCHER2.log
-    echo " > Maximum memory usage [bytes]: ${MaxRSS}" >> jobs_master_ARCHER2.log
 
     # Copy temporary RunTable
     python ../copy_runtable.py $UA_CONFIG ".tmp" ""

@@ -23,10 +23,10 @@ CASEDIR=$WORK/ua/cases/ANT
 export PYTHONPATH=$PWD:$CASEDIR:$PYTHONPATH
 
 # Make MCR available
-MCR=$WORK/MCR_2024b/R2024b/
+MCR=$WORK/MCR_2023b/R2023b/
 
 # Shorter variable name
-JOBID=$SLURM_JOB_ID
+JOBID=${SLURM_JOB_ID}
 
 # Make sure MCR cache (as defined in Ua_MCR.sh) exists
 # If you want the cache in a different location, modify it here AND in ua_run/Ua_MCR.sh
@@ -84,7 +84,7 @@ then
     # define job counter
     jobs_submitted=0
     pids=()
-
+    
     # Loop over the nodes assigned to the job
     for nodeid in $nodelist
     do
@@ -110,7 +110,7 @@ then
 		$MCR $UA_CONFIG ${SLURM_JOB_ID} "" ${RowNb[$jobs_submitted]} ${ExpID[$jobs_submitted]} \
 		& pids+=($!) 
 
-		# add expid to temporary copy of global runtable (not that RowNb follows MATLAB syntax: number of first row is 1 \
+		# add expid to temporary copy of global runtable (note that RowNb follows MATLAB syntax: number of first row is 1 \
 		# so we offset the indices by 1 to comply with python numbering convetions)
 		python ../tmpruntable_add_expid.py $UA_CONFIG $((${RowNb[$jobs_submitted]}-1)) ${ExpID[$jobs_submitted]}
 
@@ -127,18 +127,18 @@ then
     echo "---------------------------------------------------" >> jobs_master_ARCHER2.log
     rm global_log_active
 
-    # Wait for all subjobs to finish and gather exit codes
+    # Wait for all jobsteps to finish and gather exit codes
     rets=()
     for pid in ${pids[*]}; do
         wait $pid
 	rets+=($?)
     done
 
-    # gather information about job
+    sleep 5
+
+    # gather information about runtime
     currenttime=$(date +"%d-%b-%Y %H:%M:%S")
     timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
-    EJ=$(sstat -j ${JOBID} --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
-    MaxRSS=$(sstat -j ${JOBID} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage 
     exitflag=0
 
     # Find non-empty error files
@@ -152,6 +152,12 @@ then
     touch global_log_active
        
     echo "${currenttime} || ENDING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
+    echo " > Energy Consumption and maximum memory usage:" >> jobs_master_ARCHER2.log
+    for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
+        EJ=$(sacct --jobs=${JOBID}.${i} --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
+        MaxRSS=$(sacct --jobs=${JOBID}.${i} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage  
+	echo "      ExpID ${ExpID[$i]}        Energy usage [J]: ${EJ} || Maximum memory usage [bytes]: ${MaxRSS}" >> jobs_master_ARCHER2.log
+    done 
     echo " > Exit codes (if different from zero):" >> jobs_master_ARCHER2.log 
     for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
         if [ ${rets[$i]} -ne 0 ]; then
@@ -161,12 +167,10 @@ then
     done
     echo " > Non-empty error log files: ${nonempty_error_files}" >> jobs_master_ARCHER2.log
     if [ ${nonempty_error_files} -gt 0 ]; then
-        echo "      $(find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -type f ! -size 0)" >> jobs_master_ARCHER2.log
+        find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -type f ! -size 0 -exec echo "      {}" \; >> jobs_master_ARCHER2.log
         exitflag=1
     fi
     echo " > Time elapsed: ${timeelapsed}" >> jobs_master_ARCHER2.log
-    echo " > Energy Consumption [J]: ${EJ}" >> jobs_master_ARCHER2.log
-    echo " > Maximum memory usage [bytes]: ${MaxRSS}" >> jobs_master_ARCHER2.log
 
     # Copy temporary RunTable
     python ../copy_runtable.py $UA_CONFIG ".tmp" ""
