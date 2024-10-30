@@ -1,12 +1,11 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
 #SBATCH --job-name=ANT_Diag
-#SBATCH --time=01:00:00
+#SBATCH --time=00:10:00
 #SBATCH --ntasks-per-node=30
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
 #SBATCH --distribution=block:block
-
 #SBATCH --partition=standard
 #SBATCH --qos=standard
 
@@ -62,7 +61,7 @@ currenttime=$(date +"%d-%b-%Y %H:%M:%S")
 jobname=$(sacct -j ${JOBID} --format=Jobname%15 2>&1 | sed -n 3p) 
 echo "${currenttime} || STARTING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
 
-# start timer
+# Start a timer to calculate the total runtime at the end of the job
 timestart=$(date +"%s")
 
 # make local copy of runtable
@@ -78,6 +77,34 @@ RowNb=($RowNb_all)
 ExpID=($ExpID_all)
 # how many experiments to start?
 Nb_experiments_to_start=`python ../get_runs_to_submit.py $UA_CONFIG count`
+
+# We kill any jobsteps but not the batch job 5 minutes before the walltime. This is done
+# with the --time flag in the srun command below. Here we calculate the remaining walltime
+# and subtract 5 minutes to create the TIME_LIMIT variable, which is then passed on to the srun commands.
+# 1. Record time left in job, this will be a string of the format d-hh:mm:ss,
+# but zero values are truncated e.g. if d=0, hh=0 then the returned string will be mm:ss
+TIME_LIMIT="$(squeue -j $SLURM_JOB_ID -h --Format TimeLeft)"
+# 2. Trim white spaces
+TIME_LIMIT="$(echo ${TIME_LIMIT} | xargs)"
+length=${#TIME_LIMIT}
+# 3. Recover full date format (hh:mm:ss)
+if [ "$length" -eq "4" ]; then
+    TIME_LIMIT="00:0$TIME_LIMIT"
+elif [ "$length" -eq "5" ]; then
+    TIME_LIMIT="00:$TIME_LIMIT"
+elif [ "$length" -eq "7" ]; then
+    TIME_LIMIT="0$TIME_LIMIT"
+fi
+# 4. subtract 5 minutes
+TIME_LIMIT_SECS=$(( $(date -d "$TIME_LIMIT" "+%s") - $(date -d "00:05:00" "+%s") ))
+# 5. convert back to hh:mm:ss format
+h=$(( $TIME_LIMIT_SECS / 3600 ))
+m=$(( $(($TIME_LIMIT_SECS - $h * 3600)) / 60 ))
+s=$(($TIME_LIMIT_SECS - $h * 3600 - $m * 60))
+if [ $h -le 9 ];then h=0$h;fi
+if [ $m -le 9 ];then m=0$m;fi
+if [ $s -le 9 ];then s=0$s;fi
+TIME_LIMIT="$h:$m:$s"
 
 if [ $Nb_experiments_to_start -gt 0 ]
 then
@@ -105,7 +132,7 @@ then
                 # units can be specified. If you do not know how much memory to specify, we
                 # recommend that you specify `--mem=1500M` (1,500 MiB).
                 srun --nodelist=${nodeid} --nodes=1 --ntasks=1 --ntasks-per-node=1 \
-                --exact --mem-per-cpu=1500M --output /dev/null \
+                --exact --mem-per-cpu=1500M --output /dev/null --time=${TIME_LIMIT} \
                 --error stderr_jobid${JOBID}_expid${ExpID[$jobs_submitted]}.out ./Ua_MCR.sh \
 		$MCR $UA_CONFIG ${SLURM_JOB_ID} "" ${RowNb[$jobs_submitted]} ${ExpID[$jobs_submitted]} \
 		& pids+=($!) 
@@ -114,7 +141,7 @@ then
 		# so we offset the indices by 1 to comply with python numbering convetions)
 		python ../tmpruntable_add_expid.py $UA_CONFIG $((${RowNb[$jobs_submitted]}-1)) ${ExpID[$jobs_submitted]}
 
-		# advance the counter
+	# advance the counter
                 ((jobs_submitted++))
             fi
         done
@@ -134,6 +161,7 @@ then
 	rets+=($?)
     done
 
+    # Sleep for 5secs - this seems to allow some time for energy and memory statistics to be generated for individual jobsteps
     sleep 5
 
     # gather information about runtime
