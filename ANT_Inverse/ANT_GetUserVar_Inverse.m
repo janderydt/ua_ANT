@@ -166,12 +166,26 @@ if contains(UserVar.Inverse.Measurements,"dhdt")
     UserVar.Inverse.dhdt_err = RunTable{ind,"dhdt_err"};
 end
 
+
 %% sliding law
 UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
+% make sure NameOfFileForReadingSlipperinessEstimate contains the correct
+% fields in case they were accidentally overwritten
+load(UserVar.casefolder+"/"+UserVar.Experiment+"/"+NameOfRestartFiletoRead,"F","MUA","CtrlVarInRestartFile");
+C = F.C; xC = MUA.coordinates(:,1); yC = MUA.coordinates(:,2); m = F.m;
+muk = F.muk; q = F.q;
+save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimate,...
+    "MUA","CtrlVarInRestartFile","xC","yC","C","m","muk","q");
 UserVar.Inverse.priorC = RunTable{ind,"priorC"};
 
 %% Glen's exponent
 UserVar.NameOfFileForReadingAGlenEstimate=UserVar.NameOfFileForSavingAGlenEstimate;
+% make sure NameOfFileForReadingSlipperinessEstimate contains the correct
+% fields in case they were accidentally overwritten
+load(UserVar.casefolder+"/"+UserVar.Experiment+"/"+NameOfRestartFiletoRead,"F","MUA","CtrlVarInRestartFile");
+AGlen = F.AGlen; xA = MUA.coordinates(:,1); yA = MUA.coordinates(:,2); n = F.n;
+save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,...
+    "MUA","CtrlVarInRestartFile","xA","yA","AGlen","n");
 UserVar.Inverse.priorAGlen = RunTable{ind,"priorAGlen"};
 
 end
