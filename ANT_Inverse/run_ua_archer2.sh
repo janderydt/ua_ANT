@@ -14,8 +14,14 @@
 # sbatch --export=ALL,UA_CONFIG=<path to UA config file>,ACC=n02-xxxxx -N xxx -A n02-xxxxx ./run_ua_archer2.sh 
 #
 # -N xxx is the required number of nodes
-# -A n02-xxxxx is the budget code
-###########################################################################################'##################
+# n02-xxxxx is the budget code
+# 
+# for runs with a higher memory requirement:
+# use SBATCH --partition=highmem, SBATCH --qos=standard and set --mem-per-cpu=3000M in the srun command below
+#
+# for testing:
+# use SBATCH --partition=standard, SBATCH --qos=short
+##############################################################################################################
 
 # Add top directory to python path (this makes the utils.py file visible to this script)
 CASEDIR=$WORK/ua/cases/ANT
@@ -28,7 +34,7 @@ MCR=$WORK/MCR_2024b/R2024b/
 JOBID=${SLURM_JOB_ID}
 
 # Make sure MCR cache (as defined in Ua_MCR.sh) exists
-# If you want the cache in a different location, modify it here AND in ua_run/Ua_MCR.sh
+# If you want the cache in a different location, modify it here AND in Ua_MCR.sh
 if [ ! -d $WORK/mcr_cache ]; then
   mkdir $WORK/mcr_cache
 fi
