@@ -186,11 +186,13 @@ then
     touch global_log_active
        
     echo "${currenttime} || ENDING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
-    echo " > Energy Consumption and maximum memory usage:" >> jobs_master_ARCHER2.log
+    EJ=$(sacct --jobs=${JOBID}.0 --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage of batch job 
+    MaxRSS=$(sacct --jobs=${JOBID}.${i} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage of batch job 
+    echo " > Energy Consumption: ${EJ}, Maximum memory usage: ${MaxRSS}" >> jobs_master_ARCHER2.log
     for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
-        EJ=$(sacct --jobs=${JOBID}.${i} --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
-        MaxRSS=$(sacct --jobs=${JOBID}.${i} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage  
-	echo "      ExpID ${ExpID[$i]}        Energy usage [J]: ${EJ} || Maximum memory usage [bytes]: ${MaxRSS}" >> jobs_master_ARCHER2.log
+        EJ=$(sacct --jobs=${JOBID}.${i} --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage for jobstep
+        MaxRSS=$(sacct --jobs=${JOBID}.${i} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage for jobstep 
+	echo "      ExpID ${ExpID[$i]}        Energy usage [J]: ${EJ} || Maximum memory usage [bytes]: ${MaxRSS}" >> jobsteps_master_ARCHER2.log
     done 
     echo " > Exit codes (if different from zero):" >> jobs_master_ARCHER2.log 
     for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
