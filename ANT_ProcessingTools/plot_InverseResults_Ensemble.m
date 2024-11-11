@@ -1,8 +1,8 @@
 function plot_InverseResults_Ensemble
 
-variable_to_plot = 'BalancedMelt'; %options: qGL, niter, misfit, qOB, BalancedMelt
+variable_to_plot = 'misfit'; %options: qGL, niter, misfit, qOB, BalancedMelt
 
-slidinglaws = ["Umbi"];
+slidinglaws = ["Weertman"];
 file_with_inversion_data_to_read = "inversiondata_"+slidinglaws+".mat";
 
 %% load data
@@ -27,13 +27,14 @@ UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
 UserVar.cycle = 2;
 UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 5 6 8])+".csv";
-UserVar.idrange = [3000,3999;6000,6999;7000,7999;9000,9999];
+%UserVar.idrange = [3000,3999;6000,6999;7000,7999;9000,9999];
+UserVar.idrange = [14000,14999;15000,15999;16000,16999;17000,17999];
 
 % define size for markers: resize with misfit
 for ii=1:numel(data)
     if numel(data(ii).misfit)>=UserVar.cycle
         misfit(ii) = data(ii).misfit(UserVar.cycle);
-        ind_finished(ii) = ismember(data(ii).niter(UserVar.cycle),[5000,15000,16000]);
+        ind_finished(ii) = ismember(data(ii).niter(UserVar.cycle),[5000,6000,15000,16000]);
     else
         misfit(ii) = nan;
         ind_finished(ii) = 0;
@@ -90,6 +91,7 @@ switch variable_to_plot
         cmin = 0;
         cmax = 2e5;
         cbLabel = "Balanced melt";
+
 end
 
 m = [data(:).m]; m = m(:);
@@ -98,6 +100,7 @@ gaA = [data(:).gaA]; gaA = gaA(:);
 gaC = [data(:).gaC]; gaC = gaC(:);
 gsA = [data(:).gsA]; gsA = gsA(:);
 gsC = [data(:).gsC]; gsC = gsC(:);
+dhdt_err = [data(:).dhdt_err]; dhdt_err = dhdt_err(:);
 
 if variable_to_plot == "BalancedMelt"
 
@@ -182,6 +185,8 @@ s(ind)=scatter(ax_fig(ind),gsA,m,marker_size,plotdata,'filled','MarkerEdgeColor'
 ind = ind+1;
 s(ind)=scatter(ax_fig(ind),gsC,m,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
+s(ind)=scatter(ax_fig(ind),dhdt_err,m,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
+ind = ind+1;
 
 % row 2: n
 s(ind)=scatter(ax_fig(ind),m,n,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),"n"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
@@ -196,6 +201,8 @@ s(ind)=scatter(ax_fig(ind),gsA,n,marker_size,plotdata,'filled','MarkerEdgeColor'
 ind = ind+1;
 s(ind)=scatter(ax_fig(ind),gsC,n,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
+s(ind)=scatter(ax_fig(ind),dhdt_err,n,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
+ind = ind+1;
 
 % row 3: gaA
 s(ind)=scatter(ax_fig(ind),m,gaA,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),"gaA"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
@@ -209,6 +216,8 @@ ind = ind+1;
 s(ind)=scatter(ax_fig(ind),gsA,gaA,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
 s(ind)=scatter(ax_fig(ind),gsC,gaA,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
+ind = ind+1;
+s(ind)=scatter(ax_fig(ind),dhdt_err,gaA,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
 
 
@@ -225,6 +234,8 @@ s(ind)=scatter(ax_fig(ind),gsA,gaC,marker_size,plotdata,'filled','MarkerEdgeColo
 ind = ind+1;
 s(ind)=scatter(ax_fig(ind),gsC,gaC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
+s(ind)=scatter(ax_fig(ind),dhdt_err,gaC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
+ind = ind+1;
 
 
 % row 5: gsA
@@ -240,6 +251,8 @@ s(ind)=scatter(ax_fig(ind),gsA,gsA,marker_size,dummydata,'filled','MarkerEdgeCol
 ind = ind+1;
 s(ind)=scatter(ax_fig(ind),gsC,gsA,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
+s(ind)=scatter(ax_fig(ind),dhdt_err,gsA,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
+ind = ind+1;
 
 % row 6: gsC
 s(ind)=scatter(ax_fig(ind),m,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),"gsC"); xlabel(ax_fig(ind),"m"); 
@@ -254,8 +267,26 @@ s(ind)=scatter(ax_fig(ind),gsA,gsC,marker_size,plotdata,'filled','MarkerEdgeColo
 ind = ind+1;
 s(ind)=scatter(ax_fig(ind),gsC,gsC,marker_size,dummydata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gsC"); yticklabels(ax_fig(ind),"");
 ind = ind+1;
+s(ind)=scatter(ax_fig(ind),dhdt_err,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gsC"); yticklabels(ax_fig(ind),"");
+ind = ind+1;
 
-for i = 1:36
+% row 7: dhdt
+s(ind)=scatter(ax_fig(ind),m,dhd_errt,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),"gsC"); xlabel(ax_fig(ind),"m"); 
+ind = ind+1;
+s(ind)=scatter(ax_fig(ind),n,dhdt_err,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"n"); yticklabels(ax_fig(ind),"");
+ind = ind+1;
+s(ind)=scatter(ax_fig(ind),gaA,dhdt_err,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gaA"); yticklabels(ax_fig(ind),"");
+ind = ind+1;
+s(ind)=scatter(ax_fig(ind),gaC,dhdt_err,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gaC"); yticklabels(ax_fig(ind),"");
+ind = ind+1;
+s(ind)=scatter(ax_fig(ind),gsA,dhdt_err,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gsA"); yticklabels(ax_fig(ind),"");
+ind = ind+1;
+s(ind)=scatter(ax_fig(ind),gsC,dhdt_err,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gsC"); yticklabels(ax_fig(ind),"");
+ind = ind+1;
+s(ind)=scatter(ax_fig(ind),dhdt_err,dhdt_err,marker_size,dummydata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gsC"); yticklabels(ax_fig(ind),"");
+ind = ind+1;
+
+for i = 1:42
     grid(ax_fig(i),"on");
     box(ax_fig(i),"on");
 end

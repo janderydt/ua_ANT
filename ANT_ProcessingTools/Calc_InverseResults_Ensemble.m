@@ -9,7 +9,7 @@ UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
 %UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 4 5 8])+".csv";
 %UserVar.idrange = [3000,3999;5000,5999;6000,6999;9000,9999];
-%UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([10 11 12 13])+".csv";
+%UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_10-10-2024_"+string([10 11 12 13])+".csv";
 %UserVar.idrange = [10000,10999; 11000, 11999; 12000, 12999; 13000, 13999];
 UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
 UserVar.idrange = [14000,14999; 15000, 15999; 16000, 16999; 17000, 17999];
@@ -113,6 +113,11 @@ for tt=1:numel(UserVar.Table)
                 data(data_ind).gaC = CtrlVarInRestartFile.Inverse.Regularize.logC.ga;
                 data(data_ind).gsA = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.gs;
                 data(data_ind).gsC = CtrlVarInRestartFile.Inverse.Regularize.logC.gs;
+                if isfield(UserVarInRestartFile.Inverse,"dhdt_err")
+                    data(data_ind).dhdt_err = UserVarInRestartFile.Inverse.dhdt_err;
+                else
+                    data(data_ind).dhdt_err = nan;
+                end
                 data(data_ind).startgeometry = RunTable{Ind(ii),"startGeometry"};
                 data(data_ind).niter(cc) = UserVarInRestartFile.Inverse.IterationsDone;
                 data(data_ind).misfit(cc) = InvFinalValues.I;

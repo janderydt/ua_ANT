@@ -18,7 +18,7 @@ RunTable{ind,'pgid'} = pgid;
 % launched one after the other. However, on ARCHER2, all experiments are 
 % launched simultaneously, so changing the global table can cause problems 
 % because multiple jobs will try to access and modify the same file. That's 
-% why we % exclude ARCHER2 here, and update the global table once all
+% why we exclude ARCHER2 here, and only update the global table once all
 % simulations are finished.
 if UserVar.hostname ~= "ARCHER2"
     [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_global,RunTable,'write');

@@ -33,7 +33,7 @@ for ind=1:size(X,1)
     gsA = round(X.gsA(ind)*10)/10;         %gsA
     gaC = round(X.gaC(ind)*10)/10;         %gaC
     gaA = round(X.gaA(ind)*10)/10;         %gaA
-    dhdt_err = round(X.dhdt_err(ind)*100)/100;
+    dhdt_err = round(X.dhdt_err(ind)*1000)/1000;
 
     taub = 80;  
     ub = 100;%X(ind,6);

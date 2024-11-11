@@ -7,7 +7,7 @@ rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
 GradientCalc = "Adjoint"; % options: FixPoint or Adjoint
-SlidingLaw = "Umbi";
+SlidingLaw = "Weertman";
 SampleSize = 1000;
 Enrich = 0; % enriches the existing Latin Hypercube
 EnrichSampleSize = 180;
@@ -57,8 +57,8 @@ switch GradientCalc
         Input.Marginals(ind).Name = 'dhdt_err';
         %Input.Marginals(ind).Parameters = log10([1 250]); % parameters are bounds
         %Input.Marginals(ind).Bounds = log10([1 250]);
-        Input.Marginals(ind).Parameters = [0.1 1];
-        Input.Marginals(ind).Bounds = [0.1 1];
+        Input.Marginals(ind).Parameters = [0.05 0.5];
+        Input.Marginals(ind).Bounds = [0.05 0.5];
         ind = ind + 1;
         
         %% Sliding law
