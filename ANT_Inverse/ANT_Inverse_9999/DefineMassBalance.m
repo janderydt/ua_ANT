@@ -27,18 +27,24 @@ if UserVar.SpinupCycle
     as = Fsmb_RACMO_climatology(x,y);
     
     %% Basal mass balance: "balanced melt"
+    ab = 0*x;
     if F.time>0
-        ab=CalcIceShelfMeltRates(CtrlVar,MUA,F.ub,F.vb,F.s,F.b,F.S,F.B,F.rho,F.rhow,0*x,as,0*x);
-    else
-        ab = 0*x;
+        F.as = as;
+        F.ab = ab;
+        BCs=BoundaryConditions;
+        [~,BCs]=GetBoundaryConditions(UserVar,CtrlVar,MUA,BCs,F);
+        [~,dhdt]=dhdtExplicitSUPG(UserVar,CtrlVar,MUA,F,BCs);
+        ab = -dhdt;
+        %ab=CalcIceShelfMeltRates(CtrlVar,MUA,F.ub,F.vb,F.s,F.b,F.S,F.B,F.rho,F.rhow,0*x,as,0*x);
     end
     
     % apply melt on nodes downstream of GL
-    GF =IceSheetIceShelves(CtrlVar,MUA,F.GF);
-    [LakeNodes,OceanNodes,LakeElements,OceanElements] = LakeOrOcean3(CtrlVar,MUA,GF);
-    
-    I = find(LakeNodes & GF.node>0.5);
-    ab(I) = 0;
+    GF =IceSheetIceShelves(CtrlVar,MUA,F.GF);   
+    %I = find(LakeNodes | GF.node>0.5); ab(I)=0;
+    NodesDownstreamOfGroundingLines="Relaxed"; % strict
+    [LakeNodes,OceanNodes,LakeElements,OceanElements] = LakeOrOcean3(CtrlVar,MUA,GF,[],NodesDownstreamOfGroundingLines);
+    ab(LakeNodes) = 0;
+    ab(~OceanNodes) = 0;
 
     %% Make adjustments for second spinup cycle: adjust surface mass
     %% balance as -> as - dhdt and run to steady state with fixed ice shelf thickness

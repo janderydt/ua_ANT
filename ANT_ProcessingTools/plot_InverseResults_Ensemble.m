@@ -2,7 +2,7 @@ function plot_InverseResults_Ensemble
 
 variable_to_plot = 'misfit'; %options: qGL, niter, misfit, qOB, BalancedMelt
 
-slidinglaws = ["Weertman"];
+slidinglaws = ["Weertman_v0"];
 file_with_inversion_data_to_read = "inversiondata_"+slidinglaws+".mat";
 
 %% load data
@@ -34,7 +34,7 @@ UserVar.idrange = [14000,14999;15000,15999;16000,16999;17000,17999];
 for ii=1:numel(data)
     if numel(data(ii).misfit)>=UserVar.cycle
         misfit(ii) = data(ii).misfit(UserVar.cycle);
-        ind_finished(ii) = ismember(data(ii).niter(UserVar.cycle),[5000,6000,15000,16000]);
+        ind_finished(ii) = ismember(data(ii).niter(UserVar.cycle),[1000,2000,5000,6000,15000,16000]);
     else
         misfit(ii) = nan;
         ind_finished(ii) = 0;
@@ -78,8 +78,8 @@ switch variable_to_plot
         for ii=find(ind_finished==1)
             plotdata(ii) = data(ii).misfit(:,UserVar.cycle)';  
         end 
-        cmin = 1e4;
-        cmax = 1e5;
+        cmin = min(plotdata);
+        cmax = max(plotdata)/100;
         cbLabel = "Misfit";
     case 'BalancedMelt'
         for ii=find(ind_finished==1)
@@ -106,7 +106,7 @@ if variable_to_plot == "BalancedMelt"
 
     H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
 
-    tlo=tiledlayout(H,1,2,TileSpacing="tight");
+    tlo=tiledlayout(H,1,2,TileSpacing="none");
 
     xmin = min(MUA.coordinates(:,1)); xmax = max(MUA.coordinates(:,1));
     ymin = min(MUA.coordinates(:,2)); ymax = max(MUA.coordinates(:,2));
@@ -160,8 +160,8 @@ dummydata = nan*plotdata;
 
 colormap('jet');
 
-tlo_fig = tiledlayout(6,6,"TileSpacing","compact");
-for i = 1:36
+tlo_fig = tiledlayout(7,7,"TileSpacing","compact");
+for i = 1:49
     ax_fig(i) = nexttile(tlo_fig,i); hold on;
 end
 
@@ -259,19 +259,19 @@ s(ind)=scatter(ax_fig(ind),m,gsC,marker_size,plotdata,'filled','MarkerEdgeColor'
 ind = ind+1;
 s(ind)=scatter(ax_fig(ind),n,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"n"); yticklabels(ax_fig(ind),"");
 ind = ind+1;
-s(ind)=scatter(ax_fig(ind),gaA,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gaA"); yticklabels(ax_fig(ind),"");
+s(ind)=scatter(ax_fig(ind),gaA,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
-s(ind)=scatter(ax_fig(ind),gaC,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gaC"); yticklabels(ax_fig(ind),"");
+s(ind)=scatter(ax_fig(ind),gaC,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
-s(ind)=scatter(ax_fig(ind),gsA,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gsA"); yticklabels(ax_fig(ind),"");
+s(ind)=scatter(ax_fig(ind),gsA,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
-s(ind)=scatter(ax_fig(ind),gsC,gsC,marker_size,dummydata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gsC"); yticklabels(ax_fig(ind),"");
+s(ind)=scatter(ax_fig(ind),gsC,gsC,marker_size,dummydata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
-s(ind)=scatter(ax_fig(ind),dhdt_err,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gsC"); yticklabels(ax_fig(ind),"");
+s(ind)=scatter(ax_fig(ind),dhdt_err,gsC,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),""); yticklabels(ax_fig(ind),"");
 ind = ind+1;
 
 % row 7: dhdt
-s(ind)=scatter(ax_fig(ind),m,dhd_errt,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),"gsC"); xlabel(ax_fig(ind),"m"); 
+s(ind)=scatter(ax_fig(ind),m,dhdt_err,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),"dhdt_err"); xlabel(ax_fig(ind),"m"); 
 ind = ind+1;
 s(ind)=scatter(ax_fig(ind),n,dhdt_err,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"n"); yticklabels(ax_fig(ind),"");
 ind = ind+1;
@@ -283,12 +283,13 @@ s(ind)=scatter(ax_fig(ind),gsA,dhdt_err,marker_size,plotdata,'filled','MarkerEdg
 ind = ind+1;
 s(ind)=scatter(ax_fig(ind),gsC,dhdt_err,marker_size,plotdata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gsC"); yticklabels(ax_fig(ind),"");
 ind = ind+1;
-s(ind)=scatter(ax_fig(ind),dhdt_err,dhdt_err,marker_size,dummydata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"gsC"); yticklabels(ax_fig(ind),"");
+s(ind)=scatter(ax_fig(ind),dhdt_err,dhdt_err,marker_size,dummydata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),""); xlabel(ax_fig(ind),"dhdt_err"); yticklabels(ax_fig(ind),"");
 ind = ind+1;
 
-for i = 1:42
+for i = 1:49
     grid(ax_fig(i),"on");
     box(ax_fig(i),"on");
+    clim(ax_fig(i),[cmin cmax]);
 end
 
 cb=colorbar;
@@ -310,7 +311,7 @@ print(H,fname,"-dpng","-r400");
 
 %% histogram
 figure; hold on;
-bins = linspace(min(plotdata),max(plotdata),20);
+bins = linspace(min(plotdata),max(plotdata/100),20);
 h1=histogram(plotdata,bins); 
 h2=histogram(plotdata(ind_finished==1),bins);
 xlabel(cbLabel);

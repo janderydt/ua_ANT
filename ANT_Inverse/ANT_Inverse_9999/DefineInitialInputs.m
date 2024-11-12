@@ -35,7 +35,7 @@ elseif UserVar.SpinupCycle
     if ~UserVar.Spinup.Restart
         CtrlVar.time=0;
         CtrlVar.ResetTime=1;
-        CtrlVar.dt = 1e-6;
+        CtrlVar.dt = 1e-3;
         CtrlVar.ResetTimeStep=1; 
         CtrlVar.RestartTime=0;  
     end          

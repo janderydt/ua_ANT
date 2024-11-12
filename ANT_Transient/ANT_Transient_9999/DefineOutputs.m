@@ -45,11 +45,16 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'Last call') % the string "last call" 
             % simulation finished before the walltime without error, but 
             % did not reach expected number of years. One reason can be
             % that the timestep became too small
-            if CtrlVar.dt<=CtrlVar.dtmin
-                fprintf(CtrlVar.fidlog,'Simulation did not reach expected number of %s years. Timestep too small.\n',num2str(CtrlVar.TotalTime));   
+            RunTable_exp=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read');
+            ind = find(RunTable{:,'ExpID'}==UserVar.ExpID);
+            if CtrlVar.dt<=CtrlVar.dtmin   
+                RunTable_exp{ind,"Comments"}="Simulation did not reach expected number of "+...
+                    num2str(num2str(CtrlVar.TotalTime))+". Timestep too small.";          
             else
-                fprintf(CtrlVar.fidlog,'Simulation did not reach expected number of %s years. Check log file for reason.\n',num2str(CtrlVar.TotalTime));        
+                RunTable_exp{ind,"Comments"}="Simulation did not reach expected number of "+...
+                    num2str(num2str(CtrlVar.TotalTime))+". Check log file for reason.";
             end  
+            [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable_exp,'write');
             UserVar.Finished = 0;
             UserVar.Restart = 0;
             UserVar.Error = 1;
