@@ -51,14 +51,16 @@ b_m(I_toremove) = [];
 N_m = [x(:) y(:) b_m(:)];
 
 %% offset z-coordinate of N_m with large negative number (following Rosier et al. 2024)
-N_m(:,3) = N_m(:,3)-10000;
+N_m_adj = N_m;
+N_m_adj(:,3) = N_m_adj(:,3)-1e6;
 
 %% multiply z-coordinate of N_GL by two (following Rosier et al. 2024)
-N_GL(:,3) = N_GL(:,3)*2;
+N_GL_adj = N_GL;
+N_GL_adj(:,3) = N_GL_adj(:,3)*2;
 
 %% k nearest neighbour search with default Euclidean metric
 k=10;
-[idx, dist] = knnsearch(N_GL,N_m,'K',k);
+[idx, dist] = knnsearch(N_GL_adj,N_m_adj,'K',k);
 
 %% calculate global & local slope
 [dbdx,dbdy,xint,yint]=calcFEderivativesMUA(b,MUA,CtrlVar); % local slope at integration points
@@ -83,27 +85,33 @@ end
 
 %% PLOTTING
 
-%figure; hold on;
+figure; hold on;
 
-%PlotMuaMesh(CtrlVarInRestartFile,MUA,[],'color',[0.8 0.8 0.8]); hold on;
-%plot(N_m(:,1),N_m(:,2),'or'); % melt nodes
-%plot(x_GL,y_GL,'-g'); % original GL
-%plot(x_GL_main,y_GL_main,'xg'); % GL pinning points removed - these are
+PlotMuaMesh(CtrlVarInRestartFile,MUA,[],'color',[0.8 0.8 0.8]); hold on;
+g(1)=scatter(N_m(:,1),N_m(:,2),10,mean(theta_global,2),'filled'); % global slope
+g(2)=plot(x_GL,y_GL,'-m'); % original GL
+g(3)=plot(x_GL_main,y_GL_main,'xb','markersize',2); % GL pinning points removed - these are
 %the origins of the plume
 
-%XLim=[-1.695e+06 -1.524e+06];
-%YLim=[-3.844e+05 -2.498e+05];
-%xlim(XLim); ylim(YLim);
-
-% plot some pathways
+% XLim=[-1.695e+06 -1.524e+06];
+% YLim=[-3.844e+05 -2.498e+05];
+% xlim(XLim); ylim(YLim);
+% 
+% % plot some pathways
 % for ii=1:50:size(idx,1)
 %     for jj=1:k
-%         plot([N_m(ii,1) N_GL(idx(ii,jj),1)],[N_m(ii,2) N_GL(idx(ii,jj),2)],'-b');
+%         plot([N_m(ii,1) N_GL(idx(ii,jj),1)],[N_m(ii,2) N_GL(idx(ii,jj),2)],'--k');
 %     end
 % end
 
-%figure; scatter(N_m(:,1),N_m(:,2),10,dz_mean,'filled');
+%scatter(N_m(:,1),N_m(:,2),10,dz_mean,'filled');
 %figure; scatter(N_m(:,1),N_m(:,2),10,dl_mean,'filled');
-%figure; scatter(N_m(:,1),N_m(:,2),10,theta_global,'filled'); % global slope
+
+caxis([-0.01 0.01])
+CM=othercolor('RdYlBu7');
+colormap(CM);
+
+title('Global slope');
+legend(g(:),["Global slope","GL","Possible plume origins",]);
 
 %figure; scatter(N_m(:,1),N_m(:,2),10,theta_local,'filled'); % local slope
