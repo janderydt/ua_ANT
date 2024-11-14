@@ -5,7 +5,7 @@ function [N_m,N_GL,theta_global,theta_local]=CalcPlumeGeometry(MUA,F,CtrlVar)
 % N_GL: m x 3 matrix, m rows are GL nodes, 3 columns are x,y,z coordinats of each GL node
 % idx: n x 10 matrix, n rows are melt nodes, 10 columns are indices of corresponding GL nodes that form the plume origins
 % theta_global: n x 10 matrix, n rows are melt nodes, 10 columns are global slopes of the plumes
-% theta_local: n x 10 matrix, n rows are melt nodes, 10 columns are local slopes of the plumes
+% theta_local: n x 1 matrix, local slope of the ice draft for each melt node
 
 if nargin<3
     folder = "/mnt/md0/Ua/cases/ANT/ANT_Inverse/cases/ANT_nsmbl_Inverse_14423";
@@ -52,7 +52,9 @@ N_m = [x(:) y(:) b_m(:)];
 
 %% offset z-coordinate of N_m with large negative number (following Rosier et al. 2024)
 N_m_adj = N_m;
-N_m_adj(:,3) = N_m_adj(:,3)-1e6;
+N_m_adj(:,3) = N_m_adj(:,3)-1e6; % CAUTION: the plume paths are sensitive to the offset (-1e6), 
+% which was chosen to give reasonable-looking result for Antarctica. This
+% number can be changed.
 
 %% multiply z-coordinate of N_GL by two (following Rosier et al. 2024)
 N_GL_adj = N_GL;
@@ -62,22 +64,21 @@ N_GL_adj(:,3) = N_GL_adj(:,3)*2;
 k=10;
 [idx, dist] = knnsearch(N_GL_adj,N_m_adj,'K',k);
 
-%% calculate global & local slope
+%% calculate local & global slopes
 [dbdx,dbdy,xint,yint]=calcFEderivativesMUA(b,MUA,CtrlVar); % local slope at integration points
 [dbdx,dbdy]=ProjectFintOntoNodes(MUA,dbdx,dbdy); % local slope at nodes
 dbdx_m = dbdx; dbdy_m = dbdy;
 dbdx_m(I_toremove)=[]; % retain only melt nodes
 dbdy_m(I_toremove)=[];
+theta_local = atan(hypot(dbdx_m,dbdy_m));
 
 theta_global = zeros(size(idx));
-theta_local = zeros(size(idx));
 for ii=1:size(N_m,1) 
     dx = N_m(ii,1)-N_GL(idx(ii,:),1);
     dy = N_m(ii,2)-N_GL(idx(ii,:),2);
     dz = N_m(ii,3)-N_GL(idx(ii,:),3);
     dl = hypot(dx,dy);
-    theta_global(ii,:) = atan(dz./dl);
-    theta_local(ii,:) = atan(hypot(dbdx_m(ii),dbdy_m(ii)));
+    theta_global(ii,:) = atan(dz./dl);  
 end
 
 %% PLOTTING
