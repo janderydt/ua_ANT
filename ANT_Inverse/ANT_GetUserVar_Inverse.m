@@ -180,7 +180,7 @@ UserVar.Inverse.priorC = RunTable{ind,"priorC"};
 
 %% Glen's exponent
 UserVar.NameOfFileForReadingAGlenEstimate=UserVar.NameOfFileForSavingAGlenEstimate;
-% make sure NameOfFileForReadingSlipperinessEstimate contains the correct
+% make sure NameOfFileForReadingAGlenEstimate contains the correct
 % fields in case they were accidentally overwritten
 load(UserVar.casefolder+"/"+UserVar.Experiment+"/"+NameOfRestartFiletoRead,"F","MUA","CtrlVarInRestartFile");
 AGlen = F.AGlen; xA = MUA.coordinates(:,1); yA = MUA.coordinates(:,2); n = F.n;
@@ -221,9 +221,25 @@ UserVar.MeshBoundaryCoordinatesFile = UserVar.casefolder+"/"+UserVar.Experiment+
 
 %% sliding law
 UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
+% extrude C from grounded ice underneath ice shelves using streamlines,
+% using fields from the restart file
+addpath(UserVar.casefolder+"/../../ANT_Data/ANT_HelperFunctions/");
+addpath(UserVar.casefolder+"/../../ANT_Data/ANT_Interpolants/");
+load(UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+UserVar.NameOfRestartFiletoRead,"CtrlVarInRestartFile","MUA","F");
+C = ExtrudeC(CtrlVarInRestartFile,MUA,F);
+xC = MUA.coordinates(:,1); yC = MUA.coordinates(:,2); m = F.m;
+muk = F.muk; q = F.q;
+save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimate,...
+    "MUA","CtrlVarInRestartFile","xC","yC","C","m","muk","q");
 
 %% Glen's exponent
 UserVar.NameOfFileForReadingAGlenEstimate=UserVar.NameOfFileForSavingAGlenEstimate;
+% make sure NameOfFileForReadingAGlenEstimate contains the correct
+% fields in case they were accidentally overwritten
+load(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Nam4eOfRestartFiletoRead,"F","MUA","CtrlVarInRestartFile");
+AGlen = F.AGlen; xA = MUA.coordinates(:,1); yA = MUA.coordinates(:,2); n = F.n;
+save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,...
+    "MUA","CtrlVarInRestartFile","xA","yA","AGlen","n");
     
 end
 
