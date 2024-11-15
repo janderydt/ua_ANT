@@ -9,7 +9,7 @@ from utils import read_runinfo, save_runinfo
 # read input from config file
 config_file = sys.argv[1]
 read_table = str(sys.argv[2]) # either 'global' or 'local'
-write_table = str(sys.argv[3]) # either 'global' or "local'
+write_table = str(sys.argv[3]) # either 'global' or 'local'
 
 with open(config_file, "r") as fi: # Open the file in read mode
     for ln in fi:
@@ -35,14 +35,14 @@ for i in range(data_global.shape[0]):
     if float(idrange[0]) <= ExpID <=float(idrange[1]):
         expfolder = os.getcwd()+'/cases/'+data_global['Domain'].values[i]+'_'+runtype.strip().strip("\"")+'_'+str(ExpID)+'/'
         exptable = 'RunTable_'+data_global['Domain'].values[i]+'_'+runtype.strip().strip("\"")+'_'+str(ExpID)+'.csv'
-        runtable_local = expfolder+exptable
-        if os.path.isfile(runtable_local):
-            data_exp = read_runinfo(runtable_local,runtype)
+        runtable_exp = expfolder+exptable
+        if os.path.isfile(runtable_exp):
+            data_exp = read_runinfo(runtable_exp,runtype)
             if read_table == 'global' and write_table == 'local':
-                print('Writing data to '+exptable)               
+                print('Writing data to '+runtable_exp)               
                 data_exp.loc[0]=data_global.loc[i]
                 # save modified version of the local runtable
-                save_runinfo(data_exp, runtable_local)
+                save_runinfo(data_exp, runtable_exp)
             elif read_table == 'local' and write_table == 'global':
                 print('Writing data to '+runtable_global)               
                 data_global.loc[i]=data_exp.loc[0]
