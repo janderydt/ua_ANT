@@ -133,6 +133,7 @@ NameOfRestartFiletoRead = ...
 load(UserVar.casefolder+"/"+UserVar.Experiment+"/"+NameOfRestartFiletoRead,"F","MUA");
 
 UserVar.GeometryInterpolants = "ScatteredInterpolants_GeometryfromSpinupCycle"+string(UserVar.Inverse.Cycle-1)+".mat";
+
 % Lines below are removed to save memory. The interpolants should not be
 % needed because we don't change the mesh during the spinup
 %FB = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),F.B,"linear");
@@ -221,8 +222,12 @@ UserVar.MeshBoundaryCoordinatesFile = UserVar.casefolder+"/"+UserVar.Experiment+
 
 %% sliding law
 UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
-% extrude C from grounded ice underneath ice shelves using streamlines,
-% using fields from the restart file
+% C is not updated for floating ice, except for some
+% regularization-dependent smoothing. A more representative value for C
+% beneath the ice shelves could be obtained by extruding C from the
+% grounded ice along streamlines. We use streamlines based on the
+% velocity fields obtained through the inversion. Note that is very ad-hoc
+% and users might want to change this part of the code.
 addpath(UserVar.casefolder+"/../../ANT_Data/ANT_HelperFunctions/");
 addpath(UserVar.casefolder+"/../../ANT_Data/ANT_Interpolants/");
 load(UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+UserVar.NameOfRestartFiletoRead,"CtrlVarInRestartFile","MUA","F");

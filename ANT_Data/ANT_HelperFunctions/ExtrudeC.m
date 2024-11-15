@@ -14,7 +14,7 @@ C(F.GF.node<0.9)=nan;
 % ExtrudeField requires gridded coordinates
 xmin = min(xUa); ymin = min(yUa);
 xmax = max(xUa); ymax = max(yUa);
-dx = 2e3; dy = 2e3;
+dx = 10e3; dy = 10e3;
 x = [xmin:dx:xmax]; y = [ymin:dy:ymax];
 [X,Y]=ndgrid(x,y);
 Iout = find(~inpoly2([X(:) Y(:)],[MUA.Boundary.x(:) MUA.Boundary.y(:)]));
@@ -35,9 +35,12 @@ vygrid = Fvy(X,Y);
 clear Fvy FC;
 
 % Extrude C and fill nan regions
-if contains(CtrlVar.Experiment,["ASE","AS_PROPHET","ANT"])
+if contains(CtrlVar.Experiment,["ASE","AS_PROPHET"])
     step = 0.01;
     n = 30000;
+elseif contains(CtrlVar.Experiment,"ANT")
+    step = 0.01;
+    n = 10000;
 else
     error('Unknown experiment name for extruding C');
 end
@@ -52,10 +55,10 @@ FCext = scatteredInterpolant(X(I),Y(I),Cext(I),'natural');
 Cext_Ua = FCext(xUa,yUa);
 Cext_Ua(F.GF.node>=0.9) = F.C(F.GF.node>=0.9);
 
-%figure; PlotMeshScalarVariable(CtrlVar,MUA,log10(Cext_Ua));
-%hold on;
-%CtrlVar.PlotGLs=1;
-%PlotGroundingLines(CtrlVar,MUA,F.GF);
+figure; PlotMeshScalarVariable(CtrlVar,MUA,log10(Cext_Ua));
+hold on;
+CtrlVar.PlotGLs=1;
+PlotGroundingLines(CtrlVar,MUA,F.GF);
 
 %figure; %PlotMeshScalarVariable(CtrlVar,MUA,Cext_Ua-F.C);
 %hold on;
