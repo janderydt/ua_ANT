@@ -59,7 +59,7 @@ for i in range(data_global.shape[0]):
 
 # if write_table=global: check for rows with pgid~=0. These are experiments that did not finish cleanly before the end of the walltime.
 # we set pgid=0, error=1, restart=0
-if write_table='global':
+if write_table == 'global':
     pd_copy = data_global.copy()
     pgid = pd_copy['pgid'].values
         for i in range(pgid.shape[0]):
