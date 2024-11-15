@@ -62,19 +62,19 @@ for i in range(data_global.shape[0]):
 if write_table == 'global':
     pd_copy = data_global.copy()
     pgid = pd_copy['pgid'].values
-        for i in range(pgid.shape[0]):
-            if pgid[i] != 0:
-                print('non-zero pgid found:')
-                print(data_global.loc[[i]])
-                #correct = input("Would you like to set pgid=0, error=1, restart=0 in the Runtable? yes=1, no=0: ")
-                correct=1 #int(correct)
-                if correct == 1:
-                    data_global.at[i,'pgid']=0
-                    data_global.at[i,'Error']=1
-                    data_global.at[i,'Restart']=0
-                    data_global.at[i,'Running']=0
-                    data_global.at[i,'Submitted']=0
-                    data_global.at[i,'Comments']='walltime exceeded'
+    for i in range(pgid.shape[0]):
+        if pgid[i] != 0:
+            print('non-zero pgid found:')
+            print(data_global.loc[[i]])
+            #correct = input("Would you like to set pgid=0, error=1, restart=0 in the Runtable? yes=1, no=0: ")
+            correct=1 #int(correct)
+            if correct == 1:
+                data_global.at[i,'pgid']=0
+                data_global.at[i,'Error']=1
+                data_global.at[i,'Restart']=0
+                data_global.at[i,'Running']=0
+                data_global.at[i,'Submitted']=0
+                data_global.at[i,'Comments']='walltime exceeded'
 
     # save modified version of the global runtable
     save_runinfo(data_global, runtable_global)
