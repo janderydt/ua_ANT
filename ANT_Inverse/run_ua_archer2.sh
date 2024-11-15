@@ -73,6 +73,9 @@ timestart=$(date +"%s")
 # make local copy of runtable
 python ../copy_runtable.py $UA_CONFIG "" ".tmp"
 
+# update all experiment runtables based on global runtable
+python ../update_runtable.py $UA_CONFIG "local" "global"
+
 # get list of experiments to start (read python output as string)
 # first obtain the row numbers of experiments that need to be started. NOTE: the index of the first row is 1 (MATLAB syntax)
 RowNb_all="`python ../get_runs_to_submit.py $UA_CONFIG all`"
@@ -212,7 +215,7 @@ then
     python ../copy_runtable.py $UA_CONFIG ".tmp" ""
 
     # Update global RunTable
-    python ../update_runtable.py $UA_CONFIG
+    python ../update_runtable.py $UA_CONFIG "local" "global"
 
     # Clean up directory
     find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -size 0 | xargs rm -rf
