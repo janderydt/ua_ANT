@@ -9,7 +9,7 @@ from utils import read_runinfo, save_runinfo
 # read input from config file
 config_file = sys.argv[1]
 read_table = str(sys.argv[2]) # either 'global' or 'local'
-write_table = str(sys.argv[3]) # either 'global" or "local'
+write_table = str(sys.argv[3]) # either 'global' or "local'
 
 with open(config_file, "r") as fi: # Open the file in read mode
     for ln in fi:

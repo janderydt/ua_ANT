@@ -74,7 +74,7 @@ timestart=$(date +"%s")
 python ../copy_runtable.py $UA_CONFIG "" ".tmp"
 
 # update all experiment runtables based on global runtable
-python ../update_runtable.py $UA_CONFIG "local" "global"
+python ../update_runtable.py $UA_CONFIG "global" "local"
 
 # get list of experiments to start (read python output as string)
 # first obtain the row numbers of experiments that need to be started. NOTE: the index of the first row is 1 (MATLAB syntax)
