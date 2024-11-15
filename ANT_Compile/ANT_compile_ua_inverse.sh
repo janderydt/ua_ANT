@@ -12,7 +12,9 @@ UA_BUILD=./UaBuild
 UA_WRAPPER_FILES=$REPO_DIR/ANT_Inverse
 # Path to configuration-specific Ua files to overwrite
 UA_CASE_UPDATES=$REPO_DIR/ANT_Inverse/ANT_Inverse_9999
-# Path to Ua source directory (default use the one inside UaMITgcm)
+# Path to helper functions
+UA_HELPER=$REPO_DIR/ANT_Data/ANT_HelperFunctions
+# Path to Ua source directory
 UA_SOURCE=/mnt/md0/Ua/UaSource_beta
 
 if [ -e $UA_BUILD ]; then
@@ -34,6 +36,8 @@ cp `find $UA_SOURCE/Mesh2d/ -name "*.m" ! -name 'inpoly2*'` $UA_BUILD
 cp -r $REPO_DIR/*.m $UA_BUILD
 cp -r $UA_WRAPPER_FILES/*.m $UA_BUILD
 cp -r $UA_CASE_UPDATES/* $UA_BUILD
+# Copy helper functions
+cp -r $UA_HELPER/*.m $UA_BUILD
 
 # Create the executable
 $MATLAB_PATH/bin/mcc -m $UA_BUILD/ANT_UaWrapper.m -o Ua -d $UA_BUILD

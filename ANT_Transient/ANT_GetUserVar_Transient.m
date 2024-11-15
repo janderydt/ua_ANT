@@ -41,15 +41,26 @@ if exist(NameOfFiletoRead,"file")
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
     
     % copy C field
-    C = F.C; m = F.m;
+    xC = MUA.coordinates(:,1); yC = MUA.coordinates(:,2);
+    m = F.m; muk = F.muk; q = F.q;
     UserVar.NameOfFileForReadingSlipperinessEstimate = "ANT_Inverse_"+string(UserVar.Inverse)+"_C-Estimate.mat";
-    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimate,"MUA","C","m");
+    % C is not updated for floating ice, except for some
+    % regularization-dependent smoothing. A more representative value for C
+    % beneath the ice shelves could be obtained by extruding C from the
+    % grounded ice along streamlines. We use streamlines based on the
+    % velocity fields obtained through the inversion. Note that is very ad-hoc
+    % and users might want to change this part of the code.
+    addpath(UserVar.casefolder+"/../../ANT_Data/ANT_HelperFunctions/");
+    addpath(UserVar.casefolder+"/../../ANT_Data/ANT_Interpolants/");
+    C = ExtrudeC(CtrlVarInRestartFile,MUA,F);
+    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimate,"xC","yC","C","m","muk","q");
     UserVar.SlidingLaw = CtrlVarInRestartFile.SlidingLaw;
     
     % copy AGlen field
+    xA = MUA.coordinates(:,1); yA = MUA.coordinates(:,2);
     AGlen = F.AGlen; n = F.n;
     UserVar.NameOfFileForReadingAGlenEstimate = "ANT_Inverse_"+string(UserVar.Inverse)+"_AGlen-Estimate.mat";
-    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,"MUA","AGlen","n");
+    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,"xA","yA","AGlen","n");
     
 else
     error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy C and AGlen fields: "+NameOfFiletoRead);
