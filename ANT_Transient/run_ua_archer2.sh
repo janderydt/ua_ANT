@@ -14,8 +14,14 @@
 # sbatch --export=ALL,UA_CONFIG=<path to UA config file>,ACC=n02-xxxxx -N xxx -A n02-xxxxx ./run_ua_archer2.sh 
 #
 # -N xxx is the required number of nodes
-# -A n02-xxxxx is the budget code
-###########################################################################################'##################
+# n02-xxxxx is the budget code
+# 
+# for runs with a higher memory requirement:
+# use SBATCH --partition=highmem, SBATCH --qos=standard and set --mem-per-cpu=3000M in the srun command below
+#
+# for testing:
+# use SBATCH --partition=standard, SBATCH --qos=short
+##############################################################################################################
 
 # Add top directory to python path (this makes the utils.py file visible to this script)
 CASEDIR=$WORK/ua/cases/ANT
@@ -28,7 +34,7 @@ MCR=$WORK/MCR_2024b/R2024b/
 JOBID=${SLURM_JOB_ID}
 
 # Make sure MCR cache (as defined in Ua_MCR.sh) exists
-# If you want the cache in a different location, modify it here AND in ua_run/Ua_MCR.sh
+# If you want the cache in a different location, modify it here AND in Ua_MCR.sh
 if [ ! -d $WORK/mcr_cache ]; then
   mkdir $WORK/mcr_cache
 fi
@@ -66,6 +72,9 @@ timestart=$(date +"%s")
 
 # make local copy of runtable
 python ../copy_runtable.py $UA_CONFIG "" ".tmp"
+
+# update all experiment runtables based on global runtable
+python ../update_runtable.py $UA_CONFIG "global" "local"
 
 # get list of experiments to start (read python output as string)
 # first obtain the row numbers of experiments that need to be started. NOTE: the index of the first row is 1 (MATLAB syntax)
@@ -180,11 +189,13 @@ then
     touch global_log_active
        
     echo "${currenttime} || ENDING ${jobname} (Config file ${UA_CONFIG}, JobID ${JOBID})" >> jobs_master_ARCHER2.log
-    echo " > Energy Consumption and maximum memory usage:" >> jobs_master_ARCHER2.log
+    EJ=$(sacct --jobs=${JOBID}.0 --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage of batch job 
+    MaxRSS=$(sacct --jobs=${JOBID}.${i} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage of batch job 
+    echo " > Energy Consumption: ${EJ}, Maximum memory usage: ${MaxRSS}" >> jobs_master_ARCHER2.log
     for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
-        EJ=$(sacct --jobs=${JOBID}.${i} --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage
-        MaxRSS=$(sacct --jobs=${JOBID}.${i} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage  
-	echo "      ExpID ${ExpID[$i]}        Energy usage [J]: ${EJ} || Maximum memory usage [bytes]: ${MaxRSS}" >> jobs_master_ARCHER2.log
+        EJ=$(sacct --jobs=${JOBID}.${i} --format=ConsumedEnergy 2>&1 | sed -n 3p) # energy usage for jobstep
+        MaxRSS=$(sacct --jobs=${JOBID}.${i} --format=MaxRSS 2>&1 | sed -n 3p) # max memory usage for jobstep 
+	echo "      ExpID ${ExpID[$i]}        Energy usage [J]: ${EJ} || Maximum memory usage [bytes]: ${MaxRSS}" >> jobsteps_master_ARCHER2.log
     done 
     echo " > Exit codes (if different from zero):" >> jobs_master_ARCHER2.log 
     for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
@@ -204,7 +215,7 @@ then
     python ../copy_runtable.py $UA_CONFIG ".tmp" ""
 
     # Update global RunTable
-    python ../update_runtable.py $UA_CONFIG
+    python ../update_runtable.py $UA_CONFIG "local" "global"
 
     # Clean up directory
     find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -size 0 | xargs rm -rf
