@@ -228,8 +228,6 @@ UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlip
 % grounded ice along streamlines. We use streamlines based on the
 % velocity fields obtained through the inversion. Note that is very ad-hoc
 % and users might want to change this part of the code.
-addpath(UserVar.casefolder+"/../../ANT_Data/ANT_HelperFunctions/");
-addpath(UserVar.casefolder+"/../../ANT_Data/ANT_Interpolants/");
 load(UserVar.casefolder+"/"+string(UserVar.Experiment)+"/"+UserVar.NameOfRestartFiletoRead,"CtrlVarInRestartFile","MUA","F");
 C = ExtrudeC(CtrlVarInRestartFile,MUA,F);
 xC = MUA.coordinates(:,1); yC = MUA.coordinates(:,2); m = F.m;
@@ -241,7 +239,7 @@ save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingS
 UserVar.NameOfFileForReadingAGlenEstimate=UserVar.NameOfFileForSavingAGlenEstimate;
 % make sure NameOfFileForReadingAGlenEstimate contains the correct
 % fields in case they were accidentally overwritten
-load(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Nam4eOfRestartFiletoRead,"F","MUA","CtrlVarInRestartFile");
+load(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfRestartFiletoRead,"F","MUA","CtrlVarInRestartFile");
 AGlen = F.AGlen; xA = MUA.coordinates(:,1); yA = MUA.coordinates(:,2); n = F.n;
 save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,...
     "MUA","CtrlVarInRestartFile","xA","yA","AGlen","n");

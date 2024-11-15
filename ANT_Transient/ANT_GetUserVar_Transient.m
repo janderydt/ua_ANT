@@ -50,8 +50,6 @@ if exist(NameOfFiletoRead,"file")
     % grounded ice along streamlines. We use streamlines based on the
     % velocity fields obtained through the inversion. Note that is very ad-hoc
     % and users might want to change this part of the code.
-    addpath(UserVar.casefolder+"/../../ANT_Data/ANT_HelperFunctions/");
-    addpath(UserVar.casefolder+"/../../ANT_Data/ANT_Interpolants/");
     C = ExtrudeC(CtrlVarInRestartFile,MUA,F);
     save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimate,"xC","yC","C","m","muk","q");
     UserVar.SlidingLaw = CtrlVarInRestartFile.SlidingLaw;

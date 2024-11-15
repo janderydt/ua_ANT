@@ -39,8 +39,10 @@ else
     error("Hostname "+hostname+" not found.");
 end
 
-if ~contains(UserVar.hostname,"ARCHER2")
+if ~contains(UserVar.hostname,"ARCHER2") 
     addpath(getenv("froot_tools"));
+    addpath("../ANT_Data/ANT_HelperFunctions/");
+    addpath("../ANT_Data/ANT_Interpolants/");
 end
 
 UserVar.home = pwd+"/";

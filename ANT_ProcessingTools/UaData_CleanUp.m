@@ -30,7 +30,7 @@ for ii=1:numel(folders)
                 end
                 [~,I] = sort(filenums,"ascend");
                 if numel(I)>1
-                    for jj=I(1):I(end-1) % do not delete the last restart file
+                    for jj=I(1):I(end)%-1) % do not delete the last restart file
                         tmp = files_to_delete(I(jj)).folder+"/"+files_to_delete(I(jj)).name;
                         fprintf("Deleting %s\n",tmp);
                         delete(tmp);

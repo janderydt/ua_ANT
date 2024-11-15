@@ -54,11 +54,12 @@ FCext = scatteredInterpolant(X(I),Y(I),Cext(I),'natural');
 
 Cext_Ua = FCext(xUa,yUa);
 Cext_Ua(F.GF.node>=0.9) = F.C(F.GF.node>=0.9);
+Cext_Ua(Cext_Ua<CtrlVar.Cmin)=CtrlVar.Cmin;
 
-figure; PlotMeshScalarVariable(CtrlVar,MUA,log10(Cext_Ua));
-hold on;
-CtrlVar.PlotGLs=1;
-PlotGroundingLines(CtrlVar,MUA,F.GF);
+% figure; PlotMeshScalarVariable(CtrlVar,MUA,imag(Cext_Ua));%log10(Cext_Ua));
+% hold on;
+% CtrlVar.PlotGLs=1;
+% PlotGroundingLines(CtrlVar,MUA,F.GF);
 
 %figure; %PlotMeshScalarVariable(CtrlVar,MUA,Cext_Ua-F.C);
 %hold on;
