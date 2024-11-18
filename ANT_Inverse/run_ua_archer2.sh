@@ -150,8 +150,15 @@ then
 		# so we offset the indices by 1 to comply with python numbering convetions)
 		python ../tmpruntable_add_expid.py $UA_CONFIG $((${RowNb[$jobs_submitted]}-1)) ${ExpID[$jobs_submitted]}
 
-	# advance the counter
+	        # advance the counter
                 ((jobs_submitted++))
+
+		# stagger job submissions / not sure if this should be needed but it seems to resolve Matlab MRC error:
+                # MCL:ComponentCache
+                # Error: Could not access the MATLAB Runtime component cache. Details: fl:filesystem:PathNotFound
+	        # Component cache root: '/work/n02/n02/janryd69/mcr_cache/R2024b'
+                # Component name: 'Ua'	
+		sleep 1
             fi
         done
     done
@@ -225,8 +232,8 @@ then
         # calculate number of required nodes for resubmission
         Nb_experiments_to_start=`python ../get_runs_to_submit.py $UA_CONFIG count`
         Nodes_required=$(( ($Nb_experiments_to_start/30) + ($Nb_experiments_to_start%30>0) )) 
-        if [ ${Nodes_required} -gt 6 ]; then
-	    Nodes_required=6
+        if [ ${Nodes_required} -gt 9 ]; then
+	    Nodes_required=9
 	fi	    
 	if [ $Nodes_required -gt 0 ]; then
 	    THISSCRIPT=$(scontrol show job "${SLURM_JOB_ID}" | awk -F= '/Command=/{print $2}')
