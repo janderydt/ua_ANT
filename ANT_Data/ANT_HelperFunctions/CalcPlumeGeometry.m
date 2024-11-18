@@ -1,8 +1,8 @@
-function [N_m,N_GL,theta_global,theta_local]=CalcPlumeGeometry(MUA,F,CtrlVar)
+function [N_m,N_GL,theta_mean,theta_local]=CalcPlumeGeometry(MUA,F,CtrlVar)
 
 %% OUTPUTS:
-% N_m: n x 3 matrix, n rows are melt nodes, 3 columns are x,y,z coordinats of each melt node
-% N_GL: m x 3 matrix, m rows are GL nodes, 3 columns are x,y,z coordinats of each GL node
+% N_m: n x 3 matrix, n rows are melt nodes, 3 columns are x,y,z coordinates of each melt node
+% N_GL: m x 3 matrix, m rows are GL nodes, 3 columns are x,y,z coordinates of each GL node
 % idx: n x 10 matrix, n rows are melt nodes, 10 columns are indices of corresponding GL nodes that form the plume origins
 % theta_global: n x 10 matrix, n rows are melt nodes, 10 columns are global slopes of the plumes
 % theta_local: n x 1 matrix, local slope of the ice draft for each melt node
@@ -41,14 +41,15 @@ end
 N_GL = [x_GL_main(:) y_GL_main(:) Fb(x_GL_main(:),y_GL_main(:))];
 
 %% find melt nodes
-NodesDownstreamOfGroundingLines="Relaxed";%"Strickt"; % strict
-[LakeNodes,OceanNodes] = LakeOrOcean3_JDR(CtrlVar,MUA,GF,GLgeo,GLnodes,GLele,[],NodesDownstreamOfGroundingLines);
+NodesDownstreamOfGroundingLines="Relaxed";%"Strickt" or "Relaxed";
+[LakeNodes,OceanNodes] = LakeOrOcean3_JDR(CtrlVar,MUA,F.GF,GLgeo,GLnodes,GLele,[],NodesDownstreamOfGroundingLines);
 x_m = x; y_m = y; b_m = b;
 I_toremove = find(LakeNodes | ~OceanNodes);
-x(I_toremove) = [];
-y(I_toremove) = [];
+I_meltnodes = find(~LakeNodes & OceanNodes);
+x_m(I_toremove) = [];
+y_m(I_toremove) = [];
 b_m(I_toremove) = [];
-N_m = [x(:) y(:) b_m(:)];
+N_m = [x_m(:) y_m(:) b_m(:)];
 
 %% offset z-coordinate of N_m with large negative number (following Rosier et al. 2024)
 N_m_adj = N_m;
@@ -72,24 +73,27 @@ dbdx_m(I_toremove)=[]; % retain only melt nodes
 dbdy_m(I_toremove)=[];
 theta_local = atan(hypot(dbdx_m,dbdy_m));
 
-theta_global = zeros(size(idx));
+theta_mean = zeros(size(idx));
 for ii=1:size(N_m,1) 
     dx = N_m(ii,1)-N_GL(idx(ii,:),1);
     dy = N_m(ii,2)-N_GL(idx(ii,:),2);
     dz = N_m(ii,3)-N_GL(idx(ii,:),3);
     dl = hypot(dx,dy);
-    theta_global(ii,:) = atan(dz./dl);  
+    theta_mean(ii,:) = atan(dz./dl);  
 end
 
 %% PLOTTING
 
 figure; hold on;
 
-PlotMuaMesh(CtrlVarInRestartFile,MUA,[],'color',[0.8 0.8 0.8]); hold on;
-g(1)=scatter(N_m(:,1),N_m(:,2),10,mean(theta_global,2),'filled'); % global slope
-g(2)=plot(x_GL,y_GL,'-m'); % original GL
-g(3)=plot(x_GL_main,y_GL_main,'xb','markersize',2); % GL pinning points removed - these are
+slope_tmp = 0*x+nan;
+slope_tmp(I_meltnodes) = mean(theta_mean,2);
+%g(1)=PlotMeshScalarVariable(CtrlVarInRestartFile,MUA,slope_tmp); hold on;
+%PlotMuaMesh(CtrlVar,MUA,[],'color',[0.8 0.8 0.8]); hold on;
+g(1)=plot(x_GL,y_GL,'-m'); % original GL
+g(2)=plot(x_GL_main,y_GL_main,'xb','markersize',2); % GL pinning points removed - these are
 %the origins of the plume
+axis off;
 
 % XLim=[-1.695e+06 -1.524e+06];
 % YLim=[-3.844e+05 -2.498e+05];
@@ -106,20 +110,24 @@ g(3)=plot(x_GL_main,y_GL_main,'xb','markersize',2); % GL pinning points removed 
 %figure; scatter(N_m(:,1),N_m(:,2),10,dl_mean,'filled');
 
 caxis([-0.025 0.025])
-CM=othercolor('RdYlBu7');
+CM=othercolor('RdBu11');
 colormap(CM);
+cb.Label.String='slope';
 
 title('Global slope');
-legend(g(:),["Global slope","GL","Possible plume origins",]);
+legend(g(:),["GL","Possible plume origins"],"Location","southwest");
 
 
 figure; hold on;
 
-PlotMuaMesh(CtrlVarInRestartFile,MUA,[],'color',[0.8 0.8 0.8]); hold on;
-g(1)=scatter(N_m(:,1),N_m(:,2),10,mean(theta_local,2),'filled'); % global slope
-g(2)=plot(x_GL,y_GL,'-m'); % original GL
-g(3)=plot(x_GL_main,y_GL_main,'xb','markersize',2); % GL pinning points removed - these are
+slope_tmp = 0*x+nan;
+slope_tmp(I_meltnodes) = mean(theta_local,2);
+%g(1)=PlotMeshScalarVariable(CtrlVarInRestartFile,MUA,slope_tmp); hold on;
+%PlotMuaMesh(CtrlVar,MUA,[],'color',[0.8 0.8 0.8]); hold on;
+g(1)=plot(x_GL,y_GL,'-m'); % original GL
+g(2)=plot(x_GL_main,y_GL_main,'xb','markersize',2); % GL pinning points removed - these are
 %the origins of the plume
+axis off;
 
 % XLim=[-1.695e+06 -1.524e+06];
 % YLim=[-3.844e+05 -2.498e+05];
@@ -135,10 +143,12 @@ g(3)=plot(x_GL_main,y_GL_main,'xb','markersize',2); % GL pinning points removed 
 %scatter(N_m(:,1),N_m(:,2),10,dz_mean,'filled');
 %figure; scatter(N_m(:,1),N_m(:,2),10,dl_mean,'filled');
 
-caxis([-0.025 0.025])
-CM=othercolor('RdYlBu7');
+caxis([-0.04 0.04])
+CM=othercolor('RdBu11');
 colormap(CM);
+cb=colorbar;
+cb.Label.String='slope';
 
 title('Local slope');
-legend(g(:),["Local slope","GL","Possible plume origins",]);
+legend(g(:),["GL","Possible plume origins"],"Location","southwest");
 %figure; scatter(N_m(:,1),N_m(:,2),10,theta_local,'filled'); % local slope
