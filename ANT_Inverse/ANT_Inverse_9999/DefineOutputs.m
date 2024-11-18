@@ -124,9 +124,9 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'End of Inverse Run')
     		fprintf(CtrlVar.fidlog,['Simulation did not reach expected number of iterations. Done %s instead of %s. ',...
         		'Writing restart file and breaking out.\n'],num2str(IterationsDoneInThisRun),num2str(CtrlVar.Inverse.Iterations));
             RunTable_exp=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read');
-            ind = find(RunTable{:,'ExpID'}==UserVar.ExpID);
-            RunTable_exp{ind,"Comments"}="Simulation did not reach expected number of iterations. Done "+...
-                num2str(IterationsDoneInThisRun)+" instead of "+num2str(CtrlVar.Inverse.Iterations)+".";
+            ind = find(RunTable_exp{:,'ExpID'}==UserVar.ExpID);
+            RunTable_exp{ind,'Comments'}={['Simulation did not reach expected number of iterations. Done ',...
+                num2str(IterationsDoneInThisRun),' instead of ',num2str(CtrlVar.Inverse.Iterations),'.']};
             [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable_exp,'write');
             UserVar.Restart = 0;
             UserVar.Error = 1;
@@ -167,13 +167,13 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'Last call') % the string "last call" 
             % did not reach expected number of years. One reason can be
             % that the timestep became too small
             RunTable_exp=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read');
-            ind = find(RunTable{:,'ExpID'}==UserVar.ExpID);
+            ind = find(RunTable_exp{:,'ExpID'}==UserVar.ExpID);
             if CtrlVar.dt<=CtrlVar.dtmin   
-                RunTable_exp{ind,"Comments"}="Simulation did not reach expected number of "+...
-                    num2str(num2str(CtrlVar.TotalTime))+". Timestep too small.";          
+                RunTable_exp{ind,'Comments'}={['Simulation did not reach expected number of ',...
+                    num2str(CtrlVar.TotalTime),'. Timestep too small.']};          
             else
-                RunTable_exp{ind,"Comments"}="Simulation did not reach expected number of "+...
-                    num2str(num2str(CtrlVar.TotalTime))+". Check log file for reason.";
+                RunTable_exp{ind,'Comments'}={['Simulation did not reach expected number of ',...
+                    num2str(CtrlVar.TotalTime),'. Check log file for reason.']};
             end  
             [~]=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,RunTable_exp,'write');
             UserVar.Restart = 0;
