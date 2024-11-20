@@ -27,52 +27,45 @@ else
     E0=0.036; % entrainment factor default value from Lazeroms et al 2019
 end
 if isfield(UserVar,'GammaTS')
-    GammaTS=UserVar.GammaTS;
+    GammTS=UserVar.GammaTS;
 else
-    GammaTS=0.0118; % exchange coefficient default value from Lazeroms et al 2019
+    GammTS=5.9e-4; % exchange coefficient default value from Lazeroms et al 2019
 end
-Stanton = sqrt(Cd)*GammaTS; % effective thermal stanton number
 
-% plume geometry
-[N_m,~,ind_meltnodes,a_mean,a_local,zGL]=CalcPlumeGeometry(MUA,F,CtrlVar,0);
-z = N_m(:,3);
+%% obtain plume geometry
+[N_m,~,ind_meltnodes,grad_mean,grad_local,zGL]=CalcPlumeGeometry(MUA,F,CtrlVar,1);
+a_local = atan(grad_local); % local slope
+a_mean = atan(grad_mean); % mean slope
+z = N_m(:,3); % depth of melt node
 
-% melt nodes that are at the same depth as GL nodes
+% find melt nodes that are at the same depth as GL nodes
 ind_samedepth = find(isapprox(z,zGL));
 
-% define simple piecewise-linear profile that is representative for AS and apply everywhere
+%% define a simple piecewise-linear temperature profile and constant salinity that is 
+%% representative for AS ice shelves and apply everywhere
 % THIS NEEDS TO BE REPLACED BY ICE SHELF-DEPENDENT PROFILES
 
 % typical ocean properties in AS, values taken from Fig3 in De Rydt et al 2013
-zT = -800; % thermocline depth
+zT = -700; % thermocline depth
 Ts = -1; % surface temperature
 Td = 1.2; % typical mCDW temperature in AS
-Ss = 33.9; % surface temperature
 Sd = 34.7; % typical mCDW salinity in AS
 
-% GL properties
+T = Ts+z*(Td-Ts)/zT; T(z<zT)=Td; % piecewise linear temperature profile similar to Rosier et al (2024)
 Tgl = Ts+zGL*(Td-Ts)/zT; Tgl(zGL<zT)=Td; % temperature at GL
-Sgl = Ss+zGL*(Sd-Ss)/zT; Sgl(zGL<zT)=Sd; % salinity at GL
-Tfgl = l1*Sgl + l2 + l3*zGL; % freezing temperature at GL
+% piecewise linear averaging to obtain mean temperature:
+T_belowTz = max(zT-zGL,0)*Td; % this is equal to zT-zGL for zT>zGL, or 0 for zGL>zT
+T_aboveTz = (z-max(zGL,zT)).*(T+Td*(zGL<zT)+Tgl.*(zGL>=zT))/2;
+Tm = (T_belowTz+T_aboveTz)./(z-zGL);
+Tm(ind_samedepth) = T(ind_samedepth); % remove infinite values
 
-Ta = Ts+z*(Td-Ts)/zT; Ta(z<zT)=Td; % piecewise linear temperature profile similar to Rosier et al (2024)
-% piecewise linear integration to obtain mean temperature:
-T_belowTz = max(zT-zGL,0)*Td;
-T_aboveTz = (z-max(zGL,zT)).*(Ta+Td*(zGL<zT)+Tgl.*(zGL>=zT))/2;
-Tmean = (T_belowTz+T_aboveTz)./(z-zGL);
-Tmean(ind_samedepth) = Ta(ind_samedepth); % remove inf
+% freezing temperatures
+Tf = l1*Sd + l2 + l3*z; % local freezing temperature at ice base
+Tglf = l1*Sd + l2 + l3*zGL; % freezing temperature at GL
 
-Sa =  Ss+z*(Sd-Ss)/zT; Sa(z<zT)=Sd; % piecewise linear salinity profile similar to Rosier et al (2024)
-% piecewise linear integration to obtain mean salinity:
-S_belowTz = max(zT-zGL,0)*Sd;
-S_aboveTz = (z-max(zGL,zT)).*(Sa+Sd*(zGL<zT)+Sgl.*(zGL>=zT))/2;
-Smean = (S_belowTz+S_aboveTz)./(z-zGL);
-Smean(ind_samedepth) = Sa(ind_samedepth); % remove inf
-
-% now assemble melt rates - following Rosier et al (2024)
-
+%% now assemble melt rates - following Rosier et al (2024)
 % scaled distance
-x = l3*(z-zGL)./(Tmean-Tfgl).*(1+0.6*(E0*sin(a_mean)./(Stanton*(1-l1*(Smean*c/L))+E0*sin(a_mean))).^(3/4)).^(-1);
+x = l3*(z-zGL)./(Tm-Tglf).*(1+0.6*(E0*sin(a_mean)./(GammTS*(1-l1*(Sd*c/L))+E0*sin(a_mean))).^(3/4)).^(-1);
 
 % dimensionless velocity and thermal forcing functions
 fU = 1/sqrt(2)*(1-x).^(1/3).*(1-(1-x).^(4/3)).^(1/2);
@@ -80,20 +73,25 @@ fdT = 1/2*(3*(1-x)-1./(1-x).^(1/3));
 
 % velocity scale 
 U = (betaT*g*E0*sin(a_local)./(l3*(Cd+E0*sin(a_local)))).^(1/2).*...
-    ((Stanton*(betaS/betaT*(Sa*c/L)-1))./(Stanton*(1-l1*(Sa*c/L))+E0*sin(a_local))).^(1/2).*(Ta-Tfgl);
+    ((GammTS*(betaS/betaT*(Sd*c/L)-1))./(GammTS*(1-l1*(Sd*c/L))+E0*sin(a_local))).^(1/2).*(T-Tf); % we use local values here
 
 % thermal forcing scale
-dT = (E0.*sin(a_local)./(Stanton*(1-l1*(Smean*c/L))+E0*sin(a_local))).*(Tmean-Tfgl);
+dT = (E0.*sin(a_mean)./(GammTS*(1-l1*(Sd*c/L))+E0*sin(a_mean))).*(Tm-Tglf); % we use mean values here
 
 % melt rate
-ab_tmp = (Stanton/(L/c)).*U.*fU.*dT.*fdT;
-ab = zeros(MUA.Nnodes,1)+nan;
-ab(ind_meltnodes) =  -ab_tmp*365.25*24*60*60;
+ab_tmp = (GammTS/(L/c)).*U.*fU.*dT.*fdT;
 
-% plotting
+% project back onto Ua mesh
+ab = zeros(MUA.Nnodes,1)+nan;
+ab(ind_meltnodes) = -ab_tmp*365.25*24*60*60;
+
+%% plotting
 if doplots
     figure; hold on;
     PlotMeshScalarVariable(CtrlVar,MUA,ab);
     CtrlVar.PlotGLs=1;
-    PlotGroundingLines(CtrlVar,MUA,F.GF);
+    PlotGroundingLines(CtrlVar,MUA,F.GF); 
+    title("Rosier et al 2024");
+end
+
 end

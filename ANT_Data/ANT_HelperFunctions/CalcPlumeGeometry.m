@@ -1,11 +1,11 @@
-function [N_m,N_GL,ind_meltnodes,theta_mean,theta_local,z_GL]=CalcPlumeGeometry(MUA,F,CtrlVar,doplots)
+function [N_m,N_GL,ind_meltnodes,grad_mean,grad_local,z_GL]=CalcPlumeGeometry(MUA,F,CtrlVar,doplots)
 
 %% OUTPUTS:
 % N_m: n x 3 matrix, n melt nodes, 3 columns are x,y,z coordinates of each melt node
 % N_GL: m x 3 matrix, m GL nodes, 3 columns are x,y,z coordinates of each GL node
 % ind_meltnode: n x 3 matrix, nodal indices of the melt nodes
-% theta_mean: n x 1 matrix, mean slope of the plume path for each melt node
-% theta_local: n x 1 matrix, local slope of the ice draft for each melt node
+% theta_mean: n x 1 matrix, mean gradient of the plume path for each melt node
+% theta_local: n x 1 matrix, local gradient of the ice draft for each melt node
 % z_GL: n x 1 matrix, grounding line depth of plume source
 
 if nargin<4
@@ -31,6 +31,7 @@ Fb = scatteredInterpolant(x,y,b);
 x_GL = [nan; x_GL(:); nan]; y_GL = [nan; y_GL(:); nan]; 
 Inan = find(isnan(x_GL));
 x_GL_main = []; y_GL_main = []; 
+
 for ii=1:numel(Inan)-1
     x_seg = [x_GL(Inan(ii)+1:Inan(ii+1)-1)];
     y_seg = [y_GL(Inan(ii)+1:Inan(ii+1)-1)];
@@ -45,7 +46,7 @@ for ii=1:numel(Inan)-1
     % length<100km are removed. This deals with the smallest pinning points.    
     % 2) remove GL segments that form an approximately closed loop. This 
     % removes most ice rises and larger pinning points, but retains some 
-    % larger ones near the domain bounadry, sucha as Berkner Island or Bear
+    % larger ones near the domain bounadry, such as Berkner Island or Bear
     % Peninsula
     if L_seg>100e3 && d_start_end>5e3
         x_GL_main = [x_GL_main; x_seg(:); nan];
@@ -68,7 +69,7 @@ N_m = [x_m(:) y_m(:) b_m(:)];
 
 %% offset z-coordinate of N_m with large negative number (following Rosier et al. 2024)
 N_m_adj = N_m;
-N_m_adj(:,3) = N_m_adj(:,3)-1e6; % CAUTION: the plume paths are sensitive to the offset, 
+N_m_adj(:,3) = N_m_adj(:,3)-1e5; % CAUTION: the plume paths are sensitive to the offset, 
 % which was chosen to give reasonable-looking result for Antarctica. This
 % number can be changed.
 
@@ -90,26 +91,26 @@ k=100;
 dbdx_m = dbdx; dbdy_m = dbdy;
 dbdx_m(ind_toremove)=[]; % retain only melt nodes
 dbdy_m(ind_toremove)=[];
-theta_local = atan(hypot(dbdx_m,dbdy_m));
+grad_local = hypot(dbdx_m,dbdy_m);
 
-theta_mean = 0*theta_local;
-k_GL = 0*theta_local;
-z_GL = 0*theta_local;
+grad_mean = 0*grad_local;
+k_GL = 0*grad_local;
+z_GL = 0*grad_local;
 
 for ii=1:size(N_m,1) 
     dx = N_m(ii,1)-N_GL(idx(ii,:),1);
     dy = N_m(ii,2)-N_GL(idx(ii,:),2);
     dz = N_m(ii,3)-N_GL(idx(ii,:),3);
     dl = hypot(dx,dy);
-    theta_mean_tmp = atan(dz./dl);
+    grad_mean_tmp = dz./dl;
     % find GL nodes for which mean slope is positive.
-    Ipos = find(theta_mean_tmp>0);
+    Ipos = find(grad_mean_tmp>0);
     if isempty(Ipos)
-        theta_mean(ii) = eps; % no positive mean slope could be found
+        grad_mean(ii) = eps; % no positive mean slope could be found
         k_GL(ii) = nan;
         z_GL(ii) = N_m(ii,3); % plume source has same depth as melt node
     else
-        theta_mean(ii) = theta_mean_tmp(Ipos(1));
+        grad_mean(ii) = grad_mean_tmp(Ipos(1));
         k_GL(ii) = idx(ii,Ipos(1));
         z_GL(ii) = N_GL(k_GL(ii),3); % depth of plume source
     end
@@ -121,8 +122,8 @@ if doplots
     figure; hold on;
 
     slope_tmp = 0*x+nan;
-    slope_tmp(ind_meltnodes) = theta_mean;
-    PlotMeshScalarVariable(CtrlVarInRestartFile,MUA,slope_tmp); hold on;
+    slope_tmp(ind_meltnodes) = grad_mean;
+    PlotMeshScalarVariable(CtrlVar,MUA,slope_tmp); hold on;
     %PlotMuaMesh(CtrlVar,MUA,[],'color',[0.8 0.8 0.8]); hold on;
     g(1)=plot(x_GL,y_GL,'-m'); % original GL
     g(2)=plot(x_GL_main,y_GL_main,'xb','markersize',2); % GL pinning points removed - these are
@@ -133,11 +134,11 @@ if doplots
     % YLim=[-3.844e+05 -2.498e+05];
     % xlim(XLim); ylim(YLim);
     % 
-    % % plot some pathways
-    % I_toplot = find(~isnan(k_GL));
-    % for ii=1:10:numel(I_toplot)
-    %     plot([N_m(I_toplot(ii),1) N_GL(k_GL(I_toplot(ii)),1)],[N_m(I_toplot(ii),2) N_GL(k_GL(I_toplot(ii)),2)],':k');
-    % end
+    % plot some pathways
+    I_toplot = find(~isnan(k_GL));
+    for ii=1:10:numel(I_toplot)
+        plot([N_m(I_toplot(ii),1) N_GL(k_GL(I_toplot(ii)),1)],[N_m(I_toplot(ii),2) N_GL(k_GL(I_toplot(ii)),2)],':k');
+    end
     
     caxis([0 0.025])
     %CM=othercolor('RdBu11');
@@ -150,8 +151,8 @@ if doplots
     figure; hold on;
     
     slope_tmp = 0*x+nan;
-    slope_tmp(ind_meltnodes) = theta_local;
-    PlotMeshScalarVariable(CtrlVarInRestartFile,MUA,slope_tmp); hold on;
+    slope_tmp(ind_meltnodes) = grad_local;
+    PlotMeshScalarVariable(CtrlVar,MUA,slope_tmp); hold on;
     %PlotMuaMesh(CtrlVar,MUA,[],'color',[0.8 0.8 0.8]); hold on;
     g(1)=plot(x_GL,y_GL,'-m'); % original GL
     g(2)=plot(x_GL_main,y_GL_main,'xb','markersize',2); % GL pinning points removed - these are
