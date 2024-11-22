@@ -25,7 +25,7 @@ for tt=1:numel(RunTable)
     gsC = [gsC; RunTable_tmp{:,'gsC'}];
     m = [m; RunTable_tmp{:,'m'}];
     n = [n; RunTable_tmp{:,'n'}];
-    dhdt = [dhdt; RunTable_tmp{:,'dhdt_err'}];
+    dhdt = [dhdt; RunTable_tmp{:,'dhdt_err'}];    
     ExpID = [ExpID; RunTable_tmp{:,'ExpID'}];
 
     finished_tmp = RunTable_tmp{:,'Finished'};
