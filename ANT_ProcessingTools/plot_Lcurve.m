@@ -14,6 +14,8 @@ gsA = [data(:).gsA];
 gsC = [data(:).gsC];
 m = [data(:).m];
 n = [data(:).n];
+dhdt_err = [data(:).dhdt_err];
+
 for ii=1:numel(ExpID)
     I_tmp = data(ii).misfit;
     I(ii) = I_tmp(UserVar.cycle);
@@ -71,7 +73,7 @@ end
 % n = n(Ind_finished);
 % ExpID = ExpID(Ind_finished);
 
-cm = crameri('roma',numel(ExpID));
+%cm = crameri('roma',numel(ExpID));
 
 % for i = 1:numel(ExpID)
 % 
@@ -125,9 +127,12 @@ cm = crameri('roma',numel(ExpID));
 
 %% Prepare data
 Ind = find(I>400);
+m(Ind)=[]; n(Ind)=[];
 gaA(Ind)=[]; gaC(Ind)=[]; gsA(Ind)=[]; gsC(Ind)=[];
 R(Ind)=[]; I(Ind)=[];
 
+[m_norm,m_C,m_S] = normalize(m);
+[n_norm,n_C,n_S] = normalize(n);
 [gaA_norm,gaA_C,gaA_S] = normalize(gaA); % gaA_norm = (gaA-gaA_C)/gaA_S
 [gaC_norm,gaC_C,gaC_S] = normalize(gaC); 
 [gsA_norm,gsA_C,gsA_S] = normalize(log10(gsA));
@@ -137,10 +142,18 @@ R(Ind)=[]; I(Ind)=[];
 [R_norm,R_C,R_S] = normalize(log10(R)); % log improves the performance of the emulator
 
 Xtmp=[];
-Xtmp(1,:)=gaA_norm(:)'; 
-Xtmp(2,:)=gaC_norm(:)';
-Xtmp(3,:)=gsA_norm(:)';
-Xtmp(4,:)=gsC_norm(:)';
+Xtmp(1,:)=m_norm(:)';
+Xtmp(2,:)=n_norm(:)';
+Xtmp(3,:)=gaA_norm(:)'; 
+Xtmp(4,:)=gaC_norm(:)';
+Xtmp(5,:)=gsA_norm(:)';
+Xtmp(6,:)=gsC_norm(:)';
+
+if UserVar.cycle>1
+    [dhdt_err_norm,dhdt_err_C,dhdt_err_S] = normalize(log10(dhdt_err));
+    Xtmp(7,:)=dhdt_norm(:)';
+end
+
 X=double(Xtmp);
 %X = gpuArray(double(Xtmp));
 
@@ -151,18 +164,26 @@ V=double(Vtmp);
 %V = gpuArray(double(Vtmp));
 
 %% Split data into training, test, validation sets to find optimal NN architecture
-if ~exist("Lcurve_UNN_it10.mat")
+filename="Lcurve_UNN_cycle"+num2str(UserVar.cycle)+"_it10.mat";
+if ~exist(filename)
 
     for it=1:10
     
         ntot = size(X,2);
-        ind = randi(ntot,[2 round(ntot*0.15)]);
+        % ind = randi(ntot,[2 round(ntot*0.15)]);
+        % XTrain = X; XTrain(:,ind(:))=[];
+        % XVal = X(:,ind(1,:));
+        % XTest = X(:,ind(2,:));
+        % VTrain = V; VTrain(:,ind(:))=[];
+        % VVal = V(:,ind(1,:));
+        % VTest = V(:,ind(2,:));
+        ind = randi(ntot,[1 round(ntot*0.2)]);
         XTrain = X; XTrain(:,ind(:))=[];
         XVal = X(:,ind(1,:));
-        XTest = X(:,ind(2,:));
+        XTest = [];
         VTrain = V; VTrain(:,ind(:))=[];
         VVal = V(:,ind(1,:));
-        VTest = V(:,ind(2,:));
+        VTest = [];
         
         %% UNN - find optimal values of 2-layer network
         nmax = 10;
@@ -177,9 +198,9 @@ if ~exist("Lcurve_UNN_it10.mat")
         
                 % set early stopping parameters
                 net.divideFcn= 'dividerand';
-                net.divideParam.trainRatio = 0.7; % training set [%]
-                net.divideParam.valRatio = 0.15; % validation set [%]
-                net.divideParam.testRatio = 0.15; % test set [%]   
+                net.divideParam.trainRatio = 0.8; % training set [%]
+                net.divideParam.valRatio = 0; % validation set [%]
+                net.divideParam.testRatio = 0.2; % test set [%]   
                 %net.inputs{1}.processFcns = {'mapstd'}; % Normalize inputs/targets to have zero mean and unity variance
                 net.trainParam.showWindow = 0;
                 
@@ -219,8 +240,8 @@ if ~exist("Lcurve_UNN_it10.mat")
             Net(kk).JVal(it) = 0.5/size(XVal,2)*sum((VVal(:)-Y(:)).^2);
         
             % performance on test data
-            Y = Net(kk).it(it).trained(XTest);
-            Net(kk).JTest(it) = 0.5/size(XTest,2)*sum((VTest(:)-Y(:)).^2);
+            %Y = Net(kk).it(it).trained(XTest);
+            %Net(kk).JTest(it) = 0.5/size(XTest,2)*sum((VTest(:)-Y(:)).^2);
         end
 
         fprintf("Done "+num2str(it)+" iterations of the train/validate/test split of the data.\n")
@@ -231,7 +252,7 @@ if ~exist("Lcurve_UNN_it10.mat")
     
         JTrain = Net(kk).JTrain;
         JVal = Net(kk).JVal;
-        JTest = Net(kk).JTest;
+        %JTest = Net(kk).JTest;
     
         Net(kk).JTrain_min = min(JTrain);
         Net(kk).JTrain_max = max(JTrain);
@@ -243,18 +264,18 @@ if ~exist("Lcurve_UNN_it10.mat")
         Net(kk).JVal_mean = mean(JVal);
         Net(kk).JVal_std = std(JVal);
     
-        Net(kk).JTest_min = min(JTest);
-        Net(kk).JTest_max = max(JTest);
-        Net(kk).JTest_mean = mean(JTest);
-        Net(kk).JTest_std = std(JTest);
+        %Net(kk).JTest_min = min(JTest);
+        %Net(kk).JTest_max = max(JTest);
+        %Net(kk).JTest_mean = mean(JTest);
+        %Net(kk).JTest_std = std(JTest);
 
     end
 
-    save("Lcurve_UNN_it10.mat","Net");
+    save(filename,"Net");
 
 else
 
-    load("Lcurve_UNN_it10.mat");
+    load(filename);
     
 end
 
@@ -272,7 +293,7 @@ Y(2,:) = 10.^(Y(2,:)*R_S + R_C); % undo normalization and log
 tlo=tiledlayout(1,2,"TileSpacing","tight");
 
 figure;
-plotregression(I,Y(1,:));
+plotregression(log10(I),log10(Y(1,:)));
 title('Misfit');
 
 figure;
@@ -281,87 +302,190 @@ title('Regularization');
 
 %% Produce L-curve with new data
 CM = parula(10);
-for ga=1:10
-    X_new(1,:) = ones(1,15); %gaA
-    X_new(2,:) = ones(1,15); %gaC
-    X_new(3,:) = 10.^linspace(3,6,15); %gsA
-    X_new(4,:) = 1e4*ones(1,15); %gsC
-    
-    % apply normalization
-    X_new_norm(1,:) = (X_new(1,:)-gaA_C)/gaA_S;
-    X_new_norm(2,:) = (X_new(2,:)-gaC_C)/gaC_S;
-    X_new_norm(3,:) = (log10(X_new(3,:))-gsA_C)/gsA_S;
-    X_new_norm(4,:) = (log10(X_new(4,:))-gsC_C)/gsC_S;
-    
-    Y_new = Net_opt(X_new_norm);
-    Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
-    Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
-    
-    figure(999); tlo=tiledlayout(1,4,'TileSpacing','tight');
-    
-    nexttile; hold on;
-    plot(log10(Y_new(2,:)./X_new(3,:).^2),Y_new(1,:),'o-');
-    title("gsA");
 
-    %%
-    X_new(1,:) = ones(1,15); %gaA
-    X_new(2,:) = ones(1,15); %gaC
-    X_new(3,:) = 1e4*ones(1,15); %gsA
-    X_new(4,:) = 10.^linspace(3,6,15); %gsC
     
-    % apply normalization
-    X_new_norm(1,:) = (X_new(1,:)-gaA_C)/gaA_S;
-    X_new_norm(2,:) = (X_new(2,:)-gaC_C)/gaC_S;
-    X_new_norm(3,:) = (log10(X_new(3,:))-gsA_C)/gsA_S;
-    X_new_norm(4,:) = (log10(X_new(4,:))-gsC_C)/gsC_S;
-    
-    Y_new = Net_opt(X_new_norm);
-    Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
-    Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
-    
-    nexttile; hold on;
-    plot(log10(Y_new(2,:)./X_new(4,:).^2),Y_new(1,:),'o-');
-    title("gsC");
+figure(999); tlo=tiledlayout(1,4,'TileSpacing','tight');
+for tt=1:4
+    ax(tt)=nexttile(tlo); hold on;
+end
 
-    %%
-    X_new(1,:) = 10.^linspace(-1,2,15); %gaA
-    X_new(2,:) = ones(1,15); %gaC
-    X_new(3,:) = 1e4*ones(1,15); %gsA
-    X_new(4,:) = 1e4*ones(1,15); %gsC
-    
-    % apply normalization
-    X_new_norm(1,:) = (X_new(1,:)-gaA_C)/gaA_S;
-    X_new_norm(2,:) = (X_new(2,:)-gaC_C)/gaC_S;
-    X_new_norm(3,:) = (log10(X_new(3,:))-gsA_C)/gsA_S;
-    X_new_norm(4,:) = (log10(X_new(4,:))-gsC_C)/gsC_S;
-    
-    Y_new = Net_opt(X_new_norm);
-    Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
-    Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
-    
-    nexttile; hold on;
-    plot(log10(Y_new(2,:)./X_new(1,:).^2),Y_new(1,:),'o-');
-    title("gaA");
+for mexp=3
 
-    %%
-    X_new(1,:) = ones(1,15); %gaA
-    X_new(2,:) = 10.^linspace(-1,2,15); %gaC
-    X_new(3,:) = 1e4*ones(1,15); %gsA
-    X_new(4,:) = 1e4*ones(1,15); %gsC
+    %% gaA
+    X_new(1,:) = mexp*ones(1,15); %m
+    X_new(2,:) = 3*ones(1,15); %n
+    X_new(3,:) = 10.^linspace(-1,2,15); %gaA
+    X_new(4,:) = ones(1,15); %gaC
+    X_new(5,:) = 1e4*ones(1,15); %gsA
+    X_new(6,:) = 1e4*ones(1,15); %gsC
     
     % apply normalization
-    X_new_norm(1,:) = (X_new(1,:)-gaA_C)/gaA_S;
-    X_new_norm(2,:) = (X_new(2,:)-gaC_C)/gaC_S;
-    X_new_norm(3,:) = (log10(X_new(3,:))-gsA_C)/gsA_S;
-    X_new_norm(4,:) = (log10(X_new(4,:))-gsC_C)/gsC_S;
+    X_new_norm(1,:) = (X_new(1,:)-m_C)/m_S;
+    X_new_norm(2,:) = (X_new(2,:)-n_C)/n_S;
+    X_new_norm(3,:) = (X_new(3,:)-gaA_C)/gaA_S;
+    X_new_norm(4,:) = (X_new(4,:)-gaC_C)/gaC_S;
+    X_new_norm(5,:) = (log10(X_new(5,:))-gsA_C)/gsA_S;
+    X_new_norm(6,:) = (log10(X_new(6,:))-gsC_C)/gsC_S;
+
+    % find nearest to original dataset
+    Ind=knnsearch(X',X_new_norm','K',1);
+    Y_orig = V(:,Ind);
+    Y_orig(1,:) = 10.^(Y_orig(1,:)*I_S + I_C); % undo normalization
+    Y_orig(2,:) = 10.^(Y_orig(2,:)*R_S + R_C); % undo normalization and log
+    X_orig = X(:,Ind);
+    X_orig(1,:) = X_orig(1,:)*m_S + m_C; % undo normalization
+    X_orig(2,:) = X_orig(2,:)*n_S + n_C; % undo normalization and log
+    X_orig(3,:) = X_orig(3,:)*gaA_S + gaA_C; % undo normalization
+    X_orig(4,:) = X_orig(4,:)*gaC_S + gaC_C; % undo normalization and log
+    X_orig(5,:) = 10.^(X_orig(5,:)*gsA_S + gsA_C); % undo normalization
+    X_orig(6,:) = 10.^(X_orig(6,:)*gsC_S + gsC_C); % undo normalization and log
+
+    Y_new = Net_opt(X_new_norm);
+    Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
+    Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
+
+    x=log10(Y_new(2,:)./X_new(3,:).^2);
+    y=Y_new(1,:);
+    plot(ax(1),x,y,'+-');
+    if mexp==3
+        for kk=1:2:size(Y_new,2)
+            text(ax(1),x(kk),y(kk)+4,erase(num2str(X_new(3,kk),'%3.2e'),'+0'));
+        end
+    end
+    plot(ax(1),log10(Y_orig(2,:)./X_orig(3,:).^2),Y_orig(1,:),'xr');
+    title(ax(1),"gsA"); grid(ax(1),"on"); box(ax(1),"on");
+
+    %% gaC
+    X_new(1,:) = mexp*ones(1,15); %m
+    X_new(2,:) = 3*ones(1,15); %n
+    X_new(3,:) = ones(1,15); %gaA
+    X_new(4,:) = 10.^linspace(-1,2,15); %gaC
+    X_new(5,:) = 1e4*ones(1,15); %gsA
+    X_new(6,:) = 1e4*ones(1,15); %gsC
     
+    % apply normalization
+    X_new_norm(1,:) = (X_new(1,:)-m_C)/m_S;
+    X_new_norm(2,:) = (X_new(2,:)-n_C)/n_S;
+    X_new_norm(3,:) = (X_new(3,:)-gaA_C)/gaA_S;
+    X_new_norm(4,:) = (X_new(4,:)-gaC_C)/gaC_S;
+    X_new_norm(5,:) = (log10(X_new(5,:))-gsA_C)/gsA_S;
+    X_new_norm(6,:) = (log10(X_new(6,:))-gsC_C)/gsC_S;
+
+    % find nearest to original dataset
+    Ind=knnsearch(X',X_new_norm','K',1);
+    Y_orig = V(:,Ind);
+    Y_orig(1,:) = 10.^(Y_orig(1,:)*I_S + I_C); % undo normalization
+    Y_orig(2,:) = 10.^(Y_orig(2,:)*R_S + R_C); % undo normalization and log
+    X_orig = X(:,Ind);
+    X_orig(1,:) = X_orig(1,:)*m_S + m_C; % undo normalization
+    X_orig(2,:) = X_orig(2,:)*n_S + n_C; % undo normalization and log
+    X_orig(3,:) = X_orig(3,:)*gaA_S + gaA_C; % undo normalization
+    X_orig(4,:) = X_orig(4,:)*gaC_S + gaC_C; % undo normalization and log
+    X_orig(5,:) = 10.^(X_orig(5,:)*gsA_S + gsA_C); % undo normalization
+    X_orig(6,:) = 10.^(X_orig(6,:)*gsC_S + gsC_C); % undo normalization and log
+
     Y_new = Net_opt(X_new_norm);
     Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
     Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
     
-    nexttile; hold on;
-    plot(log10(Y_new(2,:)./X_new(2,:).^2),Y_new(1,:),'o-');
-    title("gaC");
+    x=log10(Y_new(2,:)./X_new(4,:).^2);
+    y=Y_new(1,:);
+    plot(ax(2),x,y,'+-');
+    if mexp==3
+        for kk=1:2:size(Y_new,2)
+            text(ax(2),x(kk),y(kk)+4,erase(num2str(X_new(4,kk),'%3.2e'),'+0'));
+        end
+    end
+    plot(ax(2),log10(Y_orig(2,:)./X_orig(4,:).^2),Y_orig(1,:),'xr');
+    title(ax(2),"gaC"); grid(ax(2),"on"); box(ax(2),"on");
+
+    %% gsA
+    X_new(1,:) = mexp*ones(1,15); %m
+    X_new(2,:) = 3*ones(1,15); %n
+    X_new(3,:) = ones(1,15); %gaA
+    X_new(4,:) = ones(1,15); %gaC
+    X_new(5,:) = 10.^linspace(3,6,15); %gsA
+    X_new(6,:) = 1e4*ones(1,15); %gsC
+    
+    % apply normalization
+    X_new_norm(1,:) = (X_new(1,:)-m_C)/m_S;
+    X_new_norm(2,:) = (X_new(2,:)-n_C)/n_S;
+    X_new_norm(3,:) = (X_new(3,:)-gaA_C)/gaA_S;
+    X_new_norm(4,:) = (X_new(4,:)-gaC_C)/gaC_S;
+    X_new_norm(5,:) = (log10(X_new(5,:))-gsA_C)/gsA_S;
+    X_new_norm(6,:) = (log10(X_new(6,:))-gsC_C)/gsC_S;
+
+    % find nearest to original dataset
+    Ind=knnsearch(X',X_new_norm','K',1);
+    Y_orig = V(:,Ind);
+    Y_orig(1,:) = 10.^(Y_orig(1,:)*I_S + I_C); % undo normalization
+    Y_orig(2,:) = 10.^(Y_orig(2,:)*R_S + R_C); % undo normalization and log
+    X_orig = X(:,Ind);
+    X_orig(1,:) = X_orig(1,:)*m_S + m_C; % undo normalization
+    X_orig(2,:) = X_orig(2,:)*n_S + n_C; % undo normalization and log
+    X_orig(3,:) = X_orig(3,:)*gaA_S + gaA_C; % undo normalization
+    X_orig(4,:) = X_orig(4,:)*gaC_S + gaC_C; % undo normalization and log
+    X_orig(5,:) = 10.^(X_orig(5,:)*gsA_S + gsA_C); % undo normalization
+    X_orig(6,:) = 10.^(X_orig(6,:)*gsC_S + gsC_C); % undo normalization and log
+
+    Y_new = Net_opt(X_new_norm);
+    Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
+    Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
+    
+    x=log10(Y_new(2,:)./X_new(5,:).^2);
+    y=Y_new(1,:);
+    plot(ax(3),x,y,'+-');
+    if mexp==3
+        for kk=1:2:size(Y_new,2)
+            text(ax(3),x(kk),y(kk)+4,erase(num2str(X_new(5,kk),'%3.2e'),'+0'));
+        end
+    end
+    plot(ax(3),log10(Y_orig(2,:)./X_orig(5,:).^2),Y_orig(1,:),'xr');
+    title(ax(3),"gsA"); grid(ax(3),"on"); box(ax(3),"on");
+
+    %% gsC
+    X_new(1,:) = mexp*ones(1,15); %m
+    X_new(2,:) = 3*ones(1,15); %n
+    X_new(3,:) = ones(1,15); %gaA
+    X_new(4,:) = ones(1,15); %gaC
+    X_new(5,:) = 1e4*ones(1,15); %gsA
+    X_new(6,:) = 10.^linspace(3,6,15); %gsC
+    
+    % apply normalization
+    X_new_norm(1,:) = (X_new(1,:)-m_C)/m_S;
+    X_new_norm(2,:) = (X_new(2,:)-n_C)/n_S;
+    X_new_norm(3,:) = (X_new(3,:)-gaA_C)/gaA_S;
+    X_new_norm(4,:) = (X_new(4,:)-gaC_C)/gaC_S;
+    X_new_norm(5,:) = (log10(X_new(5,:))-gsA_C)/gsA_S;
+    X_new_norm(6,:) = (log10(X_new(6,:))-gsC_C)/gsC_S;
+
+    % find nearest to original dataset
+    Ind=knnsearch(X',X_new_norm','K',1);
+    Y_orig = V(:,Ind);
+    Y_orig(1,:) = 10.^(Y_orig(1,:)*I_S + I_C); % undo normalization
+    Y_orig(2,:) = 10.^(Y_orig(2,:)*R_S + R_C); % undo normalization and log
+    X_orig = X(:,Ind);
+    X_orig(1,:) = X_orig(1,:)*m_S + m_C; % undo normalization
+    X_orig(2,:) = X_orig(2,:)*n_S + n_C; % undo normalization and log
+    X_orig(3,:) = X_orig(3,:)*gaA_S + gaA_C; % undo normalization
+    X_orig(4,:) = X_orig(4,:)*gaC_S + gaC_C; % undo normalization and log
+    X_orig(5,:) = 10.^(X_orig(5,:)*gsA_S + gsA_C); % undo normalization
+    X_orig(6,:) = 10.^(X_orig(6,:)*gsC_S + gsC_C); % undo normalization and log
+
+    Y_new = Net_opt(X_new_norm);
+    Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
+    Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
+    
+    x=log10(Y_new(2,:)./X_new(6,:).^2);
+    y=Y_new(1,:);
+    plot(ax(4),x,y,'+-');
+    if mexp==3
+        for kk=1:2:size(Y_new,2)
+            text(ax(4),x(kk),y(kk)+4,erase(num2str(X_new(6,kk),'%3.2e'),'+0'));
+        end
+    end
+    plot(ax(4),log10(Y_orig(2,:)./X_orig(6,:).^2),Y_orig(1,:),'xr');
+    title(ax(4),"gsC"); grid(ax(4),"on"); box(ax(4),"on");
 
 end
 

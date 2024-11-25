@@ -17,14 +17,14 @@ addpath("../");
 UserVar.home = pwd;
 
 %% original inversion run table
-RunTable_inverse_files = "../ANT_Inverse/RunTable_ARCHER2_"+string(6)+".csv";
+RunTable_inverse_files = "../ANT_Inverse/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
 
 %% year for original and new geometry
 ExpID_oldgeom = 2000;
 ExpID_newgeom = 2018;
 
 %% construct new run table or append to existing run table
-UserVar.Table = "./RunTable_ARCHER2_Diagnostic_3.csv";
+UserVar.Table = "./RunTable_ARCHER2_Diagnostic.csv";
 if ~exist(UserVar.Table,"file")
     copyfile("EmptyTable.csv",UserVar.Table);
 else
@@ -40,7 +40,7 @@ for tt=1:numel(RunTable_inverse_files)
           
     IndOriginalGeometry = find(contains(RunTable_diagnostic.Comments,"Original"));
 
-    ExistingInverseRunsInDiagnosticTable = unique(RunTable_diagnostic.InverseA(IndOriginalGeometry));
+    ExistingInverseRunsInDiagnosticTable = unique(cell2mat(RunTable_diagnostic.InverseA(IndOriginalGeometry)));
     if isempty(ExistingInverseRunsInDiagnosticTable)
         ExistingInverseRunsInDiagnosticTable = [];
     end

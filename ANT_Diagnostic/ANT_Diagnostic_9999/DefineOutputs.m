@@ -153,7 +153,7 @@ end
 if strcmp(CtrlVar.DefineOutputsInfostring,'Last call')
     UserVar.Finished = 1;
     % clean up some files from the run folder
-    delete ANT_Inverse*.mat *-RestartFile.mat Fields_to_extrude*.mat NewMeshFile.mat ANT_*_InitialMesh.mat ANT_*_MeshBoundaryCoordinates.mat
+    delete ANT_*_Inverse*.mat *-RestartFile.mat Fields_to_extrude*.mat NewMeshFile.mat ANT_*_InitialMesh.mat ANT_*_MeshBoundaryCoordinates.mat
 end
 
 

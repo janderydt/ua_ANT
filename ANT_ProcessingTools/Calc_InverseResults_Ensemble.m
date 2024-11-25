@@ -12,11 +12,11 @@ UserVar.type = "Inverse";
 %UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_10-10-2024_"+string([10 11 12 13])+".csv";
 %UserVar.idrange = [10000,10999; 11000, 11999; 12000, 12999; 13000, 13999];
 
-%UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([3 6 9])+".csv";
-%UserVar.idrange = [3000,3999; 6000, 6999; 9000, 9999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([3 6 9])+".csv";
+UserVar.idrange = [3000,3999; 6000, 6999; 9000, 9999];
 
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
-UserVar.idrange = [14000,14999; 15000, 15999; 16000, 16999; 17000, 17999];
+%UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
+%UserVar.idrange = [14000,14999; 15000, 15999; 16000, 16999; 17000, 17999];
 
 inversiondata_filename = "inversiondata_Weertman.mat";
 
@@ -78,82 +78,113 @@ for tt=1:numel(UserVar.Table)
 
                 inverse_experiments_analyzed(end+1) = ExpID(Ind(ii));
 
-                load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");
-                
-                [B,~] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
-                B = Calc_UaOBFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
-                % Sum values of SMB, qGL and qOB for each basin
-                for bb=1:numel(B.x) 
-                    B.qGL_tot{bb} = sum(B.qGL{bb},'omitmissing')/1e12;   
-                    B.qOB_tot{bb} = sum(B.qOB{bb},'omitmissing')/1e12;   
-                end
-                qGL = cell2mat(B.qGL_tot);
-                qOB = cell2mat(B.qOB_tot);
-                % 
-                % 
-                ab = CalcIceShelfMeltRates(CtrlVarInRestartFile,MUA,F.ub,F.vb,F.s,F.b,F.S,F.B,F.rho,F.rhow,0*F.ub,F.as,0*F.ub);
-                x = MUA.coordinates(:,1);
-                y = MUA.coordinates(:,2);
-                for bb=1:numel(B.x)
-                    xB = B.x{bb};
-                    yB = B.y{bb};
-                    ab_tot = 0;
-                    Indnan = [0; find(isnan(xB)); numel(xB)+1];
-                    for nn=1:numel(Indnan)-1
-                        if ~isempty([Indnan(nn)+1:Indnan(nn+1)-1])
-                            Indpoly = find(inpoly([x y],[xB(Indnan(nn)+1:Indnan(nn+1)-1) yB(Indnan(nn)+1:Indnan(nn+1)-1)]));
-                            ab_tot = ab_tot + sum(ab(Indpoly));
-                        end
+                try   
+
+                    load(restartfile,"UserVarInRestartFile","CtrlVarInRestartFile","F","MUA","InvFinalValues");
+                               
+                    data(data_ind).InverseExpID = ExpID(Ind(ii));
+                    data(data_ind).cycle(cc) = cc;
+                    data(data_ind).m = F.m(1);
+                    data(data_ind).n = F.n(1);
+                    data(data_ind).SlidingLaw = CtrlVarInRestartFile.SlidingLaw;
+                    data(data_ind).gaA = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.ga;
+                    data(data_ind).gaC = CtrlVarInRestartFile.Inverse.Regularize.logC.ga;
+                    data(data_ind).gsA = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.gs;
+                    data(data_ind).gsC = CtrlVarInRestartFile.Inverse.Regularize.logC.gs;
+                    if isfield(UserVarInRestartFile.Inverse,"dhdt_err")
+                        data(data_ind).dhdt_err = UserVarInRestartFile.Inverse.dhdt_err;
+                    else
+                        data(data_ind).dhdt_err = nan;
                     end
-                    BalancedMelt(bb) = ab_tot;
+                    data(data_ind).startgeometry = RunTable{Ind(ii),"startGeometry"};
+    
+                    if ExpID(Ind(ii))<10000 && cc>1
+                        
+                        nvec_basins = numel(B);
+                        nvec_nodes = MUA.Nnodes;
+    
+                        data(data_ind).niter(cc) = nan;
+    
+                        data(data_ind).qGL(:,cc) = nan*ones(nvec_basins,1);
+                        data(data_ind).qOB(:,cc) = nan*ones(nvec_basins,1);
+                        data(data_ind).TotalBalancedMelt(:,cc) = nan*ones(nvec_basins,1);
+    
+                        data(data_ind).BalancedMeltMap(:,cc) = nan*ones(nvec_nodes,1);
+        
+                        data(data_ind).misfit(cc) = nan;
+                        data(data_ind).regularization(cc) = nan;
+    
+                    else
+    
+                        [B,~] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
+                        B = Calc_UaOBFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
+                        % Sum values of SMB, qGL and qOB for each basin
+                        for bb=1:numel(B.x) 
+                            B.qGL_tot{bb} = sum(B.qGL{bb},'omitmissing')/1e12;   
+                            B.qOB_tot{bb} = sum(B.qOB{bb},'omitmissing')/1e12;   
+                        end
+                        qGL = cell2mat(B.qGL_tot);
+                        qOB = cell2mat(B.qOB_tot);
+                        % 
+                        % 
+                        ab = CalcIceShelfMeltRates(CtrlVarInRestartFile,MUA,F.ub,F.vb,F.s,F.b,F.S,F.B,F.rho,F.rhow,0*F.ub,F.as,0*F.ub);
+                        x = MUA.coordinates(:,1);
+                        y = MUA.coordinates(:,2);
+                        for bb=1:numel(B.x)
+                            xB = B.x{bb};
+                            yB = B.y{bb};
+                            ab_tot = 0;
+                            Indnan = [0; find(isnan(xB)); numel(xB)+1];
+                            for nn=1:numel(Indnan)-1
+                                if ~isempty([Indnan(nn)+1:Indnan(nn+1)-1])
+                                    Indpoly = find(inpoly([x y],[xB(Indnan(nn)+1:Indnan(nn+1)-1) yB(Indnan(nn)+1:Indnan(nn+1)-1)]));
+                                    ab_tot = ab_tot + sum(ab(Indpoly));
+                                end
+                            end
+                            BalancedMelt(bb) = ab_tot;
+                        end
+                        %
+                        %
+                        data(data_ind).niter(cc) = UserVarInRestartFile.Inverse.IterationsDone;
+        
+                        data(data_ind).qGL(:,cc) = qGL(:);
+                        data(data_ind).qOB(:,cc) = qOB(:);
+                        data(data_ind).TotalBalancedMelt(:,cc) = BalancedMelt(:);
+                        data(data_ind).BalancedMeltMap(:,cc) = ab(:);
+        
+                        data(data_ind).misfit(cc) = InvFinalValues.I;
+                        data(data_ind).regularization(cc) = InvFinalValues.R;
+    
+                    end
+    
+                    % Obtain Ua fluxes across the grounding line (qGL) into floating areas
+                    %[B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
+                    % qGL(ii) = 0;
+                    % for jj=1:numel(GL)
+                    %     qGL(ii) = qGL(ii)+sum(GL(jj).qGL);
+                    % end            
+                     % calculated as 
+    
+                    % store in data array
+
+                catch
+
+                    warning("Unable to load file "+restartfile+".");
+
                 end
-                %
-                %
-                data(data_ind).InverseExpID = ExpID(Ind(ii));
-                data(data_ind).cycle(cc) = cc;
-                data(data_ind).m = F.m(1);
-                data(data_ind).n = F.n(1);
-                data(data_ind).SlidingLaw = CtrlVarInRestartFile.SlidingLaw;
-                data(data_ind).gaA = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.ga;
-                data(data_ind).gaC = CtrlVarInRestartFile.Inverse.Regularize.logC.ga;
-                data(data_ind).gsA = CtrlVarInRestartFile.Inverse.Regularize.logAGlen.gs;
-                data(data_ind).gsC = CtrlVarInRestartFile.Inverse.Regularize.logC.gs;
-                if isfield(UserVarInRestartFile.Inverse,"dhdt_err")
-                    data(data_ind).dhdt_err = UserVarInRestartFile.Inverse.dhdt_err;
-                else
-                    data(data_ind).dhdt_err = nan;
-                end
-                data(data_ind).startgeometry = RunTable{Ind(ii),"startGeometry"};
-                data(data_ind).niter(cc) = UserVarInRestartFile.Inverse.IterationsDone;
 
-                data(data_ind).qGL(:,cc) = qGL(:);
-                data(data_ind).qOB(:,cc) = qOB(:);
-                data(data_ind).TotalBalancedMelt(:,cc) = BalancedMelt(:);
-                data(data_ind).BalancedMeltMap(:,cc) = ab(:);
-
-                data(data_ind).misfit(cc) = InvFinalValues.I;
-                data(data_ind).regularization(cc) = InvFinalValues.R;
-
-                % Obtain Ua fluxes across the grounding line (qGL) into floating areas
-                %[B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
-                % qGL(ii) = 0;
-                % for jj=1:numel(GL)
-                %     qGL(ii) = qGL(ii)+sum(GL(jj).qGL);
-                % end            
-                 % calculated as 
-
-                % store in data array
             end
+
         end
 
         fprintf("done %s our of %s.\n",string(ii),string(numel(Ind)));
 
     end
+
+    GF = F.GF;
+    save(inversiondata_filename,"data","inverse_experiments_analyzed","MUA","GF","-v7.3");
         
 end
-
-GF = F.GF;
-save(inversiondata_filename,"data","inverse_experiments_analyzed","MUA","GF","-v7.3");
 
 
 
