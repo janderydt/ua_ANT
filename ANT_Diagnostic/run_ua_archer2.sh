@@ -1,7 +1,7 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
 #SBATCH --job-name=ANT_Diag
-#SBATCH --time=01:00:00
+#SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=30
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
