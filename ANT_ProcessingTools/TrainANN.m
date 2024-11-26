@@ -4,9 +4,9 @@ function Net_opt = TrainANN(X,V,trainFcn,UseGPU,filename,doplots)
 % This script takes normalized data to train a simple feedforward neural 
 % network (ANN) with 2 hidden layers. The input data is split into a 
 % training set (80%) which is fed to the neural network, and a 
-% cross-validation set (20%), which is used find the optimal size of each 
-% hidden layer, with the %% size of layer 1 (nL1) ranging from 2 to 10, and 
-% the size of layer 2 (nL2) ranging from 2 to nL1. The performance is
+% cross-validation set (20%), which is used to find the optimal size of 
+% each hidden layer, with the size of layer 1 (nL1) ranging from 2 to 10, 
+% and the size of layer 2 (nL2) ranging from 2 to nL1. The performance is
 % measured using a simple cost function that calculates the mean square
 % error the ANN outputs and targets: J=1/m*sum((trained-targets)^2)
 %% ----------------------------------------------------------------------- %%
