@@ -39,12 +39,12 @@ for i in range(data_global.shape[0]):
         if os.path.isfile(runtable_exp):
             data_exp = read_runinfo(runtable_exp,runtype)
             if read_table == 'global' and write_table == 'local':
-                print('Writing data to '+runtable_exp)               
+                # print('Writing data to '+runtable_exp)               
                 data_exp.loc[0]=data_global.loc[i]
                 # save modified version of the local runtable
                 save_runinfo(data_exp, runtable_exp)
             elif read_table == 'local' and write_table == 'global':
-                print('Writing data to '+runtable_global)               
+                # print('Writing data to '+runtable_global)               
                 data_global.loc[i]=data_exp.loc[0]
                 # save modified version of the global runtable
                 save_runinfo(data_global, runtable_global)

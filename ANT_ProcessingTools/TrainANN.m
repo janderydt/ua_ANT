@@ -8,7 +8,7 @@ function Net_opt = TrainANN(X,V,trainFcn,UseGPU,filename,doplots)
 % each hidden layer, with the size of layer 1 (nL1) ranging from 2 to 10, 
 % and the size of layer 2 (nL2) ranging from 2 to nL1. The performance is
 % measured using a simple cost function that calculates the mean square
-% error the ANN outputs and targets: J=1/m*sum((trained-targets)^2)
+% error between ANN outputs and targets: J=1/m*sum((trained-targets)^2)
 %% ----------------------------------------------------------------------- %%
 % 
 %% INPUTS: 
@@ -41,7 +41,6 @@ if ~exist(filename,"file")
         VVal = V(:,ind(1,:));
         VTest = [];
         
-
         nmax = 10;
         
         kk=1;
@@ -50,7 +49,8 @@ if ~exist(filename,"file")
         
             for jj=2:ii
         
-                net = feedforwardnet([ii jj],trainFcn);
+                %net = feedforwardnet([ii jj],trainFcn);
+                net = cascadeforwardnet([ii jj],trainFcn);
         
                 % set early stopping parameters
                 net.divideFcn= 'dividerand';
@@ -62,7 +62,7 @@ if ~exist(filename,"file")
                 
                 net = configure(net,XTrain,VTrain);
                 
-                if UseGPU
+                if UseGPU==1
                     Net(kk).it(it).trained = train(net,XTrain,VTrain,'showResources','no','useGPU','only');
                 else
                     Net(kk).it(it).trained = train(net,XTrain,VTrain,'showResources','no');
@@ -101,7 +101,7 @@ if ~exist(filename,"file")
             %Net(kk).JTest(it) = 0.5/size(XTest,2)*sum((VTest(:)-Y(:)).^2);
         end
 
-        fprintf("Done "+num2str(it)+" iterations of the train/validate split of the data.\n")
+        fprintf("Done "+num2str(it)+"/10 iterations of the train/validate split of the data.\n")
     
     end
     

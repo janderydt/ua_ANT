@@ -5,7 +5,8 @@ addpath(getenv("froot_tools"));
 
 %% Inverse cycle: either 1 (no spin-up) or 2 (with spin-up)
 UserVar.cycle = 1;
-UseGPU = 1;
+trainFcn = "trainlm";
+UseGPU = 0;
 
 %% Load data - need to run Calc_InverseResults_Ensemble first
 load("inversiondata_Weertman.mat");
@@ -74,9 +75,7 @@ if UseGPU
 end
 
 %% Start training
-trainFcn = "trainscg";
-UseGPU = 1;
-filename = "Lcurve_UNN_cycle"+num2str(UserVar.cycle)+"_"+trainFcn+".mat";
+filename = "Lcurve_UNN_cycle"+num2str(UserVar.cycle)+"_cascadeforwardnet_"+trainFcn+".mat";
 doplots = 1;
 Net = TrainANN(X,V,trainFcn,UseGPU,filename,doplots);
 
