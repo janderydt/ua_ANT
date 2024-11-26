@@ -2,7 +2,7 @@ function plot_InverseResults_Ensemble
 
 variable_to_plot = 'misfit'; %options: qGL, niter, misfit, qOB, BalancedMelt
 
-slidinglaws = ["Weertman_v0"];
+slidinglaws = ["Weertman"];
 file_with_inversion_data_to_read = "inversiondata_"+slidinglaws+".mat";
 
 %% load data
@@ -26,15 +26,20 @@ end
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
 UserVar.cycle = 2;
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([2 5 6 8])+".csv";
-%UserVar.idrange = [3000,3999;6000,6999;7000,7999;9000,9999];
-UserVar.idrange = [14000,14999;15000,15999;16000,16999;17000,17999];
+%UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([3 6 9])+".csv";
+%UserVar.idrange = [3000,3999;6000,6999;9000,9999];
+%UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
+UserVar.idrange = [14000,17999];
+
+ExpID = [data(:).InverseExpID];
+Ind = find(~ismember(ExpID,[UserVar.idrange(1):UserVar.idrange(end)]));
+data(Ind)=[];
 
 % define size for markers: resize with misfit
 for ii=1:numel(data)
     if numel(data(ii).misfit)>=UserVar.cycle
         misfit(ii) = data(ii).misfit(UserVar.cycle);
-        ind_finished(ii) = ismember(data(ii).niter(UserVar.cycle),[1000,2000,5000,6000,15000,16000]);
+        ind_finished(ii) = ismember(data(ii).niter(UserVar.cycle),[2000]);
     else
         misfit(ii) = nan;
         ind_finished(ii) = 0;
@@ -78,8 +83,8 @@ switch variable_to_plot
         for ii=find(ind_finished==1)
             plotdata(ii) = data(ii).misfit(:,UserVar.cycle)';  
         end 
-        cmin = min(plotdata);
-        cmax = max(plotdata)/100;
+        cmin = 0;%min(plotdata);
+        cmax = 400;%max(plotdata)/100;
         cbLabel = "Misfit";
     case 'BalancedMelt'
         for ii=find(ind_finished==1)
@@ -170,7 +175,7 @@ ind = 1;
 s(ind)=scatter(ax_fig(ind),m,m,marker_size,dummydata,'filled','MarkerEdgeColor','none'); ylabel(ax_fig(ind),"m"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");
 % edges = linspace(min(m),max(m),10);
 % [~,~,bin] = histcounts(m,edges);
-% meany = accumarray(bin(:),plotdata(:))./accumarray(bin(:),1);
+% meany = accumarray(bin(:),plotdata(:))./accumarray(bin(:),1);cax
 % xmid = 0.5*(edges(1:end-1)+edges(2:end));
 % bar(ax_fig(ind),xmid,meany);
 % ylabel(ax_fig(ind),"qGL [Gt/yr]"); xlabel(ax_fig(ind),""); xticklabels(ax_fig(ind),"");

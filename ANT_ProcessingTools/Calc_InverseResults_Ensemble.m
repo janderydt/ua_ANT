@@ -182,6 +182,7 @@ for tt=1:numel(UserVar.Table)
     end
 
     GF = F.GF;
+    inverse_experiments_analyzed = unique(inverse_experiments_analyzed,"stable");
     save(inversiondata_filename,"data","inverse_experiments_analyzed","MUA","GF","-v7.3");
         
 end
