@@ -5,8 +5,8 @@ runtype="Diagnostic"
 pgid=9999 
 
 # define ARCHER2 walltime in HH:MM:SS format
-walltime=2:00:00
-walltime_remaining=2:00:00
+walltime=02:30:00
+walltime_remaining=02:17:17
 
 # Specify run table 
 runtable=RunTable_ARCHER2_Diagnostic.csv
