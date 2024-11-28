@@ -7,7 +7,7 @@ if nargin==0
     diagnostic_to_plot = 'Delta_u'; % Delta_qGL, Delta_qOB, Delta_u
     parameter_to_plot = 'm'; % m, n, gaA, gaC, gsA, gsC
     cycles_to_plot = [1 2]; %[1 2]
-    slidinglaws = ["Umbi"];
+    slidinglaws = ["Weertman"];
 end
 
 basins_to_analyze = {'F-G',...  % Getz
@@ -378,6 +378,9 @@ switch diagnostic_to_plot
 
     case "Delta_u"
         
+        xmin = min(MUA_2018.coordinates(:,1)); xmax = max(MUA_2018.coordinates(:,1));
+        ymin = min(MUA_2018.coordinates(:,2)); ymax = max(MUA_2018.coordinates(:,2));
+
         fields_to_plot = fields(Delta_u);
 
         % observed change in velocity
@@ -401,7 +404,6 @@ switch diagnostic_to_plot
         h2000 = Fs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)) - Fb(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));
         load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2018_EXTRUDED","Fs","Fb");
         h2018 = Fs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)) - Fb(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));       
-
 
         dspeed_meas = u2018-u2000; %dspeed(dspeed<0)=nan;
         dspeed_meas_err = hypot(uerr2000,uerr2018);    
@@ -572,7 +574,7 @@ switch diagnostic_to_plot
             end          
 
             ax(numel(fields_to_plot)+1)=nexttile(tlo(cc*999)); hold on;
-            PlotNodalBasedQuantities_JDR(ax(numel(fields_to_plot)+1),MUA_2018.connectivity,MUA_2018.coordinates,log10(dspeed_meas+eps),CtrlVar);
+            PlotNodalBasedQuantities_JDR(ax(numel(fields_to_plot)+1),MUA_2018.connectivity,MUA_2018.coordinates,log10(dspeed_meas_clean+eps),CtrlVar);
             plot(MUA_2018.Boundary.x/CtrlVar.PlotXYscale,MUA_2018.Boundary.y/CtrlVar.PlotXYscale,'-k');
             plot(MUA_2000.Boundary.x/CtrlVar.PlotXYscale,MUA_2000.Boundary.y/CtrlVar.PlotXYscale,'--k');
             PlotGroundingLines(CtrlVar,MUA_2018,GF_2018,[],[],[],'-k','linewidth',1);

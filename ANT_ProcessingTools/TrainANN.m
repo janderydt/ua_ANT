@@ -1,4 +1,4 @@
-function Net_opt = TrainANN(X,V,trainFcn,UseGPU,filename,doplots)
+function Net_opt = TrainANN(X,V,ANNtype,trainFcn,UseGPU,filename,doplots)
 
 %% ----------------------------------------------------------------------- %%
 % This script takes normalized data to train a simple feedforward neural 
@@ -16,6 +16,7 @@ function Net_opt = TrainANN(X,V,trainFcn,UseGPU,filename,doplots)
 % of samples
 % V: k x m vector with k the number of output parameters and m the number
 % of samples
+% ANNtype: feedforwardnet or cascadeforwardnet
 % UseGPU: 0 or 1
 % trainFcn: training function (examples: 'trainlm', 'trainbr', 'trainscg')
 % filename: where to save the network output
@@ -49,9 +50,14 @@ if ~exist(filename,"file")
         
             for jj=2:ii
         
-                %net = feedforwardnet([ii jj],trainFcn);
-                net = cascadeforwardnet([ii jj],trainFcn);
-        
+                if ANNtype == "feedforwardnet"
+                    net = feedforwardnet([ii jj],trainFcn);
+                elseif ANNtype == "cascadeforwardnet"
+                    net = cascadeforwardnet([ii jj],trainFcn);
+                else
+                    error("Unknown ANN type "+ANNtype);
+                end
+
                 % set early stopping parameters
                 net.divideFcn= 'dividerand';
                 net.divideParam.trainRatio = 0.8; % training set [%]
@@ -144,16 +150,6 @@ Net_opt = Net(ind).it(ind2).trained;
 
 %% Plotting
 if doplots
-    % Plot emulator vs data
-    tlo=tiledlayout(1,2,"TileSpacing","tight");
-    
-    figure;
-    plotregression(log10(I),log10(Y(1,:)));
-    title('Misfit');
-    
-    figure;
-    plotregression(log10(R),log10(Y(2,:)));
-    title('Regularization');
     
     % Plot dependency of performance on size of hidden layers
     figure; tlo=tiledlayout(2,3,"TileSpacing","tight");

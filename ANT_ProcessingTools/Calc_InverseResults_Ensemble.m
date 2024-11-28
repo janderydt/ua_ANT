@@ -12,11 +12,11 @@ UserVar.type = "Inverse";
 %UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_10-10-2024_"+string([10 11 12 13])+".csv";
 %UserVar.idrange = [10000,10999; 11000, 11999; 12000, 12999; 13000, 13999];
 
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([3 6 9])+".csv";
-UserVar.idrange = [3000,3999; 6000, 6999; 9000, 9999];
+%UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([3 6 9])+".csv";
+%UserVar.idrange = [3000,3999; 6000, 6999; 9000, 9999];
 
-%UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
-%UserVar.idrange = [14000,14999; 15000, 15999; 16000, 16999; 17000, 17999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
+UserVar.idrange = [14000,14999; 15000, 15999; 16000, 16999; 17000, 17999];
 
 inversiondata_filename = "inversiondata_Weertman.mat";
 
@@ -45,7 +45,7 @@ for tt=1:numel(UserVar.Table)
     else
         Ind_ignore = 0*Ind;
     end
-    % only keep experiments that have finished?
+    % only keep experiments that have finished
     Ind_finished = RunTable{Ind,"Finished"}==1;
     if only_finished
         Ind = Ind(Ind_ignore==0 & Ind_finished==1);
@@ -181,9 +181,11 @@ for tt=1:numel(UserVar.Table)
 
     end
 
-    GF = F.GF;
-    inverse_experiments_analyzed = unique(inverse_experiments_analyzed,"stable");
-    save(inversiondata_filename,"data","inverse_experiments_analyzed","MUA","GF","-v7.3");
+    if ~isempty(Ind)
+        GF = F.GF;
+        inverse_experiments_analyzed = unique(inverse_experiments_analyzed,"stable");
+        save(inversiondata_filename,"data","inverse_experiments_analyzed","MUA","GF","-v7.3");
+    end
         
 end
 

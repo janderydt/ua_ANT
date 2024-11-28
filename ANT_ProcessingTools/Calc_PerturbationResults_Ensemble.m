@@ -23,10 +23,10 @@ basins_to_analyze = {'A-Ap',...  % Queen Maud Land
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Diagnostic";
-UserVar.Table = UserVar.home+"ANT_Diagnostic/"+["RunTable_ARCHER2_Diagnostic_3.csv"];
-UserVar.idrange = [30000 39999];
-inversiondata_filename = "inversiondata_Umbi.mat";
-perturbationdata_filename = "perturbationdata_Umbi.mat";
+UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic.csv";
+UserVar.idrange = [10000 19999];
+inversiondata_filename = "inversiondata_Weertman.mat";
+perturbationdata_filename = "perturbationdata_Weertman.mat";
 
 % load basins
 filename = 'basins_IMBIE_v2.mat'; 

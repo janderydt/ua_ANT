@@ -5,7 +5,8 @@ addpath(getenv("froot_tools"));
 
 %% Inverse cycle: either 1 (no spin-up) or 2 (with spin-up)
 UserVar.cycle = 1;
-trainFcn = "trainlm";
+ANNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
+trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine
 UseGPU = 0;
 
 %% Load data - need to run Calc_InverseResults_Ensemble first
@@ -75,9 +76,9 @@ if UseGPU
 end
 
 %% Start training
-filename = "Lcurve_UNN_cycle"+num2str(UserVar.cycle)+"_cascadeforwardnet_"+trainFcn+".mat";
+filename = "Lcurve_UNN_cycle"+num2str(UserVar.cycle)+"_"+ANNtype+"_"+trainFcn+".mat";
 doplots = 1;
-Net = TrainANN(X,V,trainFcn,UseGPU,filename,doplots);
+Net = TrainANN(X,V,ANNtype,trainFcn,UseGPU,filename,doplots);
 
 %% Emulate full dataset
 Y = Net(X); %
@@ -88,17 +89,39 @@ end
 Y(1,:) = 10.^(Y(1,:)*I_S + I_C); % undo normalization
 Y(2,:) = 10.^(Y(2,:)*R_S + R_C); % undo normalization and log
 
+%% Plot emulator vs targets
+figure;
+plotregression(log10(I),log10(Y(1,:)));
+title('Misfit');
+
+figure;
+plotregression(log10(R),log10(Y(2,:)));
+title('Regularization');
+
 %% Produce L-curve for new data
 CM = parula(10);
 
 if UserVar.cycle==1
-    tiles=4;       
+    tiles=4;     
+    axestag=["gaA","gaC","gsA","gsC"];
 else
     tiles=5;
+    axestag=["gaA","gaC","gsA","gsC","dhdt"];
 end
-figure(999); tlo=tiledlayout(1,tiles,'TileSpacing','tight');
-for tt=1:tiles
-    ax(tt)=nexttile(tlo); hold on;
+
+fh=findobj('Type','Figure','Name','L-curves'); 
+
+if isempty(fh)
+    fh=figure('Name','L-curves'); 
+    tlo=tiledlayout(fh,1,tiles,'TileSpacing','tight');
+    for tt=1:tiles
+        ax(tt)=nexttile(tlo); hold on;
+        ax(tt).Tag=axestag(tt);
+    end
+else
+    for tt=1:numel(axestag)
+        ax(tt)=findobj(fh,'type','axes','tag',axestag(tt));
+    end
 end
 
 for mexp=3
@@ -141,7 +164,7 @@ for mexp=3
         X_orig(7,:)=10.^(X_orig(7,:)*dhdt_err_S+dhdt_err_C); % undo normalization and log
     end
 
-    Y_new = Net_opt(X_new_norm);
+    Y_new = Net(X_new_norm);
     Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
     Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
 
@@ -194,7 +217,7 @@ for mexp=3
         X_orig(7,:) = 10.^(X_orig(7,:)*dhdt_err_S+dhdt_err_C); % undo normalization and log
     end
 
-    Y_new = Net_opt(X_new_norm);
+    Y_new = Net(X_new_norm);
     Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
     Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
     
@@ -247,7 +270,7 @@ for mexp=3
         X_orig(7,:)=10.^(X_orig(7,:)*dhdt_err_S+dhdt_err_C); % undo normalization and log
     end
 
-    Y_new = Net_opt(X_new_norm);
+    Y_new = Net(X_new_norm);
     Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
     Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
     
@@ -300,7 +323,7 @@ for mexp=3
         X_orig(7,:)=10.^(X_orig(7,:)*dhdt_err_S+dhdt_err_C); % undo normalization and log
     end
 
-    Y_new = Net_opt(X_new_norm);
+    Y_new = Net(X_new_norm);
     Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
     Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
     
@@ -348,7 +371,7 @@ for mexp=3
         X_orig(6,:) = 10.^(X_orig(6,:)*gsC_S + gsC_C); % undo normalization and log
         X_orig(7,:) = 10.^(X_orig(7,:)*dhdt_err_S + dhdt_err_C); % undo normalization and log
     
-        Y_new = Net_opt(X_new_norm);
+        Y_new = Net(X_new_norm);
         Y_new(1,:) = 10.^(Y_new(1,:)*I_S + I_C); % undo normalization
         Y_new(2,:) = 10.^(Y_new(2,:)*R_S + R_C); % undo normalization and log
         
