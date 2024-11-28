@@ -1,7 +1,7 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
 #SBATCH --job-name=ANT_Diag
-#SBATCH --time=02:00:00
+#SBATCH --time=02:30:00
 #SBATCH --ntasks-per-node=30
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
@@ -22,6 +22,8 @@
 # for testing:
 # use SBATCH --partition=standard, SBATCH --qos=short
 ##############################################################################################################
+
+module remove darshan
 
 # Add top directory to python path (this makes the utils.py file visible to this script)
 CASEDIR=$WORK/ua/cases/ANT
@@ -87,9 +89,9 @@ ExpID=($ExpID_all)
 # how many experiments to start?
 Nb_experiments_to_start=`python ../get_runs_to_submit.py $UA_CONFIG count`
 
-# We kill any jobsteps but not the batch job 5 minutes before the walltime. This is done
+# We kill any jobsteps but not the batch job 10 minutes before the walltime. This is done
 # with the --time flag in the srun command below. Here we calculate the remaining walltime
-# and subtract 5 minutes to create the TIME_LIMIT variable, which is then passed on to the srun commands.
+# and subtract 10 minutes to create the TIME_LIMIT variable, which is then passed on to the srun commands.
 # 1. Record time left in job, this will be a string of the format d-hh:mm:ss,
 # but zero values are truncated e.g. if d=0, hh=0 then the returned string will be mm:ss
 TIME_LIMIT="$(squeue -j $SLURM_JOB_ID -h --Format TimeLeft)"
@@ -104,8 +106,8 @@ elif [ "$length" -eq "5" ]; then
 elif [ "$length" -eq "7" ]; then
     TIME_LIMIT="0$TIME_LIMIT"
 fi
-# 4. subtract 5 minutes
-TIME_LIMIT_SECS=$(( $(date -d "$TIME_LIMIT" "+%s") - $(date -d "00:05:00" "+%s") ))
+# 4. subtract 10 minutes
+TIME_LIMIT_SECS=$(( $(date -d "$TIME_LIMIT" "+%s") - $(date -d "00:10:00" "+%s") ))
 # 5. convert back to hh:mm:ss format
 h=$(( $TIME_LIMIT_SECS / 3600 ))
 m=$(( $(($TIME_LIMIT_SECS - $h * 3600)) / 60 ))
@@ -185,9 +187,6 @@ then
     timeelapsed=$(sacct -j ${JOBID}  --format=Elapsed 2>&1 | sed -n 3p) # elapsed time
     exitflag=0
 
-    # Find non-empty error files
-    nonempty_error_files=$(find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -type f ! -size 0 | wc -l)
-
     # Write information to jobs_master_ARCHER2.log
     while [ -f global_log_active ]; do
     	sleep 1
@@ -208,9 +207,19 @@ then
     for i in $(seq 0 $(( ${#rets[*]}-1 ))); do
         if [ ${rets[$i]} -ne 0 ]; then
 	    echo "      ExpID ${ExpID[$i]}: exit code ${rets[$i]}" >> jobs_master_ARCHER2.log
-	    exitflag=1
+	    if [ ${rets[$i]} -eq 249 ]; then
+	        # ignore exist code 249 and remove error file
+		echo "      Ignore this error code and remove stderr file" >> jobs_master_ARCHER2.log
+		rm stderr_jobid${JOBID}_expid${ExpID[$i]}.out
+	    else	    
+		exitflag=1
+	    fi
 	fi
     done
+
+    # Find non-empty error files
+    nonempty_error_files=$(find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -type f ! -size 0 | wc -l)
+
     echo " > Non-empty error log files: ${nonempty_error_files}" >> jobs_master_ARCHER2.log
     if [ ${nonempty_error_files} -gt 0 ]; then
         find . -maxdepth 1 -name "stderr_jobid${JOBID}*.out" -type f ! -size 0 -exec echo "      {}" \; >> jobs_master_ARCHER2.log
@@ -232,8 +241,8 @@ then
         # calculate number of required nodes for resubmission
         Nb_experiments_to_start=`python ../get_runs_to_submit.py $UA_CONFIG count`
         Nodes_required=$(( ($Nb_experiments_to_start/30) + ($Nb_experiments_to_start%30>0) )) 
-        if [ ${Nodes_required} -gt 9 ]; then
-	    Nodes_required=9
+        if [ ${Nodes_required} -gt 12 ]; then
+	    Nodes_required=12
 	fi	    
 	if [ $Nodes_required -gt 0 ]; then
 	    THISSCRIPT=$(scontrol show job "${SLURM_JOB_ID}" | awk -F= '/Command=/{print $2}')

@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
@@ -44,15 +45,32 @@ for i in range(data_global.shape[0]):
                 # save modified version of the local runtable
                 save_runinfo(data_exp, runtable_exp)
             elif read_table == 'local' and write_table == 'global':
-                # print('Writing data to '+runtable_global)               
-                data_global.loc[i]=data_exp.loc[0]
-                # save modified version of the global runtable
-                save_runinfo(data_global, runtable_global)
+                if data_exp.shape[0]>0:
+                    data_global.loc[i]=data_exp.loc[0]
+                else:
+                    print('Something went wrong for ExpID '+str(ExpID)+'. Deleting experiment folder and resetting global RunTable.')
+                    data_global.at[i,'ExpID']=0
+                    data_global.at[i,'Finished']=0
+                    data_global.at[i,'Running']=0
+                    data_global.at[i,'Submitted']=0
+                    shutil.rmtree('./cases/ANT_nsmbl_Diagnostic_'+str(ExpID))
             else:
                 print('Wrong combination of read_table and write_table. They should not be the same.')
         else:
-            print('Cannot find '+exptable+', no changes to '+write_table+' run table.')
+            if 'Inverse' in expfolder:
+                print('Cannot find '+exptable+', no changes to '+write_table+' run table.')
+            elif 'Diagnostic' in expfolder:
+                print('Cannot find '+exptable+'. Something went wrong for ExpID '+str(ExpID)+'. Deleting experiment folder and resetting global RunTable.')
+                data_global.at[i,'ExpID']=0
+                data_global.at[i,'Finished']=0
+                data_global.at[i,'Running']=0
+                data_global.at[i,'Submitted']=0
+                #shutil.rmtree('./cases/ANT_nsmbl_Diagnostic_'+str(ExpID))
 
+# save modified version of the global runtable
+if read_table == 'local' and write_table == 'global':
+    print('Writing data to '+runtable_global) 
+    save_runinfo(data_global, runtable_global)
 
 # save intermediate version of updated global runtable
 # save_runinfo(data_global, runtable_global+".tmp")
@@ -62,19 +80,28 @@ for i in range(data_global.shape[0]):
 if write_table == 'global':
     pd_copy = data_global.copy()
     pgid = pd_copy['pgid'].values
+    ExpID = pd_copy['ExpID'].values
     for i in range(pgid.shape[0]):
-        if pgid[i] != 0:
-            print('non-zero pgid found:')
-            print(data_global.loc[[i]])
+        if pgid[i] != 0 and ExpID[i] != 0:
             #correct = input("Would you like to set pgid=0, error=1, restart=0 in the Runtable? yes=1, no=0: ")
             correct=1 #int(correct)
             if correct == 1:
-                data_global.at[i,'pgid']=0
-                data_global.at[i,'Error']=1
-                data_global.at[i,'Restart']=0
-                data_global.at[i,'Running']=0
-                data_global.at[i,'Submitted']=0
-                data_global.at[i,'Comments']='walltime exceeded'
+                if 'Inverse' in expfolder:
+                    print('ExpID '+str(data_global['ExpID'].values[i])+': Non-zero pgid found. Setting Error=1 in RunTable')
+                    data_global.at[i,'pgid']=0
+                    data_global.at[i,'Error']=1
+                    data_global.at[i,'Restart']=0
+                    data_global.at[i,'Running']=0
+                    data_global.at[i,'Submitted']=0
+                    data_global.at[i,'Comments']=data_global['Comments'].values[i]+' - walltime exceeded'
+                elif 'Diagnostic' in expfolder:
+                    print('ExpID '+str(data_global['ExpID'].values[i])+' Non-zero pgid found. Maybe ran out of walltime. Deleting experiment folder and resetting global RunTable to try again. Consider increasing the walltime.')
+                    data_global.at[i,'pgid']=0
+                    data_global.at[i,'ExpID']=0
+                    data_global.at[i,'Finished']=0
+                    data_global.at[i,'Running']=0
+                    data_global.at[i,'Submitted']=0
+                    shutil.rmtree('./cases/ANT_nsmbl_Diagnostic_'+str(ExpID[i]))
 
     # save modified version of the global runtable
     save_runinfo(data_global, runtable_global)
