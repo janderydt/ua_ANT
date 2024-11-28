@@ -57,6 +57,13 @@ end
 tmp = load(inversiondata_filename);
 data_inverse = tmp.data;
 
+% for ii=1:numel(data)
+%     InvExp = data(ii).Inverse.ExpID;
+%     Ind = find([data_inverse(:).InverseExpID]==InvExp);
+%     dhdt_err = data_inverse(Ind).dhdt_err;
+%     data(ii).Inverse.dhdt_err = dhdt_err;
+% end
+
 for tt=1:numel(UserVar.Table)
 
     % read run table
@@ -65,6 +72,7 @@ for tt=1:numel(UserVar.Table)
     % ExpIDs
     ExpID = RunTable{:,"ExpID"};
     Ind = find(ExpID>=UserVar.idrange(tt,1) & ExpID<=UserVar.idrange(tt,2));
+    
     % only keep experiments that have not been analyzed yet
     if ~isempty(data)
         Ind_ignore = ismember(ExpID(Ind),perturbation_experiments_analyzed);
@@ -130,6 +138,7 @@ for tt=1:numel(UserVar.Table)
             data(data_ind).Inverse.gaA = data_inverse(Ind_inverse).gaA;
             data(data_ind).Inverse.gsC = data_inverse(Ind_inverse).gsC;
             data(data_ind).Inverse.gsA = data_inverse(Ind_inverse).gsA;
+            data(data_ind).Inverse.dhdt_err = data_inverse(Ind_inverse).dhdt_err;
             data(data_ind).Inverse.misfit(InverseCycle) = data_inverse(Ind_inverse).misfit(InverseCycle);
             data(data_ind).startgeometry = data_inverse(Ind_inverse).startgeometry;
 

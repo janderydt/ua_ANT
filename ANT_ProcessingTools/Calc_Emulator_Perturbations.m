@@ -1,5 +1,8 @@
 function Calc_Emulator_Perturbations
 
+load("Delta_u.mat");
+
+
 % training data
 data=Delta_u.Calv_dh.map(:,:,cycle);
 

@@ -5,10 +5,13 @@ function Net_opt = TrainANN(X,V,ANNtype,trainFcn,UseGPU,filename,doplots)
 % network (ANN) with 2 hidden layers. The input data is split into a 
 % training set (80%) which is fed to the neural network, and a 
 % cross-validation set (20%), which is used to find the optimal size of 
-% each hidden layer, with the size of layer 1 (nL1) ranging from 2 to 10, 
-% and the size of layer 2 (nL2) ranging from 2 to nL1. The performance is
-% measured using a simple cost function that calculates the mean square
-% error between ANN outputs and targets: J=1/m*sum((trained-targets)^2)
+% each hidden layer. We use a k-fold cross-validation approach, where we 
+% split the data into k subsets, and train on k-1 different subsets, k 
+% times. By default we use a 10-fold cross-validation. The size of layer 1 
+% (nL1) ranges from 2 to 10, and the size of layer 2 (nL2) ranging from 2 
+% to nL1. The performance is measured using a simple cost function (misfit)
+% that calculates the mean square error between ANN outputs and targets: 
+% J=1/m*sum((trained-targets)^2)
 %% ----------------------------------------------------------------------- %%
 % 
 %% INPUTS: 
@@ -25,28 +28,37 @@ function Net_opt = TrainANN(X,V,ANNtype,trainFcn,UseGPU,filename,doplots)
 %% OUTPUTS:
 % Net_opt: optimal network
 
-warning("Make sure to normalize each row of the X and V vectors.");
+warning("Make sure to normalize each row of the X and V input vectors.");
+
+kfold = 10;
+layersizemax = 10;
 
 addpath(getenv("froot_tools"));
 
 if ~exist(filename,"file")
 
-    for it=1:10 % split data into training and cross-validation segments in 10 different ways
+    % create k-fold partition 
+    n = size(X,2); 
+    c = cvpartition(n,"KFold",k);
+
+    % train model for k partitions
+    for it=1:kfold
     
-        ntot = size(X,2);
-        ind = randi(ntot,[1 round(ntot*0.2)]);
-        XTrain = X; XTrain(:,ind(:))=[];
-        XVal = X(:,ind(1,:));
+        idx = training(c,it);
+        idx_train = find(idx==1);
+        idx_xval = find(idx==0);
+
+        % split data into training and cross-validation segments
+        XTrain = X; XTrain(:,idx_train(:))=[];
+        XVal = X(:,idx_xval(:));
         XTest = [];
-        VTrain = V; VTrain(:,ind(:))=[];
-        VVal = V(:,ind(1,:));
+        VTrain = V; VTrain(:,idx_train)=[];
+        VVal = V(:,idx_xval);
         VTest = [];
-        
-        nmax = 10;
         
         kk=1;
         
-        for ii=2:nmax
+        for ii=2:layersizemax
         
             for jj=2:ii
         
@@ -107,7 +119,7 @@ if ~exist(filename,"file")
             %Net(kk).JTest(it) = 0.5/size(XTest,2)*sum((VTest(:)-Y(:)).^2);
         end
 
-        fprintf("Done "+num2str(it)+"/10 iterations of the train/validate split of the data.\n")
+        fprintf("Done "+num2str(it)+"/"+num2str(kfold)+" iterations in k-fold cross-validation.\n")
     
     end
     

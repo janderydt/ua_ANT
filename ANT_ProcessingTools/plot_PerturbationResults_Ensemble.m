@@ -113,6 +113,7 @@ gsA = zeros(numel(data),1);
 gsC = zeros(numel(data),1);
 gaA = zeros(numel(data),1);
 gaC = zeros(numel(data),1);
+dhdt_err = zeros(numel(data),1);
 
 Delta_u = []; Fu_original = [];
 
@@ -219,6 +220,7 @@ for ii=1:numel(data)
         gsC(ii,1) = [data(ii).Inverse.gsC];
         gaA(ii,1) = [data(ii).Inverse.gaA];
         gaC(ii,1) = [data(ii).Inverse.gaC];
+        dhdt_err(ii,1) = [data(ii).Inverse.dhdt_err];
 
     end
 
@@ -230,7 +232,7 @@ m = [data(:).m];
 n = [data(:).n];
 
 if diagnostic_to_plot=="Delta_u"
-    save("Delta_u.mat", "Delta_u","MUA_2000","MUA_2018","misfit","gsA","gsC","gaA","gaC","m","n");
+    save("Delta_u.mat", "Delta_u","MUA_2000","MUA_2018","misfit","gsA","gsC","gaA","gaC","dhdt_err","m","n");
 end
 
 CtrlVar.PlotXYscale = 1e3;
@@ -412,8 +414,8 @@ switch diagnostic_to_plot
         for cc=cycles_to_plot
 
             %% plot distribution of misfit between modelled perturbation in speed and measured change in speed
-            % prep data
 
+            % prep data: remove areas with small/negative changes in measured speed
             dspeed_meas_clean = dspeed_meas; 
             dspeed_meas_clean(abs(dspeed_meas)<1 | dspeed_meas<=0) = nan;
 
@@ -423,24 +425,47 @@ switch diagnostic_to_plot
             area_grounded = FEintegrate2D(CtrlVar,MUA_2018,GF_2018.node); 
 
             for nn=1:size(Delta_u.Calv_dh.map,1)
+
+                % modelled change in speed
                 dspeed_mod = squeeze(Delta_u.Calv_dh.map(nn,:,cc))';
                 dspeed_mod_clean = dspeed_mod;
                 dspeed_mod_clean(abs(dspeed_mod)<1 | dspeed_mod<=0) = nan;
 
+                % 
                 dspeed_log_err = 1./(dspeed_mod_clean*log(10)).*dspeed_meas_err;
                 
-                misfit_tmp = abs(log10(dspeed_mod_clean) - log10(dspeed_meas_clean));%./(dspeed_log_err+eps)).^2;
+                %% calculate misfit. there are various ways of defining the
+                %% misfit function
 
-                x = MUA_2018.coordinates(:,1);
-                y = MUA_2018.coordinates(:,2);
-                PIG_interestregion = find(x>-1.59e6 & x<-1.57e6 & y>-2.3e5 & y<-2.14e5);
-                misfit_tmp_PIG(nn) = sum(misfit_tmp(PIG_interestregion));
+                % 1. mean square error              
+                misfit_mse_tmp = (dspeed_mod_clean - dspeed_meas_clean).^2;
+                  
+                misfit_floating_tmp = FEintegrate2D(CtrlVar,MUA_2018,(1-GF_2018.node).*misfit_mse_tmp);
+                area_floating_tmp = area_floating; area_floating_tmp(isnan(misfit_floating_tmp))=[];
+                
+                misfit_grounded_tmp = FEintegrate2D(CtrlVar,MUA_2018,GF_2018.node.*misfit_mse_tmp);
+                area_grounded_tmp = area_grounded; area_grounded_tmp(isnan(misfit_grounded_tmp))=[];
 
-                misfit_floating_tmp = FEintegrate2D(CtrlVar,MUA_2018,(1-GF_2018.node).*misfit_tmp);
-                misfit_grounded_tmp = FEintegrate2D(CtrlVar,MUA_2018,GF_2018.node.*misfit_tmp);
+                misfit_mse_floating(nn) = sum(misfit_floating_tmp,"all","omitmissing")/sum(area_floating_tmp,"all","omitmissing");
+                misfit_mse_grounded(nn) = sum(misfit_grounded_tmp,"all","omitmissing")/sum(area_grounded_tmp,"all","omitmissing");
 
-                misfit_floating(nn) = sum(misfit_floating_tmp,"all","omitmissing")/sum(area_floating,"all","omitmissing");
-                misfit_grounded(nn) = sum(misfit_grounded_tmp,"all","omitmissing")/sum(area_grounded,"all","omitmissing");
+                % 2. absolute log difference
+                misfit_logdiff_tmp = abs(log10(dspeed_mod_clean) - log10(dspeed_meas_clean));%./(dspeed_log_err+eps)).^2;
+               
+                misfit_floating_tmp = FEintegrate2D(CtrlVar,MUA_2018,(1-GF_2018.node).*misfit_logdiff_tmp);
+                area_floating_tmp = area_floating; area_floating_tmp(isnan(misfit_floating_tmp))=[];
+                
+                misfit_grounded_tmp = FEintegrate2D(CtrlVar,MUA_2018,GF_2018.node.*misfit_logdiff_tmp);
+                area_grounded_tmp = area_grounded; area_grounded_tmp(isnan(misfit_grounded_tmp))=[];
+
+                misfit_logdiff_floating(nn) = sum(misfit_floating_tmp,"all","omitmissing")/sum(area_floating_tmp,"all","omitmissing");
+                misfit_logdiff_grounded(nn) = sum(misfit_grounded_tmp,"all","omitmissing")/sum(area_grounded_tmp,"all","omitmissing");
+
+                % x = MUA_2018.coordinates(:,1);
+                % y = MUA_2018.coordinates(:,2);
+                % PIG_interestregion = find(x>-1.59e6 & x<-1.57e6 & y>-2.3e5 & y<-2.14e5);
+                % misfit_tmp_PIG(nn) = sum(misfit_tmp(PIG_interestregion));
+                % 
 
                 disp("done "+num2str(nn)+" out of "+num2str(size(Delta_u.Calv_dh.map,1)));
             end
@@ -505,13 +530,61 @@ switch diagnostic_to_plot
             cb2=colorbar(ax(1)); cb2.Label.String="Change in ice thickness [m]";
 
 
-            figure; scatter([data(:).m],misfit_tmp_PIG)
-            figure; scatter([data(:).m],misfit_grounded)
-            figure; scatter([data(:).n],misfit_grounded)
-            figure; scatter([data(:).m],misfit_floating)
-            figure; scatter([data(:).n],misfit_floating)
-            
-            
+            figure; tlo=tiledlayout(3,2,"TileSpacing","Compact");
+
+            nexttile; title("Grounded");
+            yyaxis left; hold on;
+            plot(m,misfit_mse_grounded,'o','markersize',3);
+            ylabel('Misfit MSE');
+            yyaxis right; hold on;
+            plot(m,misfit_logdiff_grounded,'o','markersize',3);
+            ylabel('Misfit log difference');
+            xlabel('m');
+
+            nexttile; title("Floating");
+            yyaxis left; hold on;
+            plot(m,misfit_mse_floating,'o','markersize',3);
+            ylabel('Misfit MSE');
+            yyaxis right; hold on;
+            plot(m,misfit_logdiff_floating,'o','markersize',3);
+            ylabel('Misfit log difference');
+            xlabel('m');
+
+            nexttile;
+            yyaxis left; hold on;
+            plot(n,misfit_mse_grounded,'o','markersize',3);
+            ylabel('Misfit MSE');
+            yyaxis right; hold on;
+            plot(n,misfit_logdiff_grounded,'o','markersize',3);
+            ylabel('Misfit log difference');
+            xlabel('n');
+
+            nexttile;
+            yyaxis left; hold on;
+            plot(n,misfit_mse_floating,'o','markersize',3);
+            ylabel('Misfit MSE');
+            yyaxis right; hold on;
+            plot(n,misfit_logdiff_floating,'o','markersize',3);
+            ylabel('Misfit log difference');
+            xlabel('n');
+
+            nexttile;
+            yyaxis left; hold on;
+            plot(dhdt_err,misfit_mse_grounded,'o','markersize',3);
+            ylabel('Misfit MSE');
+            yyaxis right; hold on;
+            plot(dhdt_err,misfit_logdiff_grounded,'o','markersize',3);
+            ylabel('Misfit log difference');
+            xlabel('dhdt_err');
+
+            nexttile;
+            yyaxis left; hold on;
+            plot(dhdt_err,misfit_mse_floating,'o','markersize',3);
+            ylabel('Misfit MSE');
+            yyaxis right; hold on;
+            plot(dhdt_err,misfit_logdiff_floating,'o','markersize',3);
+            ylabel('Misfit log difference');
+            xlabel('dhdt_err');
 
             H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
 
@@ -529,6 +602,7 @@ switch diagnostic_to_plot
                     MUA = MUA_2000;
                     MUA2 = MUA_2018;
                 end
+
                 xmin = min(MUA.coordinates(:,1)); xmax = max(MUA.coordinates(:,1));
                 ymin = min(MUA.coordinates(:,2)); ymax = max(MUA.coordinates(:,2));
 

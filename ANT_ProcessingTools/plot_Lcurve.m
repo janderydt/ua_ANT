@@ -6,7 +6,7 @@ addpath(getenv("froot_tools"));
 %% Inverse cycle: either 1 (no spin-up) or 2 (with spin-up)
 UserVar.cycle = 1;
 ANNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
-trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine
+trainFcn = "trainlm"; % trainlm is fast on CPU and seems to perform just fine
 UseGPU = 0;
 
 %% Load data - need to run Calc_InverseResults_Ensemble first
