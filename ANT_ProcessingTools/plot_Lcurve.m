@@ -1,10 +1,10 @@
-function [X,V]=plot_Lcurve
+function plot_Lcurve
 
 addpath("/mnt/md0/Ua/cases/ANT/");
 addpath(getenv("froot_tools"));
 
 %% Inverse cycle: either 1 (no spin-up) or 2 (with spin-up)
-UserVar.cycle = 1;
+cycle = 1;
 ANNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
 trainFcn = "trainlm"; % trainlm is fast on CPU and seems to perform just fine
 UseGPU = 0;
@@ -23,79 +23,51 @@ dhdt_err = [data(:).dhdt_err];
 
 for ii=1:numel(ExpID)
     I_tmp = data(ii).misfit;
-    I(ii) = I_tmp(UserVar.cycle);
+    I(ii) = I_tmp(cycle);
     R_tmp = data(ii).regularization;
-    R(ii) = R_tmp(UserVar.cycle);
+    R(ii) = R_tmp(cycle);
 end
 
-%% Prepare data for training (remove outliers for misfit and normalize)
-if UserVar.cycle == 1
+%% Prepare data for training 
+% remove outliers for misfit
+if cycle == 1
     Ind = find(I>400 | I==0);
 else
     Ind = find(I>400 | I==0 | isnan(dhdt_err));
 end
+
+% predictors
 m(Ind)=[]; n(Ind)=[];
 gaA(Ind)=[]; gaC(Ind)=[]; gsA(Ind)=[]; gsC(Ind)=[];
 R(Ind)=[]; I(Ind)=[]; dhdt_err(Ind)=[];
 
-% input training parameters
-[m_norm,m_C,m_S] = normalize(m);
-[n_norm,n_C,n_S] = normalize(n);
-[gaA_norm,gaA_C,gaA_S] = normalize(gaA); % gaA_norm = (gaA-gaA_C)/gaA_S
-[gaC_norm,gaC_C,gaC_S] = normalize(gaC); 
-[gsA_norm,gsA_C,gsA_S] = normalize(log10(gsA));
-[gsC_norm,gsC_C,gsC_S] = normalize(log10(gsC));
-
-Xtmp=[];
-Xtmp(1,:)=m_norm(:)';
-Xtmp(2,:)=n_norm(:)';
-Xtmp(3,:)=gaA_norm(:)'; 
-Xtmp(4,:)=gaC_norm(:)';
-Xtmp(5,:)=gsA_norm(:)';
-Xtmp(6,:)=gsC_norm(:)';
-
-if UserVar.cycle>1
-    [dhdt_err_norm,dhdt_err_C,dhdt_err_S] = normalize(log10(dhdt_err));
-    Xtmp(7,:)=dhdt_err_norm(:)';
+X = [m(:) n(:) gaA(:) gaC(:) log10(gsA(:)) log10(gsC(:))];
+if cycle==2 % add dhdt_err to predictors
+    X = [X log10(dhdt_err(:))];
 end
-
-X=double(Xtmp);
+X = double(X');
 
 % targets
-[I_norm,I_C,I_S] = normalize(log10(I)); % log improves the performance of the emulator
-[R_norm,R_C,R_S] = normalize(log10(R)); % log improves the performance of the emulator
-
-Vtmp=[];
-Vtmp(1,:) = I_norm(:)';
-Vtmp(2,:) = R_norm(:)';
-V=double(Vtmp);
-
-if UseGPU
-    X = gpuArray(X);
-    V = gpuArray(V);
-end
+T = [log10(I(:)) log10(R(:))];
+T = double(T');
 
 %% Start training
-filename = "Lcurve_UNN_cycle"+num2str(UserVar.cycle)+"_"+ANNtype+"_"+trainFcn+".mat";
+filename = "Lcurve_UNN_cycle"+num2str(cycle)+"_"+ANNtype+"_"+trainFcn+".mat";
 doplots = 1;
-Net = TrainANN(X,V,ANNtype,trainFcn,UseGPU,filename,doplots);
+Net = TrainANN(X,T,ANNtype,trainFcn,UseGPU,filename,doplots);
 
 %% Emulate full dataset
-Y = Net(X); %
-if UseGPU
-    X=gather(X);
-    Y=gather(Y);
-end
-Y(1,:) = 10.^(Y(1,:)*I_S + I_C); % undo normalization
-Y(2,:) = 10.^(Y(2,:)*R_S + R_C); % undo normalization and log
+X_full = [Net.X_train Net.X_val Net.X_test];
+Y = Net.trained(X_full);
+T_full = [Net.T_train Net.T_val Net.T_test];
 
 %% Plot emulator vs targets
 figure;
-plotregression(log10(I),log10(Y(1,:)));
+plotregression(T_full(1,:),Y(1,:));
 title('Misfit');
 
 figure;
-plotregression(log10(R),log10(Y(2,:)));
+plotregression(T_full(2,:),Y(2,:));
 title('Regularization');
 
 %% Produce L-curve for new data

@@ -1,7 +1,7 @@
-function Net_opt = TrainANN(X,V,ANNtype,trainFcn,UseGPU,filename,doplots)
+function Net_opt = TrainANN(X,T,ANNtype,trainFcn,UseGPU,filename,doplots)
 
 %% ----------------------------------------------------------------------- %%
-% This script takes normalized data to train a simple feedforward neural 
+% This script takes data to train a simple feedforward neural 
 % network (ANN) with 2 hidden layers. The input data is split into a 
 % training set (80%) which is fed to the neural network, and a 
 % cross-validation set (20%), which is used to find the optimal size of 
@@ -15,9 +15,9 @@ function Net_opt = TrainANN(X,V,ANNtype,trainFcn,UseGPU,filename,doplots)
 %% ----------------------------------------------------------------------- %%
 % 
 %% INPUTS: 
-% X: n x m vector with n the number of training parameters and m the number
+% X: n x m vector with n the number of predictor parameters and m the number
 % of samples
-% V: k x m vector with k the number of output parameters and m the number
+% T: k x m vector with k the number of target parameters and m the number
 % of samples
 % ANNtype: feedforwardnet or cascadeforwardnet
 % UseGPU: 0 or 1
@@ -28,34 +28,48 @@ function Net_opt = TrainANN(X,V,ANNtype,trainFcn,UseGPU,filename,doplots)
 %% OUTPUTS:
 % Net_opt: optimal network
 
-warning("Make sure to normalize each row of the X and V input vectors.");
-
 kfold = 10;
 layersizemax = 10;
 
 addpath(getenv("froot_tools"));
 
+% step 1: remove test data (10%)
+num_exp = size(X,2);
+seq = randperm(num_exp);
+test_idx = floor(num_exp*0.9);
+X = X(:,seq);
+T = T(:,seq);
+X_test = X(:,test_idx+1:end); num_test = size(X_test,2);
+T_test = T(:,test_idx+1:end); 
+X_res = X(:,1:test_idx);
+T_res = T(:,1:test_idx);
+
+% step 2: k-fold partitioning into training and cross-validation
 if ~exist(filename,"file")
 
     % create k-fold partition 
-    n = size(X,2); 
-    c = cvpartition(n,"KFold",k);
+    c = cvpartition(test_idx,"KFold",kfold);
 
     % train model for k partitions
     for it=1:kfold
     
         idx = training(c,it);
-        idx_train = find(idx==1);
-        idx_xval = find(idx==0);
+        train_idx = find(idx==1);
+        val_idx = find(idx==0);
 
         % split data into training and cross-validation segments
-        XTrain = X; XTrain(:,idx_train(:))=[];
-        XVal = X(:,idx_xval(:));
-        XTest = [];
-        VTrain = V; VTrain(:,idx_train)=[];
-        VVal = V(:,idx_xval);
-        VTest = [];
-        
+        X_train = X_res(:,train_idx); num_train = size(X_train,2);
+        X_val = X_res(:,val_idx); num_val = size(X_val,2);
+        T_train = T_res(:,train_idx);
+        T_val = T_res(:,val_idx);
+
+        % normalize predictors
+        [X_train,X_train_C,X_train_S] = normalize(X_train,2); % X_norm = (X-X_C)/X_S
+        X_val = (X_val-repmat(X_train_C,1,num_val))./repmat(X_train_S,1,num_val);
+        % normalize targets
+        [T_train,T_train_C,T_train_S] = normalize(T_train,2);
+        T_val = (T_val-repmat(T_train_C,1,num_val))./repmat(T_train_S,1,num_val);
+
         kk=1;
         
         for ii=2:layersizemax
@@ -73,51 +87,58 @@ if ~exist(filename,"file")
                 % set early stopping parameters
                 net.divideFcn= 'dividerand';
                 net.divideParam.trainRatio = 0.8; % training set [%]
-                net.divideParam.valRatio = 0; % validation set [%]
-                net.divideParam.testRatio = 0.2; % test set [%]   
+                net.divideParam.valRatio = 0.2; % validation set [%]
+                net.divideParam.testRatio = 0; % test set [%]   
                 %net.inputs{1}.processFcns = {'mapstd'}; % Normalize inputs/targets to have zero mean and unity variance
                 net.trainParam.showWindow = 0;
-                
-                net = configure(net,XTrain,VTrain);
-                
+
+                net = configure(net,X_train,T_train);
+
                 if UseGPU==1
-                    Net(kk).it(it).trained = train(net,XTrain,VTrain,'showResources','no','useGPU','only');
+                    X_train_gpu = gpuArray(X_train);
+                    T_train_gpu = gpuArray(T_train);                 
+                    Net(kk).it(it).trained = train(net,X_train_gpu,T_train_gpu,'showResources','no','useGPU','only');
                 else
-                    Net(kk).it(it).trained = train(net,XTrain,VTrain,'showResources','no');
+                    Net(kk).it(it).trained = train(net,X_train,T_train,'showResources','no');
                 end
 
                 Net(kk).nL1 = ii;
                 Net(kk).nL2 = jj;
-        
+                fprintf("("+num2str(ii)+","+num2str(jj)+")\n");
+
                 kk=kk+1;
         
             end
+            
         end
         
         % Now calculate cost functions
         for kk=1:numel(Net)
 
-            % performance on training data using simple quadratic misfit
-            Y = Net(kk).it(it).trained(XTrain);
-            Net(kk).JTrain(it) = 0.5/size(XTrain,2)*sum((VTrain(:)-Y(:)).^2);
-        
-            %Net(kk).Perf = perform(Net(kk).trained,Y,VTrain);
-        
-            Ptmp = polyfit(VTrain(:),Y(:),1);
+            % performance on training data using mse
+            Y = Net(kk).it(it).trained(X_train);
+            Net(kk).J_train(it) = 0.5/size(X_train,2)*sum((T_train(:)-Y(:)).^2);
+                
+            Ptmp = polyfit(T_train(:),Y(:),1);
             Net(kk).slope(it)=Ptmp(1);
             Net(kk).intercept(it)=Ptmp(2);
         
-            [Rtmp,~]=corrcoef(VTrain(:),Y(:));
+            [Rtmp,~]=corrcoef(T_train(:),Y(:));
             Net(kk).R(it)=Rtmp(2,1);
         
             % performance on cross-validation data
-            Y = Net(kk).it(it).trained(XVal);
-            Net(kk).JVal(it) = 0.5/size(XVal,2)*sum((VVal(:)-Y(:)).^2);
-        
-            % performance on test data
-            %Y = Net(kk).it(it).trained(XTest);
-            %Net(kk).JTest(it) = 0.5/size(XTest,2)*sum((VTest(:)-Y(:)).^2);
+            Y = Net(kk).it(it).trained(X_val);
+            Net(kk).J_val(it) = 0.5/size(X_val,2)*sum((T_val(:)-Y(:)).^2);
         end
+
+        fold(it).X_train = X_train;
+        fold(it).X_train_C = X_train_C;
+        fold(it).X_train_S = X_train_S;
+        fold(it).T_train = T_train;
+        fold(it).T_train_C = T_train_C;
+        fold(it).T_train_S = T_train_S;
+        fold(it).X_val = X_val;
+        fold(it).T_val = T_val;
 
         fprintf("Done "+num2str(it)+"/"+num2str(kfold)+" iterations in k-fold cross-validation.\n")
     
@@ -126,28 +147,22 @@ if ~exist(filename,"file")
 
     for kk=1:numel(Net)
     
-        JTrain = Net(kk).JTrain;
-        JVal = Net(kk).JVal;
-        %JTest = Net(kk).JTest;
+        J_train = Net(kk).J_train;
+        J_val = Net(kk).J_val;
     
-        Net(kk).JTrain_min = min(JTrain);
-        Net(kk).JTrain_max = max(JTrain);
-        Net(kk).JTrain_mean = mean(JTrain);
-        Net(kk).JTrain_std = std(JTrain);
+        Net(kk).J_train_min = min(J_train);
+        Net(kk).J_train_max = max(J_train);
+        Net(kk).J_train_mean = mean(J_train);
+        Net(kk).J_train_std = std(J_train);
     
-        Net(kk).JVal_min = min(JVal);
-        Net(kk).JVal_max = max(JVal);
-        Net(kk).JVal_mean = mean(JVal);
-        Net(kk).JVal_std = std(JVal);
+        Net(kk).J_val_min = min(J_val);
+        Net(kk).J_val_max = max(J_val);
+        Net(kk).J_val_mean = mean(J_val);
+        Net(kk).J_val_std = std(J_val);
     
-        %Net(kk).JTest_min = min(JTest);
-        %Net(kk).JTest_max = max(JTest);
-        %Net(kk).JTest_mean = mean(JTest);
-        %Net(kk).JTest_std = std(JTest);
-
     end
 
-    save(filename,"Net");
+    save(filename,"Net","fold","X_test","T_test");
 
 else
 
@@ -156,9 +171,19 @@ else
 end
 
 %% Choose 'optimal' architecture based on mean of cost function
-[~,ind]=min([Net(:).JVal_mean]);
-[~,ind2] = min(Net(ind).JVal);
-Net_opt = Net(ind).it(ind2).trained;
+[~,ind]=min([Net(:).J_val_mean]);
+[~,ind2] = min(Net(ind).J_val);
+Net_opt.trained = Net(ind).it(ind2).trained;
+Net_opt.X_train = fold(ind2).X_train;
+Net_opt.X_train_C = fold(ind2).X_train_C;
+Net_opt.X_train_S = fold(ind2).X_train_S;
+Net_opt.T_train = fold(ind2).T_train;
+Net_opt.T_train_C = fold(ind2).T_train_C;
+Net_opt.T_train_S = fold(ind2).T_train_S;
+Net_opt.X_val = fold(ind2).X_val;
+Net_opt.T_val = fold(ind2).T_val;
+Net_opt.X_test = (X_test-repmat(Net_opt.X_train_C,1,num_test))./repmat(Net_opt.X_train_S,1,num_test);
+Net_opt.T_test = (T_test-repmat(Net_opt.T_train_C,1,num_test))./repmat(Net_opt.T_train_S,1,num_test);
 
 %% Plotting
 if doplots
@@ -167,39 +192,39 @@ if doplots
     figure; tlo=tiledlayout(2,3,"TileSpacing","tight");
     
     nexttile; hold on;
-    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).JTrain_mean],'filled');
+    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).J_train_mean],'filled');
     clim([0.05 0.5]); grid on; axis on;
     title("J training mean");
     
     nexttile; hold on;
-    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).JTrain_min],'filled');
+    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).J_train_min],'filled');
     clim([0.05 0.5]); grid on; axis on;
     title("J training min");
     
     nexttile; hold on;
-    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).JTrain_max],'filled');
+    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).J_train_max],'filled');
     clim([0.05 0.5]); grid on; axis on;
     title("J training max");
     
     nexttile; hold on;
-    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).JVal_mean],'filled');
-    [Jmin,I]=min([Net(:).JVal_mean]);
+    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).J_val_mean],'filled');
+    [Jmin,I]=min([Net(:).J_val_mean]);
     plot(Net(I).nL1,Net(I).nL2,'ok','markersize',10);
     clim([0.05 0.5]); grid on; axis on;
     yticklabels("");
     title("J validation mean");
     
     nexttile; hold on;
-    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).JVal_min],'filled');
-    [Jmin,I]=min([Net(:).JVal_mean]);
+    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).J_val_min],'filled');
+    [Jmin,I]=min([Net(:).J_val_mean]);
     plot(Net(I).nL1,Net(I).nL2,'ok','markersize',10);
     clim([0.05 0.5]); grid on; axis on;
     yticklabels("");
     title("J validation min");
     
     nexttile; hold on;
-    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).JVal_max],'filled');
-    [Jmin,I]=min([Net(:).JVal_mean]);
+    scatter([Net(:).nL1],[Net(:).nL2],50,[Net(:).J_val_max],'filled');
+    [Jmin,I]=min([Net(:).J_val_mean]);
     plot(Net(I).nL1,Net(I).nL2,'ok','markersize',10);
     clim([0.05 0.5]); grid on; axis on;
     yticklabels("");

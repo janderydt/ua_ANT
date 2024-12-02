@@ -7,13 +7,13 @@ if nargin==0
     diagnostic_to_plot = 'Delta_u'; % Delta_qGL, Delta_qOB, Delta_u
     parameter_to_plot = 'm'; % m, n, gaA, gaC, gsA, gsC
     cycles_to_plot = [1 2]; %[1 2]
-    slidinglaws = ["Weertman"];
+    slidinglaw = "Weertman";
 end
 
 basins_to_analyze = {'F-G',...  % Getz
     'G-H',...  % PIG, Thwaites
     'H-Hp'}; % Abbott
-file_with_perturbation_data_to_read = "perturbationdata_"+slidinglaws+".mat";
+file_with_perturbation_data_to_read = "perturbationdata_"+slidinglaw+".mat";
 CtrlVar=Ua2D_DefaultParameters; 
 
 %% load basins
@@ -89,7 +89,7 @@ if exist(file_with_perturbation_data_to_read,"file")
 else
     error(file_with_perturbation_data_to_read+" does not exist");
 end
-tmp = load("inversiondata_"+slidinglaws+".mat");
+tmp = load("inversiondata_"+slidinglaw+".mat");
 data_inverse = tmp.data;
 
 % available drainage basins
@@ -167,14 +167,14 @@ for ii=1:numel(data)
                         if contains(ff,"Calv")
                             original_node_numbers = MUA_2000.k(find(~isnan(MUA_2000.k)));
                             % interpolate original and perturbed speed to same grid
-                            Ind_out = find(~inpoly2(MUA_target.coordinates,[MUA_2000.Boundary.x MUA_2000.Boundary.y]));
+                            %Ind_out = find(~inpoly2(MUA_target.coordinates,[MUA_2000.Boundary.x MUA_2000.Boundary.y]));
                             if isempty(Fu_original)
-                                Fu_original = scatteredInterpolant(MUA_2000.coordinates(:,1),MUA_2000.coordinates(:,2),data(ii).Original.speed(original_node_numbers,cc),"natural");
+                                Fu_original = scatteredInterpolant(MUA_2000.coordinates(:,1),MUA_2000.coordinates(:,2),data(ii).Original.speed(original_node_numbers,cc),"natural","boundary");
                             else
                                 Fu_original.Values = data(ii).Original.speed(original_node_numbers,cc);
                             end
                             u_original_interp = Fu_original(MUA_target.coordinates(:,1),MUA_target.coordinates(:,2));
-                            u_original_interp(Ind_out) = nan;
+                            %u_original_interp(Ind_out) = nan;
                             original_node_numbers = MUA_target.k(find(~isnan(MUA_target.k)));
                             if size(data(ii).(char(ff)).speed,2)>=cc
                                 du = data(ii).(char(ff)).speed(original_node_numbers,cc)-u_original_interp;
@@ -232,7 +232,7 @@ m = [data(:).m];
 n = [data(:).n];
 
 if diagnostic_to_plot=="Delta_u"
-    save("Delta_u.mat", "Delta_u","MUA_2000","MUA_2018","misfit","gsA","gsC","gaA","gaC","dhdt_err","m","n");
+    save("Delta_u_AS_"+slidinglaw+".mat", "Delta_u","MUA_2000","MUA_2018","misfit","gsA","gsC","gaA","gaC","dhdt_err","m","n");
 end
 
 CtrlVar.PlotXYscale = 1e3;
@@ -408,7 +408,7 @@ switch diagnostic_to_plot
         h2018 = Fs(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2)) - Fb(MUA_2018.coordinates(:,1),MUA_2018.coordinates(:,2));       
 
         dspeed_meas = u2018-u2000; %dspeed(dspeed<0)=nan;
-        dspeed_meas_err = hypot(uerr2000,uerr2018);    
+        dspeed_meas_err = hypot(uerr2000,uerr2018);
         dh_meas = h2018-h2000;
 
         for cc=cycles_to_plot
@@ -449,8 +449,8 @@ switch diagnostic_to_plot
                 misfit_mse_floating(nn) = sum(misfit_floating_tmp,"all","omitmissing")/sum(area_floating_tmp,"all","omitmissing");
                 misfit_mse_grounded(nn) = sum(misfit_grounded_tmp,"all","omitmissing")/sum(area_grounded_tmp,"all","omitmissing");
 
-                % 2. absolute log difference
-                misfit_logdiff_tmp = abs(log10(dspeed_mod_clean) - log10(dspeed_meas_clean));%./(dspeed_log_err+eps)).^2;
+                % 2. mse of log
+                misfit_logdiff_tmp = (log10(dspeed_mod_clean) - log10(dspeed_meas_clean)).^2;%./(dspeed_log_err+eps)).^2;
                
                 misfit_floating_tmp = FEintegrate2D(CtrlVar,MUA_2018,(1-GF_2018.node).*misfit_logdiff_tmp);
                 area_floating_tmp = area_floating; area_floating_tmp(isnan(misfit_floating_tmp))=[];

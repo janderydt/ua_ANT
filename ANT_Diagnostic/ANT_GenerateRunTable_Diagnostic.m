@@ -39,10 +39,17 @@ for tt=1:numel(RunTable_inverse_files)
     RunTable_inverse =  ANT_ReadWritetable(UserVar,RunTable_inverse_files(tt),[],'read');
           
     IndOriginalGeometry = find(contains(RunTable_diagnostic.Comments,"Original"));
+    
+    ExistingInverseRunsInDiagnosticTable=RunTable_diagnostic.InverseA(IndOriginalGeometry);
 
-    ExistingInverseRunsInDiagnosticTable = unique(cell2mat(RunTable_diagnostic.InverseA(IndOriginalGeometry)));
     if isempty(ExistingInverseRunsInDiagnosticTable)
         ExistingInverseRunsInDiagnosticTable = [];
+    else
+        if iscell(ExistingInverseRunsInDiagnosticTable)
+            ExistingInverseRunsInDiagnosticTable = unique(cell2mat(ExistingInverseRunsInDiagnosticTable));
+        else
+            ExistingInverseRunsInDiagnosticTable = unique(ExistingInverseRunsInDiagnosticTable);
+        end
     end
     
     BaseMesh='2000_2009_2014_2018_meshmin3000_meshmax100000_refined';
