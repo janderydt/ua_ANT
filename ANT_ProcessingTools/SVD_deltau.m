@@ -1,13 +1,13 @@
-function [U,S,V] = SVD_deltau
+function SVD_deltau
 
 addpath(getenv("froot_tools"));
 
 cycle=1;
-ANNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
+FNNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
 trainFcn = "trainscg"; % trainlm/trainscg is fast on CPU and seems to perform just fine
 UseGPU=1;
-doplots=1;
-writeoutputsforTF=0;
+doplots=0;
+writeoutputsforTF=1;
 
 % load data file
 load("Delta_u_AS_Weertman.mat");
@@ -67,47 +67,55 @@ for ii=1:numel(pct)
     
     data = T_hat(seq,:);
     predictors = X(seq,:);
-    
-    % split targets and predictors into training, cross-validation and test
-    % datasets
-    val_idx = floor(num_exp*0.8);
-    test_idx = floor(num_exp*0.1) + val_idx;
-    
-    T_train = data(1:val_idx,:); num_train = size(T_train,1);
-    T_val = data(val_idx+1:test_idx,:); num_val = size(T_val,1);
-    T_test = data(test_idx+1:end,:); num_test = size(T_test,1);
-    
-    X_train = predictors(1:val_idx,:);
-    X_val = predictors(val_idx+1:test_idx,:);
-    X_test = predictors(test_idx+1:end,:);
 
     %% Now simulate FeedForward NN
-    filename = sprintf("Perturbation_Calv_dh_UNN_cycle%s_%s_%s_N0k%.2g",num2str(cycle),ANNtype,trainFcn,100*pct(ii));
-    Net = TrainANN(predictors',data',ANNtype,trainFcn,UseGPU,filename,doplots);
+    fname1 = sprintf("./FNN/mat_files/SVD_Calv_dh_cycle%s_%s_%s_N0k%.2g",num2str(cycle),FNNtype,trainFcn,100*pct(ii));
+    save(fname1, 'V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
+    fname2 = sprintf("./FNN/mat_files/FNN_Calv_dh_cycle%s_%s_%s_N0k%.2g",num2str(cycle),FNNtype,trainFcn,100*pct(ii));
+    addpath("./FNN");
+    TrainFNN(predictors',data',FNNtype,trainFcn,UseGPU,fname2,doplots);
 
     % Emulate full dataset
-    X_full = [Net.X_train Net.X_val Net.X_test];
-    Y = Net.trained(X_full);
-    T_full = [Net.T_train Net.T_val Net.T_test];
-    
-    % Plot emulator vs targets
-    for ii=1:size(T_full,1)
-        figure;
-        plotregression(T_full(ii,:),Y(ii,:));
-        title("mode "+num2str(ii));
-    end
+    % X_full = [Net.X_train Net.X_val Net.X_test];
+    % Y = Net.trained(X_full);
+    % T_full = [Net.T_train Net.T_val Net.T_test];
+    % 
+    % % Plot emulator vs targets
+    % for ii=1:size(T_full,1)
+    %     figure;
+    %     plotregression(T_full(ii,:),Y(ii,:));
+    %     title("mode "+num2str(ii));
+    % end
 
     %% WRITE OUTPUTS for tensorflow
     if writeoutputsforTF
-        % feed normalized data to tensorflow
-        [X_train,C,S]=normalize(X_train);
-        X_val = (X_val-repmat(C,num_val,1))./repmat(S,num_val,1);
-        X_test = (X_test-repmat(C,num_test,1))./repmat(S,num_test,1);
+        % split targets and predictors into training, cross-validation and test
+        % datasets
+        val_idx = floor(num_exp*0.8);
+        test_idx = floor(num_exp*0.1) + val_idx;
         
-        fname1 = sprintf('./mat_files/data_N0k%.2g',pct(ii)*100);
-        fname2 = sprintf('./mat_files/SVD_N0k%.2g',pct(ii)*100);
-        save(fname1,'X_test','X_val','X_train','T_train','T_val','T_test');
-        save(fname2, 'V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq','C','S');
+        T_train = data(1:val_idx,:); num_train = size(T_train,1);
+        T_val = data(val_idx+1:test_idx,:); num_val = size(T_val,1);
+        T_test = data(test_idx+1:end,:); num_test = size(T_test,1);
+        
+        X_train = predictors(1:val_idx,:);
+        X_val = predictors(val_idx+1:test_idx,:);
+        X_test = predictors(test_idx+1:end,:);
+
+        % need to feed normalized data to tensorflow
+        [X_train,X_train_C,X_train_S]=normalize(X_train);
+        X_val = (X_val-repmat(X_train_C,num_val,1))./repmat(X_train_S,num_val,1);
+        X_test = (X_test-repmat(X_train_C,num_test,1))./repmat(X_train_S,num_test,1);
+
+        [T_train,T_train_C,T_train_S]=normalize(T_train);
+        T_val = (T_val-repmat(T_train_C,num_val,1))./repmat(T_train_S,num_val,1);
+        T_test = (T_test-repmat(T_train_C,num_test,1))./repmat(T_train_S,num_test,1);
+
+        fname1 = sprintf('./RNN/mat_files/data_N0k%.2g',pct(ii)*100);
+        fname2 = sprintf('./RNN/mat_files/SVD_N0k%.2g',pct(ii)*100);
+        save(fname1,'X_train','X_val','X_test','T_train','T_val','T_test',...
+            'X_train_C','X_train_S','T_train_C','T_train_S');
+        save(fname2, 'V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
     end
 end
 

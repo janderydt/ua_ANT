@@ -1,25 +1,25 @@
-function Net_opt = TrainANN(X,T,ANNtype,trainFcn,UseGPU,filename,doplots)
+function Net_opt = TrainFNN(X,T,FNNtype,trainFcn,UseGPU,filename,doplots)
 
 %% ----------------------------------------------------------------------- %%
 % This script takes data to train a simple feedforward neural 
-% network (ANN) with 2 hidden layers. The input data is split into a 
+% network (FNN) with 2 hidden layers. The input data is split into a 
 % training set (80%) which is fed to the neural network, and a 
 % cross-validation set (20%), which is used to find the optimal size of 
 % each hidden layer. We use a k-fold cross-validation approach, where we 
 % split the data into k subsets, and train on k-1 different subsets, k 
-% times. By default we use a 10-fold cross-validation. The size of layer 1 
-% (nL1) ranges from 2 to 10, and the size of layer 2 (nL2) ranging from 2 
-% to nL1. The performance is measured using a simple cost function (misfit)
-% that calculates the mean square error between ANN outputs and targets: 
+% times. By default we use k=10. The size of layer 1 (nL1) ranges from 
+% 2 to 15, and the size of layer 2 (nL2) ranging from 1 to nL1. The 
+% performance is measured using a simple cost function (misfit)
+% that calculates the mean square error between FNN outputs and targets: 
 % J=1/m*sum((trained-targets)^2)
 %% ----------------------------------------------------------------------- %%
 % 
 %% INPUTS: 
-% X: n x m vector with n the number of predictor parameters and m the number
-% of samples
+% X: n x m vector with n the number of predictor parameters and m the 
+% number of samples
 % T: k x m vector with k the number of target parameters and m the number
 % of samples
-% ANNtype: feedforwardnet or cascadeforwardnet
+% FNNtype: feedforwardnet or cascadeforwardnet
 % UseGPU: 0 or 1
 % trainFcn: training function (examples: 'trainlm', 'trainbr', 'trainscg')
 % filename: where to save the network output
@@ -74,20 +74,20 @@ if ~exist(filename,"file")
         
         for ii=2:layersizemax
         
-            for jj=2:ii
+            for jj=1:ii
         
-                if ANNtype == "feedforwardnet"
+                if FNNtype == "feedforwardnet"
                     net = feedforwardnet([ii jj],trainFcn);
-                elseif ANNtype == "cascadeforwardnet"
+                elseif FNNtype == "cascadeforwardnet"
                     net = cascadeforwardnet([ii jj],trainFcn);
                 else
-                    error("Unknown ANN type "+ANNtype);
+                    error("Unknown FNN type "+FNNtype);
                 end
 
                 % set early stopping parameters
                 net.divideFcn= 'dividerand';
-                net.divideParam.trainRatio = 0.8; % training set [%]
-                net.divideParam.valRatio = 0.2; % validation set [%]
+                net.divideParam.trainRatio = 0.9; % training set [%]
+                net.divideParam.valRatio = 0.1; % validation set [%]
                 net.divideParam.testRatio = 0; % test set [%]   
                 %net.inputs{1}.processFcns = {'mapstd'}; % Normalize inputs/targets to have zero mean and unity variance
                 net.trainParam.showWindow = 0;
@@ -162,28 +162,28 @@ if ~exist(filename,"file")
     
     end
 
-    save(filename,"Net","fold","X_test","T_test");
+    % Choose 'optimal' architecture based on mean of cost function
+    [~,ind]=min([Net(:).J_val_mean]);
+    [~,ind2] = min(Net(ind).J_val);
+    Net_opt.trained = Net(ind).it(ind2).trained;
+    Net_opt.X_train = fold(ind2).X_train; % normalized
+    Net_opt.X_train_C = fold(ind2).X_train_C;
+    Net_opt.X_train_S = fold(ind2).X_train_S;
+    Net_opt.T_train = fold(ind2).T_train; % normalized
+    Net_opt.T_train_C = fold(ind2).T_train_C;
+    Net_opt.T_train_S = fold(ind2).T_train_S;
+    Net_opt.X_val = fold(ind2).X_val; % normalized
+    Net_opt.T_val = fold(ind2).T_val; % normalized
+    Net_opt.X_test = (X_test-repmat(Net_opt.X_train_C,1,num_test))./repmat(Net_opt.X_train_S,1,num_test);
+    Net_opt.T_test = (T_test-repmat(Net_opt.T_train_C,1,num_test))./repmat(Net_opt.T_train_S,1,num_test);
+
+    save(filename,"X","T","Net_opt","seq","kfold","layersizemax","FNNtype","trainFcn");
 
 else
 
     load(filename);
     
 end
-
-%% Choose 'optimal' architecture based on mean of cost function
-[~,ind]=min([Net(:).J_val_mean]);
-[~,ind2] = min(Net(ind).J_val);
-Net_opt.trained = Net(ind).it(ind2).trained;
-Net_opt.X_train = fold(ind2).X_train;
-Net_opt.X_train_C = fold(ind2).X_train_C;
-Net_opt.X_train_S = fold(ind2).X_train_S;
-Net_opt.T_train = fold(ind2).T_train;
-Net_opt.T_train_C = fold(ind2).T_train_C;
-Net_opt.T_train_S = fold(ind2).T_train_S;
-Net_opt.X_val = fold(ind2).X_val;
-Net_opt.T_val = fold(ind2).T_val;
-Net_opt.X_test = (X_test-repmat(Net_opt.X_train_C,1,num_test))./repmat(Net_opt.X_train_S,1,num_test);
-Net_opt.T_test = (T_test-repmat(Net_opt.T_train_C,1,num_test))./repmat(Net_opt.T_train_S,1,num_test);
 
 %% Plotting
 if doplots

@@ -20,6 +20,7 @@ Ua
 datetime
 logging
 *job_submitted
+RNN_network_optimisation_JDR.py
 
 #ignore all hidden files
 .*
