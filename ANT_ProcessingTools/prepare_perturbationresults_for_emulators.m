@@ -1,15 +1,18 @@
-function SVD_deltau
+function prepare_perturbationresults_for_emulators
 
 addpath(getenv("froot_tools"));
 
-cycle=1;
+perturbation='Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
+cycle=1; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
 FNNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
-trainFcn = "trainscg"; % trainlm/trainscg is fast on CPU and seems to perform just fine
-UseGPU=1;
+trainFcn = "trainlm"; % trainlm is fast on CPU and seems to perform just fine, 
+% alternatives that seem to work well are trainlm
+UseGPU=0; % UseGPU=1 only works with trainFcn="trainscg"
 doplots=0;
 writeoutputsforTF=1;
 
-% load data file
+% load data file || this file is produced by the
+% plot_PerturbationResults_Ensemble.m function
 load("Delta_u_AS_Weertman.mat");
 
 %% PREDICTORS
@@ -23,7 +26,7 @@ X = double(X);
 %% simulated instanteneous changes in surface speed in response to changes
 %% in ice-sheet geometry (ice thickness, calving front location). The input
 %% data consists of num_nodes nodal values for nun_exp experiments.
-T = Delta_u.Calv_dh.map(:,:,cycle);
+T = Delta_u.(perturbation).map(:,:,cycle);
 % check for nans and inf
 if any(isnan(T) | isinf(T))
     error("Remove nan and inf from T");
@@ -118,8 +121,6 @@ for ii=1:numel(pct)
         save(fname2, 'V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
     end
 end
-
-return
 
 %% PLOTTING
 

@@ -30,6 +30,9 @@ __pycache__/
 __init__.py
 
 #ignore specific case folders, only track master folder
+ANT_ProcessingTools/FNN/mat_files/
+ANT_ProcessingTools/RNN/mat_files/
+ANT_ProcessingTools/RNN/TF_files/
 ANT_Diagnostic/cases/*
 ANT_Inverse/cases/*
 ANT_Transient/cases/*

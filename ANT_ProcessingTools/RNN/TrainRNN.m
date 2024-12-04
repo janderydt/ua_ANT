@@ -2,7 +2,7 @@ function TrainRNN
 
 % we call a separate tensorflow script
 
-pct = [95:99];
+pct = 95:99;
 
 for ii=1:numel(pct)
     
