@@ -232,7 +232,8 @@ m = [data(:).m];
 n = [data(:).n];
 
 if diagnostic_to_plot=="Delta_u"
-    save("Delta_u_AS_"+slidinglaw+".mat", "Delta_u","MUA_2000","MUA_2018","misfit","gsA","gsC","gaA","gaC","dhdt_err","m","n");
+    save("Delta_u_AS_"+slidinglaw+".mat", "Delta_u","MUA_2000","MUA_2018","GF_2000","GF_2018",...
+        "misfit","gsA","gsC","gaA","gaC","dhdt_err","m","n");
 end
 
 CtrlVar.PlotXYscale = 1e3;
@@ -668,7 +669,7 @@ switch diagnostic_to_plot
             % Save
             pos = get(H,"Position");
             set(H,"PaperPositionMode","Auto","PaperUnits","Inches","PaperSize",[pos(3),pos(4)]);
-            fname = "./Figures/"+diagnostic_to_plot+"cycle"+string(cc);
+            fname = "./Figures/"+diagnostic_to_plot+"_cycle"+string(cc);
             print(H,fname,"-dpng","-r400");
 
 

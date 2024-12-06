@@ -35,10 +35,7 @@ addpath(getenv("froot_tools"));
 
 % step 1: remove test data (10%)
 num_exp = size(X,2);
-seq = randperm(num_exp);
 test_idx = floor(num_exp*0.9);
-X = X(:,seq);
-T = T(:,seq);
 X_test = X(:,test_idx+1:end); num_test = size(X_test,2);
 T_test = T(:,test_idx+1:end); 
 X_res = X(:,1:test_idx);
@@ -177,7 +174,7 @@ if ~exist(filename,"file")
     Net_opt.X_test = (X_test-repmat(Net_opt.X_train_C,1,num_test))./repmat(Net_opt.X_train_S,1,num_test);
     Net_opt.T_test = (T_test-repmat(Net_opt.T_train_C,1,num_test))./repmat(Net_opt.T_train_S,1,num_test);
 
-    save(filename,"X","T","Net_opt","seq","kfold","layersizemax","FNNtype","trainFcn");
+    save(filename,"X","T","Net_opt","kfold","layersizemax","FNNtype","trainFcn");
 
 else
 

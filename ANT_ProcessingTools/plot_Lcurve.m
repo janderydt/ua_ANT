@@ -88,7 +88,8 @@ end
 fh=findobj('Type','Figure','Name','L-curves'); 
 
 if isempty(fh)
-    fh=figure('Name','L-curves'); 
+    fh=fig('units','inches','width',120*12/72.27,'height',45*12/72.27,...
+        'Name','L-curves','fontsize',14,'font','Helvetica');
     tlo=tiledlayout(fh,1,tiles,'TileSpacing','tight');
     for tt=1:tiles
         ax(tt)=nexttile(tlo); hold on;
@@ -137,9 +138,9 @@ T_orig(2,:) = 10.^T_orig(2,:);
 % plot
 x=log10(Y_new(2,:)./X_new(3,:).^2);
 y=Y_new(1,:);
-plot(ax(1),x,y,'+-');
+plot(ax(1),x,y,'+-','LineWidth',2,'MarkerSize',8);
 for kk=1:2:size(Y_new,2)
-    text(ax(1),x(kk),y(kk)+4,erase(num2str(X_new(3,kk),'%3.2e'),'+0'));
+    text(ax(1),x(kk),y(kk)+2,erase(num2str(X_new(3,kk),'%3.2e'),'+0'),'FontSize',8);
 end
 plot(ax(1),log10(T_orig(2,:)./X_orig(3,:).^2),T_orig(1,:),'xr');
 title(ax(1),"gaA"); grid(ax(1),"on"); box(ax(1),"on");
@@ -180,9 +181,9 @@ T_orig(2,:) = 10.^T_orig(2,:);
         
 x=log10(Y_new(2,:)./X_new(4,:).^2);
 y=Y_new(1,:);
-plot(ax(2),x,y,'+-');
+plot(ax(2),x,y,'+-','LineWidth',2,'MarkerSize',8);
 for kk=1:2:size(Y_new,2)
-    text(ax(2),x(kk),y(kk)+4,erase(num2str(X_new(4,kk),'%3.2e'),'+0'));
+    text(ax(2),x(kk),y(kk)+2,erase(num2str(X_new(4,kk),'%3.2e'),'+0'),'FontSize',8);
 end
 plot(ax(2),log10(T_orig(2,:)./X_orig(4,:).^2),T_orig(1,:),'xr');
 title(ax(2),"gaC"); grid(ax(2),"on"); box(ax(2),"on");
@@ -223,9 +224,9 @@ T_orig(2,:) = 10.^T_orig(2,:);
 
 x=log10(Y_new(2,:)./X_new(5,:).^2);
 y=Y_new(1,:);
-plot(ax(3),x,y,'+-');
+plot(ax(3),x,y,'+-','LineWidth',2,'MarkerSize',8);
 for kk=1:2:size(Y_new,2)
-    text(ax(3),x(kk),y(kk)+4,erase(num2str(X_new(5,kk),'%3.2e'),'+0'));
+    text(ax(3),x(kk),y(kk)+2,erase(num2str(X_new(5,kk),'%3.2e'),'+0'),'FontSize',8);
 end
 plot(ax(3),log10(T_orig(2,:)./X_orig(5,:).^2),T_orig(1,:),'xr');
 title(ax(3),"gsA"); grid(ax(3),"on"); box(ax(3),"on");
@@ -266,9 +267,9 @@ T_orig(2,:) = 10.^T_orig(2,:);
 
 x=log10(Y_new(2,:)./X_new(6,:).^2);
 y=Y_new(1,:);
-plot(ax(4),x,y,'+-');
+plot(ax(4),x,y,'+-','LineWidth',2,'MarkerSize',8);
 for kk=1:2:size(Y_new,2)
-    text(ax(4),x(kk),y(kk)+4,erase(num2str(X_new(6,kk),'%3.2e'),'+0'));
+    text(ax(4),x(kk),y(kk)+2,erase(num2str(X_new(6,kk),'%3.2e'),'+0'),'FontSize',8);
 end
 plot(ax(4),log10(T_orig(2,:)./X_orig(6,:).^2),T_orig(1,:),'xr');
 title(ax(4),"gsC"); grid(ax(4),"on"); box(ax(4),"on");
@@ -316,3 +317,11 @@ if cycle>1
     %plot(ax(5),log10(Y_orig(2,:)),Y_orig(1,:),'xr');
     title(ax(5),"dhdt_err"); grid(ax(5),"on"); box(ax(5),"on");
 end
+
+xlabel(tlo,'Misfit');
+ylabel(tlo,'Regularization');
+
+pos = get(fh,"Position");
+set(fh,"PaperPositionMode","Auto","PaperUnits","Inches","PaperSize",[pos(3),pos(4)]);
+fname = "./Figures/Lcurve";
+print(fh,fname,"-dpng","-r400");

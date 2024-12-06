@@ -3,17 +3,18 @@ function prepare_perturbationresults_for_emulators
 addpath(getenv("froot_tools"));
 
 perturbation='Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
+slidinglaw="Weertman";
 cycle=1; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
 FNNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
-trainFcn = "trainlm"; % trainlm is fast on CPU and seems to perform just fine, 
+trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine, 
 % alternatives that seem to work well are trainlm
-UseGPU=0; % UseGPU=1 only works with trainFcn="trainscg"
+UseGPU=1; % UseGPU=1 only works with trainFcn="trainscg"
 doplots=0;
-writeoutputsforTF=1;
+writeoutputsforTF=0;
 
 % load data file || this file is produced by the
 % plot_PerturbationResults_Ensemble.m function
-load("Delta_u_AS_Weertman.mat");
+load("Delta_u_AS_"+slidinglaw+".mat");
 
 %% PREDICTORS
 X = [m(:) n(:) gaA(:) gaC(:) log10(gsA(:)) log10(gsC(:))];
@@ -64,6 +65,31 @@ for ii=1:numel(pct)
     % values, and right singular vectors V for T_nComp largest singular values
     [U_trunc,S_trunc,V_trunc] = svds(T,T_nComp);
 
+    % note that T is transposed compared to the canonical treatment of the
+    % svd. 
+    % [T]=n-by-m with n number of samples and m size of each sample
+    % [U]=n-by-n 
+    % [S]=n-by-m
+    % [V']=m-by-m
+    % T = U*S*V' = U*B with B=S*V' with [B]=n-by-m
+    % truncate decomposation at rank r:
+    % [T_trunc]=n-by-m
+    % [U_trunc]=n-by-r 
+    % [S_trunc]=r-by-r
+    % [V_trunc']=r-by-m
+    % T_trunc = U_trunc*S_trunc*V_trunc' = U_trunc*B_trunc with 
+    % B_trunc=S_trunc*V_trunc' with [B_trunc]=r-by-m
+    % So T_trunc = U_trunc*B_trunc
+    % => T_trunc*B_trunc' = U_trunc*B_trunc*B_trunc'
+    % ==> T_trunc*B_trunc'*inv(B_trunc*B_trunc') = U_trunc
+    % and define T_reproj = inv(B_trunc*B_trunc')*B_trunc
+    % then T_reproj' = B_trunc'*inv(B_trunc*B_trunc')
+    % with [T_reproj']=m-by-r
+    % and U_trunc = T_trunc*T_reproj';
+    % Instead of training the emulator with U_trunc, we train the emulator
+    % with T_hat = T*T_reproj'
+    % To reproject T_hat to the original basis, simply multiply with 
+    % B_trunc: T = T_hat*B_trunc
     B_trunc = S_trunc*V_trunc';
     T_reproj = (B_trunc*B_trunc')\B_trunc; % equivalent to inv(B*B')*B
     T_hat = T*T_reproj';
@@ -72,9 +98,9 @@ for ii=1:numel(pct)
     predictors = X(seq,:);
 
     %% Now simulate FeedForward NN
-    fname1 = sprintf("./FNN/mat_files/SVD_Calv_dh_cycle%s_%s_%s_N0k%.2g",num2str(cycle),FNNtype,trainFcn,100*pct(ii));
+    fname1 = sprintf("./FNN/mat_files/SVD_%s_%s_cycle%s_%s_%s_N0k%.2g",perturbation,slidinglaw,num2str(cycle),FNNtype,trainFcn,100*pct(ii));
     save(fname1, 'V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
-    fname2 = sprintf("./FNN/mat_files/FNN_Calv_dh_cycle%s_%s_%s_N0k%.2g",num2str(cycle),FNNtype,trainFcn,100*pct(ii));
+    fname2 = sprintf("./FNN/mat_files/FNN_%s_%s_cycle%s_%s_%s_N0k%.2g",perturbation,slidinglaw,num2str(cycle),FNNtype,trainFcn,100*pct(ii));
     addpath("./FNN");
     TrainFNN(predictors',data',FNNtype,trainFcn,UseGPU,fname2,doplots);
 
@@ -114,8 +140,8 @@ for ii=1:numel(pct)
         T_val = (T_val-repmat(T_train_C,num_val,1))./repmat(T_train_S,num_val,1);
         T_test = (T_test-repmat(T_train_C,num_test,1))./repmat(T_train_S,num_test,1);
 
-        fname1 = sprintf('./RNN/mat_files/data_N0k%.2g',pct(ii)*100);
-        fname2 = sprintf('./RNN/mat_files/SVD_N0k%.2g',pct(ii)*100);
+        fname1 = sprintf('./RNN/mat_files/data_%s_%s_cycle%s_N0k%.2g',perturbation,slidinglaw,cycle,pct(ii)*100);
+        fname2 = sprintf('./RNN/mat_files/SVD_%s_%s_cycle%s_N0k%.2g',perturbation,slidinglaw,cycle,pct(ii)*100);
         save(fname1,'X_train','X_val','X_test','T_train','T_val','T_test',...
             'X_train_C','X_train_S','T_train_C','T_train_S');
         save(fname2, 'V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
