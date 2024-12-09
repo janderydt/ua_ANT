@@ -148,7 +148,7 @@ title(ax(1),"gaA"); grid(ax(1),"on"); box(ax(1),"on");
 %% gaC
 X_new(1,:) = 3*ones(1,15); %m
 X_new(2,:) = 3*ones(1,15); %n
-X_new(3,:) = ones(1,15); %gaA
+X_new(3,:) = 10*ones(1,15); %gaA
 X_new(4,:) = 10.^linspace(-1,2,15); %gaC
 X_new(5,:) = log10(1e4*ones(1,15)); %gsA
 X_new(6,:) = log10(1e4*ones(1,15)); %gsC
@@ -191,8 +191,8 @@ title(ax(2),"gaC"); grid(ax(2),"on"); box(ax(2),"on");
 %% gsA
 X_new(1,:) = 3*ones(1,15); %m
 X_new(2,:) = 3*ones(1,15); %n
-X_new(3,:) = ones(1,15); %gaA
-X_new(4,:) = ones(1,15); %gaC
+X_new(3,:) = 10*ones(1,15); %gaA
+X_new(4,:) = 10*ones(1,15); %gaC
 X_new(5,:) = log10(10.^linspace(3,6,15)); %gsA
 X_new(6,:) = log10(1e4*ones(1,15)); %gsC
 if cycle>1
@@ -234,8 +234,8 @@ title(ax(3),"gsA"); grid(ax(3),"on"); box(ax(3),"on");
 %% gsC
 X_new(1,:) = 3*ones(1,15); %m
 X_new(2,:) = 3*ones(1,15); %n
-X_new(3,:) = ones(1,15); %gaA
-X_new(4,:) = ones(1,15); %gaC
+X_new(3,:) = 10*ones(1,15); %gaA
+X_new(4,:) = 10*ones(1,15); %gaC
 X_new(5,:) = log10(1e4*ones(1,15)); %gsA
 X_new(6,:) = log10(10.^linspace(3,6,15)); %gsC
 if cycle>1
@@ -278,8 +278,8 @@ title(ax(4),"gsC"); grid(ax(4),"on"); box(ax(4),"on");
 if cycle>1
     X_new(1,:) = 3*ones(1,15); %m
     X_new(2,:) = 3*ones(1,15); %n
-    X_new(3,:) = ones(1,15); %gaA
-    X_new(4,:) = ones(1,15); %gaC
+    X_new(3,:) = 10*ones(1,15); %gaA
+    X_new(4,:) = 10*ones(1,15); %gaC
     X_new(5,:) = log10(1e4*ones(1,15)); %gsA
     X_new(6,:) = log10(1e4*ones(1,15)); %gsC
     X_new(7,:) = log10(linspace(0.1,0.5,15)); %dhdt_err

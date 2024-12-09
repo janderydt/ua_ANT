@@ -37,8 +37,8 @@ end
 fprintf("Reading MeaSUREs velocity data for 2000_2001");
 [vxm,x,y] = measures_annual('vx','2000_2001');
 vym = measures_annual('vy','2000_2001');
-xerrm = measures_annual('vxerr','2000_2001'); xerrm(isnan(xerrm))=0; % change nan to zero for calculation of  total error.
-yerrm = measures_annual('vyerr','2000_2001'); yerrm(isnan(yerrm))=0; % change nan to zero for calculation of  total error.
+xerrm = measures_annual('vxerr','2000_2001'); xerrm(isnan(xerrm))=0; % change nan to zero for calculation of total error.
+yerrm = measures_annual('vyerr','2000_2001'); yerrm(isnan(yerrm))=0; % change nan to zero for calculation of total error.
 vm = hypot(vxm,vym);
 errm = hypot(vxm./vm.*xerrm,vym./vm.*yerrm);% propagation of error for velocity v = sqrt(vx^2+vy^2)
 wm = 1./errm.^2; % weights

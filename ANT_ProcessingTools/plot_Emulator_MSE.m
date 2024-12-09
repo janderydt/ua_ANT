@@ -1,14 +1,15 @@
 function plot_Emulator_MSE
 
-plotRNN=1;
+plotRNN=0;
 plotFNN=1;
 
 perturbation='Calv_dh';
+year="2018";
 slidinglaw="Weertman";
-cycle=1;
+cycle=2;
 n_test=10; % index of test data to plot (integer between 1 and size of test dataset)
 
-load("Delta_u_AS_"+slidinglaw+".mat");
+load("Delta_u_"+year+"_AS_"+slidinglaw+".mat");
 MUA=MUA_2018; GF=GF_2018;
 T = Delta_u.(perturbation).map(:,:,cycle);
 T_mean=mean(T,1);
@@ -80,7 +81,7 @@ if plotFNN
     for ii=1:numel(pct)
     
         tmp=load("./FNN/mat_files/FNN_"+perturbation+"_"+slidinglaw+"_cycle"+cycle+"_feedforwardnet_trainscg_N0k"+pct(ii)+".mat");
-        load("./FNN/mat_files/SVD_"+perturbation+"_"+slidinglaw+"_cycle"+cycle+"_feedforwardnet_trainscg_N0k"+pct(ii)+".mat","B_trunc","seq");
+        load("./FNN/mat_files/SVD_"+perturbation+"_"+slidinglaw+"_cycle"+cycle+"_feedforwardnet_trainscg_N0k"+pct(ii)+".mat","B_trunc","T_reproj","seq");
         net=tmp.Net_opt;
         
         X_train = net.X_train';
@@ -110,9 +111,10 @@ if plotFNN
             repmat(net.T_train_C',num_test,1); % undo normalization
         Y_reproj = Y_test*B_trunc;% reproject onto nodal basis
         
-        % ua outputnet.s
+        % ua output
         Ind_test_orig = seq(num_train+num_val+1:end);
         Ua_orig=T(Ind_test_orig,:);
+        Ua_proj = (Ua_orig-repmat(T_mean,num_test,1))*T_reproj';
     
         % reconstruct original target data
         T_test = net.T_test'.*repmat(net.T_train_S',num_test,1)+...
@@ -120,7 +122,10 @@ if plotFNN
         T_test = T_test*B_trunc;% reproject onto nodal basis
         
         % calc mse of test data
+        % in nodal basis
         mse(ii,:)=1/num_test*sum((Y_reproj-Ua_orig).^2,1);
+        % in truncated svd basis
+        mse_trunc=1/num_test*sum((Y_test-Ua_proj).^2,1)
 
         % plot some maps for particular test case
         predictorvalues = X_test(n_test,:).*net.X_train_S' + net.X_train_C';

@@ -2,22 +2,24 @@ function prepare_perturbationresults_for_emulators
 
 addpath(getenv("froot_tools"));
 
-perturbation='Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
-slidinglaw="Weertman";
-cycle=1; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
+perturbation = 'Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
+year = "2018";
+slidinglaw = "Weertman";
+cycle=2; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
 FNNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
 trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine, 
 % alternatives that seem to work well are trainlm
-UseGPU=1; % UseGPU=1 only works with trainFcn="trainscg"
-doplots=0;
-writeoutputsforTF=0;
+UseGPU = 1; % UseGPU=1 only works with trainFcn="trainscg"
+doplots = 0;
+writeoutputsforTF = 0;
 
 % load data file || this file is produced by the
 % plot_PerturbationResults_Ensemble.m function
-load("Delta_u_AS_"+slidinglaw+".mat");
+load("Delta_u_"+year+"_AS_"+slidinglaw+".mat");
 
 %% PREDICTORS
-X = [m(:) n(:) gaA(:) gaC(:) log10(gsA(:)) log10(gsC(:))];
+X = [log10(gaA(:)) log10(gaC(:)) log10(gsA(:)) log10(gsC(:)) m(:) n(:)];
+%X = [m(:) n(:) gaA(:) gaC(:) log10(gsA(:)) log10(gsC(:))];
 if cycle==2 % add dhdt_err to predictors
     X = [X log10(dhdt_err(:))];
 end
@@ -45,7 +47,13 @@ end
 % remove mean
 T_mean=mean(T,1);
 T = T-repmat(T_mean(:)',size(T,1),1);
-MUA=MUA_2018;
+if year == "2009"
+    MUA=MUA_2009;
+elseif year == "2014"
+    MUA=MUA_2014;
+elseif year == "2018"
+    MUA=MUA_2018;
+end
 
 %% DIMENSIONALITY REDUCTION: use singular value decomposition of targets to
 %% express each map of \Delta u in terms of its k dominant principal components
@@ -54,7 +62,7 @@ MUA=MUA_2018;
 [~,S,~] = svd(T,'econ');
 
 seq = randperm(num_exp);
-pct = [0.95 0.96 0.97 0.98 0.99];
+pct = [0.95 0.96 0.97 0.98 0.99 0.995];
 
 for ii=1:numel(pct)
     T_nComp = find((cumsum(diag(S).^2)./sum(diag(S).^2))>pct(ii),1,'first');
@@ -98,9 +106,9 @@ for ii=1:numel(pct)
     predictors = X(seq,:);
 
     %% Now simulate FeedForward NN
-    fname1 = sprintf("./FNN/mat_files/SVD_%s_%s_cycle%s_%s_%s_N0k%.2g",perturbation,slidinglaw,num2str(cycle),FNNtype,trainFcn,100*pct(ii));
-    save(fname1, 'V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
-    fname2 = sprintf("./FNN/mat_files/FNN_%s_%s_cycle%s_%s_%s_N0k%.2g",perturbation,slidinglaw,num2str(cycle),FNNtype,trainFcn,100*pct(ii));
+    fname1 = sprintf("./FNN/mat_files/SVD_%s_%s_%s_cycle%s_%s_%s_N0k%.3g",perturbation,year,slidinglaw,string(cycle),FNNtype,trainFcn,1000*pct(ii));
+    save(fname1, 'T_mean','V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
+    fname2 = sprintf("./FNN/mat_files/FNN_%s_%s_%s_cycle%s_%s_%s_N0k%.3g",perturbation,year,slidinglaw,string(cycle),FNNtype,trainFcn,1000*pct(ii));
     addpath("./FNN");
     TrainFNN(predictors',data',FNNtype,trainFcn,UseGPU,fname2,doplots);
 
@@ -140,8 +148,8 @@ for ii=1:numel(pct)
         T_val = (T_val-repmat(T_train_C,num_val,1))./repmat(T_train_S,num_val,1);
         T_test = (T_test-repmat(T_train_C,num_test,1))./repmat(T_train_S,num_test,1);
 
-        fname1 = sprintf('./RNN/mat_files/data_%s_%s_cycle%s_N0k%.2g',perturbation,slidinglaw,cycle,pct(ii)*100);
-        fname2 = sprintf('./RNN/mat_files/SVD_%s_%s_cycle%s_N0k%.2g',perturbation,slidinglaw,cycle,pct(ii)*100);
+        fname1 = sprintf('./RNN/mat_files/data_%s_%s_%s_cycle%s_N0k%.3g',perturbation,year,slidinglaw,string(cycle),pct(ii)*1000);
+        fname2 = sprintf('./RNN/mat_files/SVD_%s_%s_%s_cycle%s_N0k%.3g',perturbation,year,slidinglaw,string(cycle),pct(ii)*1000);
         save(fname1,'X_train','X_val','X_test','T_train','T_val','T_test',...
             'X_train_C','X_train_S','T_train_C','T_train_S');
         save(fname2, 'V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');

@@ -176,15 +176,17 @@ for ii=1:numel(data)
                             u_original_interp = Fu_original(MUA_target.coordinates(:,1),MUA_target.coordinates(:,2));
                             %u_original_interp(Ind_out) = nan;
                             original_node_numbers = MUA_target.k(find(~isnan(MUA_target.k)));
-                            if size(data(ii).(char(ff)).speed,2)>=cc
-                                du = data(ii).(char(ff)).speed(original_node_numbers,cc)-u_original_interp;
+                            Ind = find(data(ii).(char(ff)).cycle==cc);
+                            if ~isempty(Ind)
+                                du = data(ii).(char(ff)).speed(original_node_numbers,Ind)-u_original_interp;
                             else
                                 du = nan*original_node_numbers;
                             end
                         else
                             original_node_numbers = MUA_target.k(find(~isnan(MUA_target.k)));
-                            if size(data(ii).(char(ff)).speed,2)>=cc
-                                du = data(ii).(char(ff)).speed(original_node_numbers,cc)-data(ii).Original.speed(original_node_numbers,cc);
+                            Ind = find(data(ii).(char(ff)).cycle==cc);
+                            if ~isempty(Ind)
+                                du = data(ii).(char(ff)).speed(original_node_numbers,Ind)-data(ii).Original.speed(original_node_numbers,cc);   
                             else
                                 du = nan*original_node_numbers;
                             end
