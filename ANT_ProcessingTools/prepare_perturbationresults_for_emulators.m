@@ -152,7 +152,7 @@ for ii=1:numel(pct)
         fname2 = sprintf('./RNN/mat_files/SVD_%s_%s_%s_cycle%s_N0k%.3g',perturbation,year,slidinglaw,string(cycle),pct(ii)*1000);
         save(fname1,'X_train','X_val','X_test','T_train','T_val','T_test',...
             'X_train_C','X_train_S','T_train_C','T_train_S');
-        save(fname2, 'V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
+        save(fname2, 'T_mean','V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
     end
 end
 

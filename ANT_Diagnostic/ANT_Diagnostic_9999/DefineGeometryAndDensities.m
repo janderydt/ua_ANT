@@ -64,11 +64,11 @@ else
             b = inpaint_nans(b,4);
         end
         
-	load(UserVar.DensityInterpolant,'Frho');
+	    load(UserVar.DensityInterpolant,'Frho');
         rho = Frho(MUA.coordinates(:,1),MUA.coordinates(:,2));
         clearvars Frho;
         
-        %save(filename_geometryfields,"B","b","S","s","rho");
+        %save(filename_GIgeometryfields,"B","b","S","s","rho");
         fprintf('done.\n');
         fprintf('Used geometry interpolants from %s for grounded ice.\n',UserVar.GIGeometryInterpolants);
     else

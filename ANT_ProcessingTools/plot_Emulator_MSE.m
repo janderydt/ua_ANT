@@ -1,7 +1,7 @@
 function plot_Emulator_MSE
 
-plotRNN=0;
-plotFNN=1;
+plotRNN=1;
+plotFNN=0;
 
 perturbation='Calv_dh';
 year="2018";
@@ -15,17 +15,18 @@ T = Delta_u.(perturbation).map(:,:,cycle);
 T_mean=mean(T,1);
 T = T-repmat(T_mean(:)',size(T,1),1);
 
-pct=string(95:99);
+pct=string([950 960 970 980 990 995]);
 
 %% RNN Tensorflow
 if plotRNN
 
     for ii=1:numel(pct)
     
-        net=importNetworkFromTensorFlow("./RNN/TF_files/tuned_model_forAll_"+perturbation+"_Weertman_cycle"+string(cycle)+"_N"+pct(ii));
+        net=importNetworkFromTensorFlow("./RNN/TF_files/tuned_model_forAll_"+perturbation+"_"+year+"_"+slidinglaw+...
+            "_cycle"+string(cycle)+"_N0k"+pct(ii));
         netUpdated=initialize(net);
-        load("./RNN/mat_files/data_"+perturbation+"_"+slidinglaw+"_cycle"+string(cycle)+"_N0k"+pct(ii)+".mat");
-        load("./RNN/mat_files/SVD_"+perturbation+"_"+slidinglaw+"_cycle"+string(cycle)+"_N0k"+pct(ii)+".mat");
+        load("./RNN/mat_files/data_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+string(cycle)+"_N0k"+pct(ii)+".mat");
+        load("./RNN/mat_files/SVD_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+string(cycle)+"_N0k"+pct(ii)+".mat");
         num_train = size(X_train,1);
         num_val = size(X_val,1);
         num_test = size(X_test,1);
@@ -52,7 +53,8 @@ if plotRNN
         
         % ua outputs
         Ind_test_orig = seq(num_train+num_val+1:end);
-        Ua_orig=T(Ind_test_orig,:);
+        Ua_orig = T(Ind_test_orig,:);
+        Ua_proj = (Ua_orig-repmat(T_mean,num_test,1))*T_reproj';
     
         % reconstruct original target data
         T_test = T_test.*repmat(T_train_S,num_test,1)+...
@@ -60,7 +62,11 @@ if plotRNN
         T_test = T_test*B_trunc;% reproject onto nodal basis
         
         % calc mse of test data
+        % in nodal basis
         mse(ii,:)=1/num_test*sum((Y_reproj-Ua_orig).^2,1);
+        % in truncated svd basis
+        mse_RNN=1/num_test*sum((Y_test-Ua_proj).^2,1);
+        save("./RNN/mat_files/MSE_RNN_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_RNN");
 
         % plot some maps for particular test case
         predictorvalues = X_test(n_test,:).*X_train_S + X_train_C;
@@ -80,8 +86,8 @@ end
 if plotFNN
     for ii=1:numel(pct)
     
-        tmp=load("./FNN/mat_files/FNN_"+perturbation+"_"+slidinglaw+"_cycle"+cycle+"_feedforwardnet_trainscg_N0k"+pct(ii)+".mat");
-        load("./FNN/mat_files/SVD_"+perturbation+"_"+slidinglaw+"_cycle"+cycle+"_feedforwardnet_trainscg_N0k"+pct(ii)+".mat","B_trunc","T_reproj","seq");
+        tmp=load("./FNN/mat_files/FNN_trainscg_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii)+".mat");
+        load("./FNN/mat_files/SVD_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii)+".mat","B_trunc","T_reproj","seq");
         net=tmp.Net_opt;
         
         X_train = net.X_train';
@@ -113,7 +119,7 @@ if plotFNN
         
         % ua output
         Ind_test_orig = seq(num_train+num_val+1:end);
-        Ua_orig=T(Ind_test_orig,:);
+        Ua_orig = T(Ind_test_orig,:);
         Ua_proj = (Ua_orig-repmat(T_mean,num_test,1))*T_reproj';
     
         % reconstruct original target data
@@ -125,7 +131,8 @@ if plotFNN
         % in nodal basis
         mse(ii,:)=1/num_test*sum((Y_reproj-Ua_orig).^2,1);
         % in truncated svd basis
-        mse_trunc=1/num_test*sum((Y_test-Ua_proj).^2,1)
+        mse_FNN=1/num_test*sum((Y_test-Ua_proj).^2,1);
+        save("./FNN/mat_files/MSE_FNN_trainscg_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_FNN");
 
         % plot some maps for particular test case
         predictorvalues = X_test(n_test,:).*net.X_train_S' + net.X_train_C';

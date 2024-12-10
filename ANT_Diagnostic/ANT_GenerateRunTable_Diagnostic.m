@@ -21,7 +21,10 @@ RunTable_inverse_files = "../ANT_Inverse/RunTable_ARCHER2_08-10-2024_"+string([1
 
 %% year for original and new geometry
 ExpID_oldgeom = 2000;
-ExpID_newgeom = 2018;
+ExpID_newgeom = 2014; % 2009, 2014, 2018
+
+%% which perturbations?
+pert = ["Calv_ISthick_GIthick"]; % Calv, ISthick, GIthick, Calv_ISthick_GIthick
 
 %% construct new run table or append to existing run table
 UserVar.Table = "./RunTable_ARCHER2_Diagnostic.csv";
@@ -95,31 +98,39 @@ for tt=1:numel(RunTable_inverse_files)
                 RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_orig];
         
                 % Calv
-                Newrow_tmp_Calv = Newrow_tmp;
-                Newrow_tmp_Calv{17} = ExpID_newgeom;
-                Newrow_tmp_Calv{end} = "Ice front geometry 2018";
-                RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_Calv];
+                if contains("Calv",pert)
+                    Newrow_tmp_Calv = Newrow_tmp;
+                    Newrow_tmp_Calv{17} = ExpID_newgeom;
+                    Newrow_tmp_Calv{end} = "Ice front geometry "+string(ExpID_newgeom);
+                    RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_Calv];
+                end
         
                 % ISthick
-                Newrow_tmp_ISthick = Newrow_tmp;
-                Newrow_tmp_ISthick{18} = ExpID_newgeom;
-                Newrow_tmp_ISthick{end} = "Ice shelf thickness 2018";
-                RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_ISthick];
+                if contains("ISthick",pert)
+                    Newrow_tmp_ISthick = Newrow_tmp;
+                    Newrow_tmp_ISthick{18} = ExpID_newgeom;
+                    Newrow_tmp_ISthick{end} = "Ice shelf thickness "+string(ExpID_newgeom);
+                    RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_ISthick];
+                end
         
-                % ISthick and GIthick       
-                Newrow_tmp_ISthick_GIthick = Newrow_tmp;
-                Newrow_tmp_ISthick_GIthick{18} = ExpID_newgeom;
-                Newrow_tmp_ISthick_GIthick{20} = ExpID_newgeom;
-                Newrow_tmp_ISthick_GIthick{end} = "Ice thickness 2018";
-                RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_ISthick_GIthick];
+                % ISthick and GIthick      
+                if contains("GIthick",pert)
+                    Newrow_tmp_ISthick_GIthick = Newrow_tmp;
+                    Newrow_tmp_ISthick_GIthick{18} = ExpID_newgeom;
+                    Newrow_tmp_ISthick_GIthick{20} = ExpID_newgeom;
+                    Newrow_tmp_ISthick_GIthick{end} = "Ice thickness "+string(ExpID_newgeom);
+                    RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_ISthick_GIthick];
+                end
         
                 % Calv, ISthick and GIthick
-                Newrow_tmp_Calv_ISthick_GIthick = Newrow_tmp;
-                Newrow_tmp_Calv_ISthick_GIthick{17} = ExpID_newgeom; 
-                Newrow_tmp_Calv_ISthick_GIthick{18} = ExpID_newgeom; 
-                Newrow_tmp_Calv_ISthick_GIthick{20} = ExpID_newgeom; 
-                Newrow_tmp_Calv_ISthick_GIthick{end} = "Ice front and thickness 2018";
-                RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_Calv_ISthick_GIthick];
+                if contains("Calv_ISthick_GIthick",pert)
+                    Newrow_tmp_Calv_ISthick_GIthick = Newrow_tmp;
+                    Newrow_tmp_Calv_ISthick_GIthick{17} = ExpID_newgeom; 
+                    Newrow_tmp_Calv_ISthick_GIthick{18} = ExpID_newgeom; 
+                    Newrow_tmp_Calv_ISthick_GIthick{20} = ExpID_newgeom; 
+                    Newrow_tmp_Calv_ISthick_GIthick{end} = "Ice front and thickness "+string(ExpID_newgeom);
+                    RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_Calv_ISthick_GIthick];
+                end
     
             end
     
