@@ -28,7 +28,7 @@ end
 
 filename = 'basins_IMBIE_v2.mat'; 
 B = load(filename);
-B = RemoveSmallIceRisesAndIslands(B);
+B = RemoveIceRisesAndIslands(B);
 
 kk=1;
 

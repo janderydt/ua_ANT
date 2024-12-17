@@ -21,10 +21,10 @@ RunTable_inverse_files = "../ANT_Inverse/RunTable_ARCHER2_08-10-2024_"+string([1
 
 %% year for original and new geometry
 ExpID_oldgeom = 2000;
-ExpID_newgeom = 2014; % 2009, 2014, 2018
+ExpID_newgeom = 2009; % 2009, 2014, 2018
 
 %% which perturbations?
-pert = ["Calv_ISthick_GIthick"]; % Calv, ISthick, GIthick, Calv_ISthick_GIthick
+pert = ["Calv_ISthick_GIthick"]; % Original, Calv, ISthick, GIthick, Calv_ISthick_GIthick
 
 %% construct new run table or append to existing run table
 UserVar.Table = "./RunTable_ARCHER2_Diagnostic.csv";
@@ -92,11 +92,13 @@ for tt=1:numel(RunTable_inverse_files)
                     };
         
                 %% add details about geometry
-                % none
-                Newrow_tmp_orig = Newrow_tmp;
-                Newrow_tmp_orig{end} = "Original geometry "+string(RunTable_inverse.startGeometry(ii));
-                RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_orig];
-        
+                % Original geometry
+                if contains("Original",pert)
+                    Newrow_tmp_orig = Newrow_tmp;
+                    Newrow_tmp_orig{end} = "Original geometry "+string(RunTable_inverse.startGeometry(ii));
+                    RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_orig];
+                end
+
                 % Calv
                 if contains("Calv",pert)
                     Newrow_tmp_Calv = Newrow_tmp;

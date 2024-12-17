@@ -17,7 +17,7 @@ Table = readtable("../ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_2.csv");
 %% basins from C Greene
 filename = 'basins_IMBIE_v2.mat'; 
 B = load(filename);
-B = RemoveSmallIceRisesAndIslands(B);
+B = RemoveIceRisesAndIslands(B);
 
 %% load data baseline simulation
 load(froot_ua+"/ANT_Diagnostic/cases/"+domain+"_Diagnostic_"+string(baseline)+"/"+domain+"_Diagnostic_"+string(baseline)+"-RestartFile.mat");

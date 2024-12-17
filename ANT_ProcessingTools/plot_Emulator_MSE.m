@@ -1,32 +1,55 @@
 function plot_Emulator_MSE
 
-plotRNN=1;
-plotFNN=0;
+plotRNN=0;
+plotFNN=1;
 
 perturbation='Calv_dh';
-year="2018";
+startyear="2000";
+targetyear=""; % this can be an empty string to plot results for the u emulator, rather than the du emulator
 slidinglaw="Weertman";
 cycle=2;
-n_test=10; % index of test data to plot (integer between 1 and size of test dataset)
+n_test=1; % index of test data to plot (integer between 1 and size of test dataset)
 
-load("Delta_u_"+year+"_AS_"+slidinglaw+".mat");
-MUA=MUA_2018; GF=GF_2018;
-T = Delta_u.(perturbation).map(:,:,cycle);
+if targetyear ~= ""
+    years=startyear+"-"+targetyear;
+    datafile = "Delta_u_AS_"+slidinglaw+"_"+years+".mat";
+    load(datafile);
+    
+    MUA = MUA_yr2; GF = GF_yr2;
+    T = Delta_u.(perturbation).map(:,:,cycle);
+else
+    years = startyear;
+    datafile = "u_AS_"+perturbation+"_cycle"+string(cycle)+"_"+slidinglaw+"_2000_2009_2014_2018.mat";
+    load(datafile);
+    T = speed.("yr"+string(years));
+    MUA = MUA.("yr"+string(years)); GF = GF.("yr"+string(years));
+end
+
+Ind_toremove=find(gaC>50);
+% check for nans and inf
+if any(isnan(T))
+    warning("Removing nan from T");
+    [rows,~]=find(isnan(T));
+    rows = unique(rows);
+    T(rows,:)=[];
+end
+T(Ind_toremove,:)=[];
 T_mean=mean(T,1);
 T = T-repmat(T_mean(:)',size(T,1),1);
 
 pct=string([950 960 970 980 990 995]);
+%pct = string([995]);
 
 %% RNN Tensorflow
 if plotRNN
 
     for ii=1:numel(pct)
     
-        net=importNetworkFromTensorFlow("./RNN/TF_files/tuned_model_forAll_"+perturbation+"_"+year+"_"+slidinglaw+...
+        net=importNetworkFromTensorFlow("./RNN/TF_files/tuned_model_"+perturbation+"_"+years+"_"+slidinglaw+...
             "_cycle"+string(cycle)+"_N0k"+pct(ii));
         netUpdated=initialize(net);
-        load("./RNN/mat_files/data_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+string(cycle)+"_N0k"+pct(ii)+".mat");
-        load("./RNN/mat_files/SVD_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+string(cycle)+"_N0k"+pct(ii)+".mat");
+        load("./RNN/mat_files/data_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+string(cycle)+"_N0k"+pct(ii)+".mat");
+        load("./RNN/mat_files/SVD_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+string(cycle)+"_N0k"+pct(ii)+".mat");
         num_train = size(X_train,1);
         num_val = size(X_val,1);
         num_test = size(X_test,1);
@@ -66,14 +89,14 @@ if plotRNN
         mse(ii,:)=1/num_test*sum((Y_reproj-Ua_orig).^2,1);
         % in truncated svd basis
         mse_RNN=1/num_test*sum((Y_test-Ua_proj).^2,1);
-        save("./RNN/mat_files/MSE_RNN_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_RNN");
+        save("./RNN/mat_files/MSE_RNN_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_RNN");
 
         % plot some maps for particular test case
         predictorvalues = X_test(n_test,:).*X_train_S + X_train_C;
         Ua_orig = Ua_orig(n_test,:);
         Y_reproj = Y_reproj(n_test,:);
         T_test = T_test(n_test,:);
-        %plot_comparison_emulator_ua(T_mean,Ua_orig,T_test,Y_reproj,MUA,GF,pct(ii),predictorvalues);
+        plot_comparison_emulator_ua(T_mean,Ua_orig,T_test,Y_reproj,MUA,GF,pct(ii),predictorvalues);
     
     end
 
@@ -86,8 +109,8 @@ end
 if plotFNN
     for ii=1:numel(pct)
     
-        tmp=load("./FNN/mat_files/FNN_trainscg_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii)+".mat");
-        load("./FNN/mat_files/SVD_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii)+".mat","B_trunc","T_reproj","seq");
+        tmp=load("./FNN/mat_files/FNN_trainscg_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii)+".mat");
+        load("./FNN/mat_files/SVD_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii)+".mat","B_trunc","T_reproj","seq");
         net=tmp.Net_opt;
         
         X_train = net.X_train';
@@ -132,7 +155,7 @@ if plotFNN
         mse(ii,:)=1/num_test*sum((Y_reproj-Ua_orig).^2,1);
         % in truncated svd basis
         mse_FNN=1/num_test*sum((Y_test-Ua_proj).^2,1);
-        save("./FNN/mat_files/MSE_FNN_trainscg_"+perturbation+"_"+year+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_FNN");
+        save("./FNN/mat_files/MSE_FNN_trainscg_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_FNN");
 
         % plot some maps for particular test case
         predictorvalues = X_test(n_test,:).*net.X_train_S' + net.X_train_C';
@@ -198,8 +221,13 @@ title("Emulator - Ua");
 %xlabel(tlo,'psx [km]');
 %ylabel(tlo,'psy [km]');
 
-title(tlo,sprintf('m=%2.2f, n=%2.2f, gaA=%3.1f, gaC=%3.1f, log10(gsA)=%3.1f, log10(gsC)=%3.1f',...
-    predictorvalues));
+if numel(predictorvalues)==6
+    title(tlo,sprintf('log10(gaA)=%3.1f, log10(gaC)=%3.1f, log10(gsA)=%3.1f, log10(gsC)=%3.1f, m=%2.2f, n=%2.2f',...
+        predictorvalues));
+else
+    title(tlo,sprintf(['log10(gaA)=%3.1f, log10(gaC)=%3.1f, log10(gsA)=%3.1f, log10(gsC)=%3.1f, m=%2.2f, n=%2.2f, log10(dhdterr)=%3.1f'],...
+        predictorvalues));
+end
 
 pos = get(H,"Position");
 set(H,"PaperPositionMode","Auto","PaperUnits","Inches","PaperSize",[pos(3),pos(4)]);
@@ -221,18 +249,20 @@ CtrlVar.PlotXYscale=1e3;
 CtrlVar.PlotsXaxisLabel='' ; 
 CtrlVar.PlotsYaxisLabel='' ;
 
+rmse = sqrt(mse);
+
 for ii=1:numel(pct)
     ax(ii)=nexttile; hold on;
     
     if ii==1
-        PlotMeshScalarVariable(CtrlVar,MUA,log10(mse(ii,:)'));
-        caxis(ax(ii),[0 5]); colormap(ax(ii),CM); 
-        cb=colorbar; cb.Label.String='log_{10}(mse) between emulator and Ua [m^2/yr^2]';
+        PlotMeshScalarVariable(CtrlVar,MUA,log10(rmse(ii,:)'));
+        caxis(ax(ii),[0 4]); colormap(ax(ii),CM); 
+        cb=colorbar; cb.Label.String='log_{10}(rmse) between emulator and Ua [m^2/yr^2]';
     else
-        PlotMeshScalarVariable(CtrlVar,MUA,log10(mse(ii,:)')-log10(mse(1,:)'));
+        PlotMeshScalarVariable(CtrlVar,MUA,log10(rmse(ii,:)')-log10(rmse(1,:)'));
         caxis(ax(ii),[-1 1]); colormap(ax(ii),CM2); 
         if ii==numel(pct)
-            cb=colorbar; cb.Label.String='log_{10}(mse_{pct}) - log_{10}(mse_{95})';
+            cb=colorbar; cb.Label.String='log_{10}(rmse_{pct}) - log_{10}(rmse_{95})';
         else
             colorbar("off");
         end

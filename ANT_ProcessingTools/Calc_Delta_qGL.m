@@ -12,7 +12,7 @@ end
 % gather basin data
 filename = 'basins_IMBIE_v2.mat'; 
 B = load(filename);
-B = RemoveSmallIceRisesAndIslands(B);
+B = RemoveIceRisesAndIslands(B);
 [~,BasinInd] = ismember(basins_to_analyze,B.name);
 
 % load inversion data

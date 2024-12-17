@@ -47,7 +47,7 @@ if grounded
 filename = 'basins_IMBIE_v2.mat'; 
 B = load(filename);
 
-B = RemoveSmallIceRisesAndIslands(B);
+B = RemoveIceRisesAndIslands(B);
 
 %% To compare modelled fluxes with those from the literature, we need the flux gates that were used
 %% to calculate drainage. 

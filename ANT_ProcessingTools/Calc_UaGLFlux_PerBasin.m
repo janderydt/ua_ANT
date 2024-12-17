@@ -7,7 +7,7 @@ function [B,GL] = Calc_UaGLFlux_PerBasin(MUA,F,GF,B,CtrlVar)
 %% 
 %% filename = 'basins_IMBIE_v2.mat'; 
 %% B = load(filename);
-%% B = RemoveSmallIceRisesAndIslands(B);
+%% B = RemoveIceRisesAndIslands(B);
 
 % GL flux
 GLgeo=GLgeometry(MUA.connectivity,MUA.coordinates,GF,CtrlVar);

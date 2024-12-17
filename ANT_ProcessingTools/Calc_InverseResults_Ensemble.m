@@ -29,7 +29,7 @@ end
 
 filename = 'basins_IMBIE_v2.mat'; 
 B = load(filename);
-B = RemoveSmallIceRisesAndIslands(B);
+B = RemoveIceRisesAndIslands(B);
 
 for tt=1:numel(UserVar.Table)
 

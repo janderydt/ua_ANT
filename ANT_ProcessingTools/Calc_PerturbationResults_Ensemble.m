@@ -1,6 +1,19 @@
 function Calc_PerturbationResults_Ensemble
 
 addpath(getenv("froot_ua")+"cases/ANT");
+addpath(getenv("froot_tools"));
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% MAKE CHANGES IN THIS BLOCK AS REQUIRED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+UserVar.home = "/mnt/md0/Ua/cases/ANT/";
+UserVar.type = "Diagnostic";
+UserVar.year = "2014";
+UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_Weertman_2014.csv";
+UserVar.idrange = [30000 39999];
+inversiondata_filename = "inversiondata_Weertman.mat";
+perturbationdata_filename = "perturbationdata_Weertman.mat";
 
 basins_to_analyze = {'A-Ap',...  % Queen Maud Land
     'Ap-B',... % Enderby Land
@@ -21,17 +34,12 @@ basins_to_analyze = {'A-Ap',...  % Queen Maud Land
     'Jpp-K',... % Filchner
     'K-A'}; % Caird Coast
 
-UserVar.home = "/mnt/md0/Ua/cases/ANT/";
-UserVar.type = "Diagnostic";
-UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic.csv";
-UserVar.idrange = [10000 19999];
-inversiondata_filename = "inversiondata_Weertman.mat";
-perturbationdata_filename = "perturbationdata_Weertman.mat";
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % load basins
 filename = 'basins_IMBIE_v2.mat'; 
 B = load(filename);
-B = RemoveSmallIceRisesAndIslands(B);
+B = RemoveIceRisesAndIslands(B);
 Ind = contains(B.name,basins_to_analyze);
 Bfields= fields(B);
 for ii=1:numel(Bfields)
@@ -143,26 +151,20 @@ for tt=1:numel(UserVar.Table)
             data(data_ind).startgeometry = data_inverse(Ind_inverse).startgeometry;
 
             %initialize structure
-            initialize = 0;
             if ~isfield(data(data_ind),'Original')
-                initialize = 1;
-            else
-                if ~isfield(data(data_ind).Original,'geometry')
-                    initialize = 1;
-                end
-            end
-            if initialize
-                geomfields = {'Original','Calv','dhIS','dh','Calv_dh'};
+                data(data_ind).Original=[];
+                geomfields = {'Calv','dhIS','dh','Calv_dh'};
+                yearfld="yr"+UserVar.year;
                 for ff=1:numel(geomfields)
-                    data(data_ind).(geomfields{ff}).geometry=[];
+                    %data(data_ind).(geomfields{ff}).geometry=[];
                     for bb=1:numel(basins_to_analyze)
                         basin = char(erase(basins_to_analyze(bb),'-'));
-                        data(data_ind).(geomfields{ff}).qGL.(basin)=[];
-                        data(data_ind).(geomfields{ff}).qOB.(basin)=[];
+                        data(data_ind).(geomfields{ff}).(yearfld).qGL.(basin)=[];
+                        data(data_ind).(geomfields{ff}).(yearfld).qOB.(basin)=[];
                     end
-                    data(data_ind).(geomfields{ff}).cycle=[];
-                    data(data_ind).(geomfields{ff}).ExpID=[];
-                    data(data_ind).(geomfields{ff}).speed=[];
+                    data(data_ind).(geomfields{ff}).(yearfld).cycle=[];
+                    data(data_ind).(geomfields{ff}).(yearfld).ExpID=[];
+                    data(data_ind).(geomfields{ff}).(yearfld).speed=[];
                 end
             end
 
@@ -185,23 +187,24 @@ for tt=1:numel(UserVar.Table)
             elseif contains(expinfo,"Ice front and thickness")
                 year = RunTable{Ind(ii),"Calv"};
                 fieldname = 'Calv_dh';
-                if ~exist("MUA_2018","var")
-                    MUA_2018=MUA;
-                    GF_2018=F.GF;
+                if ~exist("MUA_2014","var")
+                    MUA_2014=MUA;
+                    GF_2014=F.GF;
                 end
             else
                 error("Unknown experiment info "+expinfo);
             end
 
             % save data
-            data(data_ind).(fieldname).geometry(end+1) = year;
+            %data(data_ind).(fieldname).geometry(end+1) = year;
+            yearfld = "yr"+year;
             for bb=1:numel(basins_to_analyze)
                 basin = char(erase(basins_to_analyze(bb),'-'));
-                data(data_ind).(fieldname).qGL.(basin)(end+1) = cell2mat(B.qGL_tot(bb));
-                data(data_ind).(fieldname).qOB.(basin)(end+1) = cell2mat(B.qOB_tot(bb));               
+                data(data_ind).(fieldname).(yearfld).qGL.(basin)(end+1) = cell2mat(B.qGL_tot(bb));
+                data(data_ind).(fieldname).(yearfld).qOB.(basin)(end+1) = cell2mat(B.qOB_tot(bb));               
             end           
-            data(data_ind).(fieldname).cycle(end+1) = InverseCycle;
-            data(data_ind).(fieldname).ExpID(end+1) = ExpID(Ind(ii));
+            data(data_ind).(fieldname).(yearfld).cycle(end+1) = InverseCycle;
+            data(data_ind).(fieldname).(yearfld).ExpID(end+1) = ExpID(Ind(ii));
             
             % Interpolate speed to relevant grid
             % Ind_nan = find(isnan(MUA.Boundary.x));
@@ -232,11 +235,11 @@ for tt=1:numel(UserVar.Table)
             % end
             % 
             % speed(Ind_out) = NaN;
-            data(data_ind).(fieldname).speed(:,end+1) = hypot(F.ub(:),F.vb(:));
+            data(data_ind).(fieldname).(yearfld).speed(:,end+1) = hypot(F.ub(:),F.vb(:));
 
         end             
         fprintf("Done %s out of %s.\n",string(ii),string(numel(Ind)));
     end
 end
 
-save(perturbationdata_filename,"data","perturbation_experiments_analyzed","MUA_2000","MUA_2018","GF_2000","GF_2018","-v7.3");
+save(perturbationdata_filename,"data","perturbation_experiments_analyzed","-v7.3");

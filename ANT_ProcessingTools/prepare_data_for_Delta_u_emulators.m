@@ -1,9 +1,16 @@
-function prepare_perturbationresults_for_emulators
+function prepare_data_for_Delta_u_emulators
+
+%% Script reads maps of speed change from perturbation experiments
+%% ('Calv', 'dhIS', 'dh' or 'Calv_dh') between startyear and targetyear,
+%% uses SVD to reduce the dimensionality for a range of truncated 
+%% decompositions (describing 95% - 99.5% of the variance), then carries out
+%% the FNN training and writes data for the Tensorflow RNN training.
 
 addpath(getenv("froot_tools"));
 
 perturbation = 'Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
-year = "2018";
+startyear = "2014";
+targetyear = "2018";
 slidinglaw = "Weertman";
 cycle=2; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
 FNNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
@@ -11,28 +18,35 @@ trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine,
 % alternatives that seem to work well are trainlm
 UseGPU = 1; % UseGPU=1 only works with trainFcn="trainscg"
 doplots = 0;
-writeoutputsforTF = 0;
+writeoutputsforTF = 1;
 
 % load data file || this file is produced by the
 % plot_PerturbationResults_Ensemble.m function
-load("Delta_u_"+year+"_AS_"+slidinglaw+".mat");
+load("Delta_u_AS_"+slidinglaw+"_"+startyear+"-"+targetyear+".mat");
 
 %% PREDICTORS
+Ind_toremove = find(gaC>50);
 X = [log10(gaA(:)) log10(gaC(:)) log10(gsA(:)) log10(gsC(:)) m(:) n(:)];
-%X = [m(:) n(:) gaA(:) gaC(:) log10(gsA(:)) log10(gsC(:))];
 if cycle==2 % add dhdt_err to predictors
     X = [X log10(dhdt_err(:))];
 end
 X = double(X);
+X(Ind_toremove,:)=[];
 
 %% TARGETS (training/input data). In this case, input data consists of 
 %% simulated instanteneous changes in surface speed in response to changes
 %% in ice-sheet geometry (ice thickness, calving front location). The input
 %% data consists of num_nodes nodal values for nun_exp experiments.
 T = Delta_u.(perturbation).map(:,:,cycle);
+% remove gaA>50
+T(Ind_toremove,:)=[];
 % check for nans and inf
 if any(isnan(T) | isinf(T))
-    error("Remove nan and inf from T");
+    warning("Removing nan from T");
+    [rows,~]=find(isnan(T));
+    rows = unique(rows);
+    X(rows,:)=[];
+    T(rows,:)=[];
 end
 % check dimensions of input data; rows: experiments, columns: nodes
 if numel(size(T))==2
@@ -47,13 +61,6 @@ end
 % remove mean
 T_mean=mean(T,1);
 T = T-repmat(T_mean(:)',size(T,1),1);
-if year == "2009"
-    MUA=MUA_2009;
-elseif year == "2014"
-    MUA=MUA_2014;
-elseif year == "2018"
-    MUA=MUA_2018;
-end
 
 %% DIMENSIONALITY REDUCTION: use singular value decomposition of targets to
 %% express each map of \Delta u in terms of its k dominant principal components
@@ -106,9 +113,10 @@ for ii=1:numel(pct)
     predictors = X(seq,:);
 
     %% Now simulate FeedForward NN
-    fname1 = sprintf("./FNN/mat_files/SVD_%s_%s_%s_cycle%s_%s_%s_N0k%.3g",perturbation,year,slidinglaw,string(cycle),FNNtype,trainFcn,1000*pct(ii));
+    year = startyear + "-" + targetyear;
+    fname1 = sprintf("./FNN/mat_files/SVD_%s_%s_%s_cycle%s_N0k%.3g",perturbation,year,slidinglaw,string(cycle),1000*pct(ii));
     save(fname1, 'T_mean','V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
-    fname2 = sprintf("./FNN/mat_files/FNN_%s_%s_%s_cycle%s_%s_%s_N0k%.3g",perturbation,year,slidinglaw,string(cycle),FNNtype,trainFcn,1000*pct(ii));
+    fname2 = sprintf("./FNN/mat_files/FNN_%s_%s_%s_%s_cycle%s_N0k%.3g",trainFcn,perturbation,year,slidinglaw,string(cycle),1000*pct(ii));
     addpath("./FNN");
     TrainFNN(predictors',data',FNNtype,trainFcn,UseGPU,fname2,doplots);
 
@@ -159,6 +167,15 @@ end
 %% PLOTTING
 
 if doplots
+
+    load("perturbation_grids.mat");
+    if targetyear == "2009"
+        MUA=MUA_2009;
+    elseif targetyear == "2014"
+        MUA=MUA_2014;
+    elseif targetyear == "2018"
+        MUA=MUA_2018;
+    end
 
     CtrlVar=Ua2D_DefaultParameters;
     CtrlVar.PlotXYscale = 1e3;
