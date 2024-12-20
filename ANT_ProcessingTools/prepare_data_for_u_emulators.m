@@ -9,8 +9,9 @@ function prepare_data_for_u_emulators
 addpath(getenv("froot_tools"));
 addpath("..");
 
-years_to_analyze = [2000 2009 2014 2018];
+years_to_analyze = [2000];
 perturbation = 'Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
+trainingdataformat = "LOGu"; % u or LOGu
 basins_to_analyze = {'F-G',...  % Getz
     'G-H',...  % PIG, Thwaites
     'H-Hp'}; % Abbott
@@ -149,6 +150,10 @@ for yy=1:numel(years_to_analyze)
     else
         error("check dimensions of input data");
     end
+    % take log
+    if trainingdataformat == "LOGu"
+        T = log10(T);
+    end
     % remove mean
     T_mean=mean(T,1);
     T = T-repmat(T_mean(:)',size(T,1),1);
@@ -160,7 +165,8 @@ for yy=1:numel(years_to_analyze)
     [~,S,~] = svd(T,'econ');
     
     seq = randperm(num_exp);
-    pct = [0.95 0.96 0.97 0.98 0.99 0.995];
+    pct = [0.98 0.99 0.995];
+    %pct = [0.95];
     
     for ii=1:numel(pct)
         T_nComp = find((cumsum(diag(S).^2)./sum(diag(S).^2))>pct(ii),1,'first');
@@ -204,7 +210,13 @@ for yy=1:numel(years_to_analyze)
         predictors = X(seq,:);
     
         %% Now simulate FeedForward NN
-        year = string(years_to_analyze(yy));
+        if trainingdataformat == "LOGu"
+            year = "LOGu"+string(years_to_analyze(yy));
+        elseif trainingdataformat == "u"
+            year = "u"+string(years_to_analyze(yy));
+        else
+            error(trainingdataformat+" unkown.");
+        end
         fname1 = sprintf("./FNN/mat_files/SVD_%s_%s_%s_cycle%s_N0k%.3g",perturbation,year,slidinglaw,string(cycle),1000*pct(ii));
         save(fname1, 'T_mean','V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
         fname2 = sprintf("./FNN/mat_files/FNN_%s_%s_%s_%s_cycle%s_N0k%.3g",trainFcn,perturbation,year,slidinglaw,string(cycle),1000*pct(ii));

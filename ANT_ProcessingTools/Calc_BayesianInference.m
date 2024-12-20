@@ -3,9 +3,9 @@ function Calc_BayesianInference
 Klear;
 
 %% user defined parameters
-dataformat = "u"; % use speed ("u") or change in speed ("du")
+dataformat = "LOGu"; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
 cycle = 2; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
-pct = 995; % trunction of SVD in emulator (98% seems optimal)
+pct = 960; % trunction of SVD in emulator
 years = [2000]; % a vector with years for which velocity data is used
 NN = "FNN"; % which emulator? FNN or RNN
 
@@ -30,22 +30,22 @@ PriorOpts.Name = 'Model parameters prior';
 
 ind = 1;
 PriorOpts.Marginals(ind).Name = 'log10(gaA)';
-%PriorOpts.Marginals(ind).Type = 'Gaussian';
-%PriorOpts.Marginals(ind).Parameters = [1 0.5]; % mean and std
+% PriorOpts.Marginals(ind).Type = 'Gaussian';
+% PriorOpts.Marginals(ind).Parameters = [1 0.5]; % mean and std
 PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [-1 log10(200)];
-%PriorOpts.Marginals(ind).Bounds = [-1 log10(200)];
+% PriorOpts.Marginals(ind).Bounds = [-1 log10(200)];
 ind = ind+1;
 PriorOpts.Marginals(ind).Name = 'log10(gaC)';
-%PriorOpts.Marginals(ind).Type = 'Gaussian';
-%PriorOpts.Marginals(ind).Parameters = [1 0.5];
+% PriorOpts.Marginals(ind).Type = 'Gaussian';
+% PriorOpts.Marginals(ind).Parameters = [1 0.5];
 PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [-1 log10(50)];
 %PriorOpts.Marginals(ind).Bounds = [-1 log10(50)];
 ind = ind+1;
 PriorOpts.Marginals(ind).Name = 'log10(gsA)';
-%PriorOpts.Marginals(ind).Type = 'Gaussian';
-%PriorOpts.Marginals(ind).Parameters = [4 0.5];
+% PriorOpts.Marginals(ind).Type = 'Gaussian';
+% PriorOpts.Marginals(ind).Parameters = [4 0.5];
 PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [3 6];
 %PriorOpts.Marginals(ind).Bounds = [3 6];
@@ -92,7 +92,7 @@ myLogLikelihood = @(params,y) customLogLikelihood(params, y, [dataformat,years,c
 %% define solver options
 mySolver.Type = 'MCMC';
 mySolver.MCMC.Sampler = 'AIES'; % AM, HMS or AIES (default)
-mySolver.MCMC.Steps = 5000; % T=300 default
+mySolver.MCMC.Steps = 20000; % T=300 default
 mySolver.MCMC.NChains = 20; % C=100 default
 mySolver.MCMC.Visualize.Parameters = 1:numel(PriorOpts.Marginals);
 mySolver.MCMC.Visualize.Interval = 20;
@@ -216,7 +216,7 @@ if dataformat == "du"
         out.("yr"+years(ii)+"_yr"+years(ii+1)).du = deltau(:);
         out.("yr"+years(ii)+"_yr"+years(ii+1)).stddu = deltau_err(:);
     end
-else
+elseif ismember(dataformat,["u","LOGu"])
     for ii=1:numel(years)
         load("u_AS_Calv_dh_cycle2_Weertman_2000_2009_2014_2018.mat","MUA","GF");
         MUA = MUA.("yr"+years(ii)); GF = GF.("yr"+years(ii));
@@ -228,10 +228,16 @@ else
         % remove nans
         Ind = find(isnan(u_tmp) | isnan(std_tmp));
         std_tmp(Ind) = 5e3;
-        u_tmp(Ind) = 0;
+        u_tmp(Ind) = eps(0);
 
+        % apply log if needed
+        if dataformat=="LOGu"
+            u_tmp = log10(u_tmp);
+            std_tmp = std_tmp./(u_tmp*log(10));
+        end
         out.("yr"+years(ii)).u = u_tmp(:);
         out.("yr"+years(ii)).stdu = std_tmp(:);
+
     end
 end
 
@@ -269,9 +275,12 @@ if isempty(M)
         for ii=1:N
             yearstr(ii) = years(ii)+"-"+years(ii+1);
         end
-    else
+    elseif dataformat == "u"
         N = numel(years);
-        yearstr = years;
+        yearstr = "u"+years;
+    elseif dataformat == "LOGu"
+        N = numel(years);
+        yearstr = "LOGu"+years;
     end
     for ii=1:N
         % Check prepare_perturbationresults_for_emulators.m to see
@@ -311,15 +320,30 @@ if isempty(M)
         % These are the unnormalized values.
         if dataformat == "du"
             yearstr2 = "yr"+years(ii)+"_yr"+years(ii+1);
+            stdstr = "stddu";
+            ustr = "du";
         else
             yearstr2 = "yr"+years(ii);
+            stdstr = "stdu";
+            ustr = "u";
         end
-        M(ii).data = (measurements(1).(yearstr2).(dataformat)(:)-T_mean(:))'*T_reproj';
+        M(ii).data = (measurements(1).(yearstr2).(ustr)(:)-T_mean(:))'*T_reproj';
         % Assemble covariance matrices
         % 1. measurement errors
-        S_meas = T_reproj*spdiags(measurements(1).(yearstr2).("std"+dataformat)(:).^2,0,nNodes,nNodes)*T_reproj';
+        S_meas = T_reproj*spdiags(measurements(1).(yearstr2).(stdstr)(:).^2,0,nNodes,nNodes)*T_reproj';
         % 2. Ua errors: obtained from  FIXME
-        S_ua = 0*S_meas;
+        s_u = 200; %m/yr
+        if dataformat == "LOGu"
+            s_u = log10(s_u);
+        end
+        l = 200e3; % range in the semivariogram
+        load("u_AS_Calv_dh_cycle2_Weertman_2000_2009_2014_2018.mat","MUA");
+        MUA = MUA.(yearstr2);
+        D_tmp = pdist2(MUA.coordinates,MUA.coordinates,"squaredeuclidean");
+        D_tmp = s_u^2*exp(-D_tmp/(2*l^2));
+        D_tmp = D_tmp*T_reproj';
+        S_ua = T_reproj*D_tmp;
+        clear D_tmp
         % 3. Emulator errors: obtained from plot_Emulator_MSE
         S_emulator = spdiags(MSE(:),0,nModes,nModes);
         M(ii).S = S_meas + S_ua + S_emulator;
@@ -335,15 +359,17 @@ for ii=1:N
     % Apply normalization to parameters before feeding into emulator
     predictors = (params-repmat(M(ii).X_train_C,nReal,1))./repmat(M(ii).X_train_S,nReal,1);
 
-    % Evaluate forward model. Undo normalization of the output but keep in the
-    % projected basis to make it compatible with data
+    % Evaluate forward model. 
     if NN=="RNN"
         modelRun = double(predict(M(ii).net,predictors)); 
     elseif NN=="FNN"
         modelRun = double(M(ii).net(predictors')');
     end
+    % Undo normalization of the output but keep in the projected basis to 
+    % make it compatible with data
     modelRun = modelRun.*repmat(M(ii).T_train_S,nReal,1)+repmat(M(ii).T_train_C,nReal,1);
 
+    % Assemble log likelihood
     for jj = 1:nReal
       % Evaluate log-likelihood
       logLikeli = - 1/2*log(2*pi*M(ii).detS) - 1/2*(M(ii).data...

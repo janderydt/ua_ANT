@@ -4,6 +4,7 @@ plotRNN=0;
 plotFNN=1;
 
 perturbation='Calv_dh';
+trainingdataformat="LOGu"; % u or LOGu
 startyear="2000";
 targetyear=""; % this can be an empty string to plot results for the u emulator, rather than the du emulator
 slidinglaw="Weertman";
@@ -13,16 +14,19 @@ n_test=1; % index of test data to plot (integer between 1 and size of test datas
 if targetyear ~= ""
     years=startyear+"-"+targetyear;
     datafile = "Delta_u_AS_"+slidinglaw+"_"+years+".mat";
-    load(datafile);
-    
+    load(datafile);    
     MUA = MUA_yr2; GF = GF_yr2;
     T = Delta_u.(perturbation).map(:,:,cycle);
+    
 else
-    years = startyear;
+    years = trainingdataformat+startyear;
     datafile = "u_AS_"+perturbation+"_cycle"+string(cycle)+"_"+slidinglaw+"_2000_2009_2014_2018.mat";
     load(datafile);
-    T = speed.("yr"+string(years));
-    MUA = MUA.("yr"+string(years)); GF = GF.("yr"+string(years));
+    T = speed.("yr"+string(startyear));
+    MUA = MUA.("yr"+string(startyear)); GF = GF.("yr"+string(startyear));
+    if trainingdataformat=="LOGu"
+        T = log10(T);
+    end
 end
 
 Ind_toremove=find(gaC>50);
@@ -38,7 +42,7 @@ T_mean=mean(T,1);
 T = T-repmat(T_mean(:)',size(T,1),1);
 
 pct=string([950 960 970 980 990 995]);
-%pct = string([995]);
+pct = string([960]);
 
 %% RNN Tensorflow
 if plotRNN
@@ -77,7 +81,7 @@ if plotRNN
         % ua outputs
         Ind_test_orig = seq(num_train+num_val+1:end);
         Ua_orig = T(Ind_test_orig,:);
-        Ua_proj = (Ua_orig-repmat(T_mean,num_test,1))*T_reproj';
+        Ua_proj = Ua_orig*T_reproj';
     
         % reconstruct original target data
         T_test = T_test.*repmat(T_train_S,num_test,1)+...
@@ -86,9 +90,18 @@ if plotRNN
         
         % calc mse of test data
         % in nodal basis
-        mse(ii,:)=1/num_test*sum((Y_reproj-Ua_orig).^2,1);
+        mse_tmp = 1/(num_test-1)*sum((Y_reproj-Ua_orig).^2,1);
+        mse_tmp(mse_tmp>1e6) = 1e6;
+        mse(ii,:) = mse_tmp;
+
+        nNodes = size(Ua_orig,2);
+        mse_tmp=spdiags(mse_tmp(:),0,nNodes,nNodes);
+
         % in truncated svd basis
-        mse_RNN=1/num_test*sum((Y_test-Ua_proj).^2,1);
+        %mse_RNN = T_reproj*mse_tmp*T_reproj';   
+
+        mse_RNN=1/(num_test-1)*sum((Y_test-Ua_proj).^2,1);
+
         save("./RNN/mat_files/MSE_RNN_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_RNN");
 
         % plot some maps for particular test case
@@ -142,8 +155,8 @@ if plotFNN
         
         % ua output
         Ind_test_orig = seq(num_train+num_val+1:end);
-        Ua_orig = T(Ind_test_orig,:);
-        Ua_proj = (Ua_orig-repmat(T_mean,num_test,1))*T_reproj';
+        Ua_orig = T(Ind_test_orig,:);        
+        Ua_proj = Ua_orig*T_reproj';
     
         % reconstruct original target data
         T_test = net.T_test'.*repmat(net.T_train_S',num_test,1)+...
@@ -152,9 +165,24 @@ if plotFNN
         
         % calc mse of test data
         % in nodal basis
-        mse(ii,:)=1/num_test*sum((Y_reproj-Ua_orig).^2,1);
+        mse_tmp = 1/(num_test-1)*sum((Y_reproj-Ua_orig).^2,1);        
+        %mse_tmp(mse_tmp>1e6)=1e6;
+        mse(ii,:)= mse_tmp;
+
+        std_orig = std(Ua_orig,1);
+        figure; PlotMeshScalarVariable([],MUA,std_orig(:)./mse_tmp(:));
+        caxis([0 50]);
+        title("std\_orig/mse\_tmp "+pct(ii));
+
         % in truncated svd basis
-        mse_FNN=1/num_test*sum((Y_test-Ua_proj).^2,1);
+        nNodes = size(Ua_orig,2);
+        mse_tmp=spdiags(mse_tmp(:),0,nNodes,nNodes);
+
+        % in truncated svd basis
+        mse_FNN = T_reproj*mse_tmp*T_reproj';   
+
+        %mse_FNN=1/(num_test-1)*sum((Y_test-Ua_proj).^2,1);
+        
         save("./FNN/mat_files/MSE_FNN_trainscg_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_FNN");
 
         % plot some maps for particular test case
@@ -162,7 +190,7 @@ if plotFNN
         Ua_orig = Ua_orig(n_test,:);
         Y_reproj = Y_reproj(n_test,:);
         T_test = T_test(n_test,:);
-        %plot_comparison_emulator_ua(T_mean,Ua_orig,T_test,Y_reproj,MUA,GF,pct(ii),predictorvalues);
+        plot_comparison_emulator_ua(T_mean,Ua_orig,T_test,Y_reproj,MUA,GF,pct(ii),predictorvalues,trainingdataformat);
     
     end
 
@@ -173,7 +201,7 @@ end
 
 end
 
-function plot_comparison_emulator_ua(T_mean,T_orig,Y_reproj_orig,Y_reproj,MUA,GF,pct,predictorvalues)
+function plot_comparison_emulator_ua(T_mean,T_orig,Y_reproj_orig,Y_reproj,MUA,GF,pct,predictorvalues,trainingdataformat)
 
 CM = othercolor('Reds8',15);
 CM2 = flipdim(othercolor('RdBu11',15),1);
@@ -192,7 +220,11 @@ PlotGroundingLines(CtrlVar,MUA,GF,[],[],[],'color','k');
 plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k','LineWidth',0.5);
 colormap(ax(1),CM); 
 cb=colorbar; cb.Label.String='\Delta u [m/yr]';
-caxis(ax(1),[0 2000]); 
+if trainingdataformat == "LOGu"
+    caxis(ax(1),[0 4]); 
+else
+    caxis(ax(1),[0 2000]); 
+end
 axis equal; axis tight; 
 grid(ax(1),"off"); box(ax(1),"off"); axis(ax(1),"off");
 yticklabels([]); xticklabels([]); 
@@ -202,8 +234,13 @@ ax(2)=nexttile; hold on;
 PlotMeshScalarVariable(CtrlVar,MUA,Y_reproj_orig'-T_orig');
 PlotGroundingLines(CtrlVar,MUA,GF,[],[],[],'color','k');
 plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k','LineWidth',0.5);
-colormap(ax(2),CM2); colorbar('off')
-caxis(ax(2),[-300 300]); axis equal; axis tight;
+colormap(ax(2),CM2); colorbar('off');
+if trainingdataformat == "LOGu"
+    caxis(ax(2),[-0.2 0.2]); 
+else
+    caxis(ax(2),[-300 300]); 
+end
+axis equal; axis tight;
 grid(ax(2),"off"); box(ax(2),"off"); axis(ax(2),"off");
 yticklabels([]); xticklabels([]);
 title("Truncated SVD ("+pct+"%) - Ua");
@@ -213,7 +250,12 @@ PlotMeshScalarVariable(CtrlVar,MUA,Y_reproj'-T_orig');
 PlotGroundingLines(CtrlVar,MUA,GF,[],[],[],'color','k');
 plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k','LineWidth',0.5);
 colormap(ax(3),CM2); cb2=colorbar; cb2.Label.String='\Delta u [m/yr]';
-caxis(ax(3),[-300 300]); axis equal; axis tight;
+if trainingdataformat == "LOGu"
+    caxis(ax(3),[-0.2 0.2]); 
+else
+    caxis(ax(3),[-300 300]); 
+end
+axis equal; axis tight;
 grid(ax(3),"off"); box(ax(3),"off"); axis(ax(3),"off");
 yticklabels([]); xticklabels([]);
 title("Emulator - Ua");
