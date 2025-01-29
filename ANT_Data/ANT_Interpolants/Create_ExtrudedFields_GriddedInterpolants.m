@@ -1,5 +1,7 @@
 function Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,ScalarInterpolant,CreateGeotiff,fields_to_extrude)
 
+addpath("../ANT_HelperFunctions/");
+
 % This function extrudes surface velocities, ice geometry (surface and draft), 
 % densities or any other scalar quantity from the present-day ice edge of Antarctica along flowlines
 % of ice flux (H*q). The processing chain is largely based on a script by
@@ -53,7 +55,7 @@ if contains(fields_to_extrude,'-v-')
     vx_v = Fus.Values';
     vy_v = Fvs.Values';
     v_source_v = Fsource.Values';
-    H_v = Fs(X_v,Y_v)' - Fb(X_v,Y_v)';
+    H_v = Fs(X_v,Y_v) - Fb(X_v,Y_v);
 
 end
 
@@ -141,7 +143,12 @@ if contains(fields_to_extrude,'-v-')
     vy_r = imresize(vy_v,sc); 
     H_r = imresize(H_v,sc);
     
-    Hvx_r = inpaint_nans(H_r.*vx_r,4);
+    figure; hold on; 
+    subplot(1,3,1); imagesc(H_r); caxis([-1 1]); title("H_r");
+    subplot(1,3,2); imagesc(vx_r); caxis([-1 1]); title("vx_r");
+    subplot(1,3,3); imagesc(vy_r); caxis([-1 1]); title("vy_r");
+
+    Hvx_r = inpain;t_nans(H_r.*vx_r,4);
     Hvy_r = inpaint_nans(H_r.*vy_r,4);
     fprintf("done.\n");
 
@@ -232,6 +239,11 @@ if contains(fields_to_extrude,'-geom-')
     [vx_r,x_r,y_r] = demresize(vx_g,x_g,y_g,sc);
     vy_r = imresize(vy_g,sc); 
     H_r = imresize(H_g,sc);
+
+    figure; hold on; 
+    subplot(1,3,1); imagesc(H_r); caxis([-1 1]); title("H_r");
+    subplot(1,3,2); imagesc(vx_r); caxis([-1 1]); title("vx_r");
+    subplot(1,3,3); imagesc(vy_r); caxis([-1 1]); title("vy_r");
     
     Hvx_r = inpaint_nans(H_r.*vx_r,4);
     Hvy_r = inpaint_nans(H_r.*vy_r,4);
@@ -326,6 +338,11 @@ if contains(fields_to_extrude,'-scalar-')
     [vx_r,x_r,y_r] = demresize(vx_scal,x_scal,y_scal,sc);
     vy_r = imresize(vy_scal,sc); 
     H_r = imresize(H_scal,sc);
+
+    figure; hold on; 
+    subplot(1,3,1); imagesc(H_r); caxis([-1 1]); title("H_r");
+    subplot(1,3,2); imagesc(vx_r); caxis([-1 1]); title("vx_r");
+    subplot(1,3,3); imagesc(vy_r); caxis([-1 1]); title("vy_r");
     
     Hvx_r = inpaint_nans(H_r.*vx_r,4);
     Hvy_r = inpaint_nans(H_r.*vy_r,4);

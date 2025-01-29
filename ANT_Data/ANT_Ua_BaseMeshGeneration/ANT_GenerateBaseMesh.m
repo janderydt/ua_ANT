@@ -18,10 +18,10 @@ geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2018_EXT
 % refinement criteria are defined then a mesh with uniform resolution 
 % meshav is produced.
 
-years_to_include = 2018;%[2000 2009 2014 2018]; %tested with 2000
-ExtrudeMesh = 0;
+years_to_include = [2000 2009 2014 2020]; %tested with 2000
+ExtrudeMesh = 1;
 VariableBoundaryResolution = 1;
-meshmin = 5e3;
+meshmin = 2e3;
 meshav = 10e3;
 meshmax = 100e3;
 

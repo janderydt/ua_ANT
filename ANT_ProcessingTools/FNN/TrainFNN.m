@@ -88,6 +88,7 @@ if ~exist(filename,"file")
                 net.divideParam.testRatio = 0; % test set [%]   
                 %net.inputs{1}.processFcns = {'mapstd'}; % Normalize inputs/targets to have zero mean and unity variance
                 net.trainParam.showWindow = 0;
+                net.performFcn = 'mse'; % for other option use >>help nnperformance
 
                 net = configure(net,X_train,T_train);
 

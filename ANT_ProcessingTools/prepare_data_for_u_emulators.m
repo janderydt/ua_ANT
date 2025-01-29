@@ -9,18 +9,18 @@ function prepare_data_for_u_emulators
 addpath(getenv("froot_tools"));
 addpath("..");
 
-years_to_analyze = [2000];
+years_to_analyze = [2000]; % can be 2000, 2009, 2014 or 2018
 perturbation = 'Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
 trainingdataformat = "LOGu"; % u or LOGu
 basins_to_analyze = {'F-G',...  % Getz
     'G-H',...  % PIG, Thwaites
     'H-Hp'}; % Abbott
 slidinglaw = "Weertman";
-cycle=2; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
+cycle=1; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
 FNNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
 trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine, 
 % alternatives that seem to work well are trainlm
-UseGPU = 1; % UseGPU=1 only works with trainFcn="trainscg"
+UseGPU = 0; % UseGPU=1 only works with trainFcn="trainscg"
 doplots = 0;
 writeoutputsforTF = 1;
 
@@ -165,10 +165,10 @@ for yy=1:numel(years_to_analyze)
     [~,S,~] = svd(T,'econ');
     
     seq = randperm(num_exp);
-    pct = [0.98 0.99 0.995];
-    %pct = [0.95];
+    pct = [0.9];
     
     for ii=1:numel(pct)
+
         T_nComp = find((cumsum(diag(S).^2)./sum(diag(S).^2))>pct(ii),1,'first');
         T_pct1 = diag(S).^2./sum(diag(S).^2);
         T_pct = T_pct1(1:T_nComp);
@@ -268,7 +268,6 @@ for yy=1:numel(years_to_analyze)
     end
 end
 
-return
 %% PLOTTING
 
 if doplots

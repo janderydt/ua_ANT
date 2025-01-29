@@ -9,16 +9,17 @@ function prepare_data_for_Delta_u_emulators
 addpath(getenv("froot_tools"));
 
 perturbation = 'Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
-startyear = "2014";
+startyear = "2000";
 targetyear = "2018";
 slidinglaw = "Weertman";
-cycle=2; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
+cycle=1; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
 FNNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
 trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine, 
-% alternatives that seem to work well are trainlm
-UseGPU = 1; % UseGPU=1 only works with trainFcn="trainscg"
+% alternatives that seem to work well are trainscg
+UseGPU = 0; % UseGPU=1 only works with trainFcn="trainscg"
 doplots = 0;
 writeoutputsforTF = 1;
+add_data_to_SVD = 1;
 
 % load data file || this file is produced by the
 % plot_PerturbationResults_Ensemble.m function
@@ -59,8 +60,37 @@ else
     error("check dimensions of input data");
 end
 % remove mean
-T_mean=mean(T,1);
+T_mean = mean(T,1);
 T = T-repmat(T_mean(:)',size(T,1),1);
+
+%% Load data if required
+if add_data_to_SVD
+    for yy=[startyear targetyear]
+        if yy=="2000"
+            fname = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
+        else
+            fname = "GriddedInterpolants_"+yy+"-"+string(double(yy)+1)+...
+            "_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
+        end
+        load("../ANT_Data/ANT_Interpolants/"+fname);
+        v_tmp = hypot(Fus.Values,Fvs.Values);
+        Fu = Fus; Fu.Values = v_tmp;
+        std_tmp = hypot(Fxerr.Values,Fyerr.Values);
+        Fstd = Fus; Fstd.Values = std_tmp;
+        v.("yr"+yy).F = Fu;
+        std.("yr"+yy).F = Fstd;
+    end
+    load("Delta_u_AS_Weertman_"+startyear+"-"+targetyear+".mat","MUA_yr2","GF_yr2");
+    MUA = MUA_yr2; GF = GF_yr2;
+    % interpolate initial and final speed onto Ua mesh
+    u_init = v.("yr"+yr1).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+    std_init = std.("yr"+yr1).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+    u_target = v.("yr"+yr2).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+    std_target = std.("yr"+yr2).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+    deltau = u_target-u_init; % measured change in speed (m/yr)
+    T_meas = deltau(:) - T_mean(:);
+    T = [T_meas(:)' ; T];
+end
 
 %% DIMENSIONALITY REDUCTION: use singular value decomposition of targets to
 %% express each map of \Delta u in terms of its k dominant principal components
@@ -69,7 +99,7 @@ T = T-repmat(T_mean(:)',size(T,1),1);
 [~,S,~] = svd(T,'econ');
 
 seq = randperm(num_exp);
-pct = [0.95 0.96 0.97 0.98 0.99 0.995];
+pct = [0.995]; %% required so we can adequately represent the data in the truncated basis
 
 for ii=1:numel(pct)
     T_nComp = find((cumsum(diag(S).^2)./sum(diag(S).^2))>pct(ii),1,'first');
@@ -107,16 +137,23 @@ for ii=1:numel(pct)
     % B_trunc: T = T_hat*B_trunc
     B_trunc = S_trunc*V_trunc';
     T_reproj = (B_trunc*B_trunc')\B_trunc; % equivalent to inv(B*B')*B
-    T_hat = T*T_reproj';
+
+    if add_data_to_SVD
+        T_hat = T(2:end,:)*T_reproj'; % we remove the first line here, which contains the data
+        datastr = "nodata";
+    else
+        T_hat = T*T_reproj';
+        datastr = "withdata";
+    end
     
     data = T_hat(seq,:);
     predictors = X(seq,:);
 
     %% Now simulate FeedForward NN
     year = startyear + "-" + targetyear;
-    fname1 = sprintf("./FNN/mat_files/SVD_%s_%s_%s_cycle%s_N0k%.3g",perturbation,year,slidinglaw,string(cycle),1000*pct(ii));
+    fname1 = sprintf("./FNN/mat_files/SVD-%s_%s_%s_%s_cycle%s_N0k%.4g",datastr,perturbation,year,slidinglaw,string(cycle),10000*pct(ii));
     save(fname1, 'T_mean','V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
-    fname2 = sprintf("./FNN/mat_files/FNN_%s_%s_%s_%s_cycle%s_N0k%.3g",trainFcn,perturbation,year,slidinglaw,string(cycle),1000*pct(ii));
+    fname2 = sprintf("./FNN/mat_files/FNN_SVD-%s_%s_%s_%s_%s_cycle%s_N0k%.4g",datastr,trainFcn,perturbation,year,slidinglaw,string(cycle),10000*pct(ii));
     addpath("./FNN");
     TrainFNN(predictors',data',FNNtype,trainFcn,UseGPU,fname2,doplots);
 
@@ -156,8 +193,8 @@ for ii=1:numel(pct)
         T_val = (T_val-repmat(T_train_C,num_val,1))./repmat(T_train_S,num_val,1);
         T_test = (T_test-repmat(T_train_C,num_test,1))./repmat(T_train_S,num_test,1);
 
-        fname1 = sprintf('./RNN/mat_files/data_%s_%s_%s_cycle%s_N0k%.3g',perturbation,year,slidinglaw,string(cycle),pct(ii)*1000);
-        fname2 = sprintf('./RNN/mat_files/SVD_%s_%s_%s_cycle%s_N0k%.3g',perturbation,year,slidinglaw,string(cycle),pct(ii)*1000);
+        fname1 = sprintf('./RNN/mat_files/data_SVD-%s_%s_%s_%s_cycle%s_N0k%.4g',datastr,perturbation,year,slidinglaw,string(cycle),pct(ii)*10000);
+        fname2 = sprintf('./RNN/mat_files/SVD-%s_%s_%s_%s_cycle%s_N0k%.4g',datastr,perturbation,year,slidinglaw,string(cycle),pct(ii)*10000);
         save(fname1,'X_train','X_val','X_test','T_train','T_val','T_test',...
             'X_train_C','X_train_S','T_train_C','T_train_S');
         save(fname2, 'T_mean','V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');

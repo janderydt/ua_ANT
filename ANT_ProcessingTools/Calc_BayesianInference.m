@@ -3,11 +3,11 @@ function Calc_BayesianInference
 Klear;
 
 %% user defined parameters
-dataformat = "LOGu"; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
-cycle = 2; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
-pct = 960; % trunction of SVD in emulator
-years = [2000]; % a vector with years for which velocity data is used
-NN = "FNN"; % which emulator? FNN or RNN
+dataformat = ["LOGu" "du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
+cycle = [1 1]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
+pct = [900 9950]; % trunction of SVD in emulator
+years = ["2000" "2000-2018"]; % a vector with years for which velocity data is used
+NN = ["RNN" "RNN"]; % which emulator? FNN or RNN
 
 %% initialize UQLAB
 addpath(genpath(getenv("froot_matlabfunctions")+"/../UQLab_Rel2.0.0"));
@@ -23,29 +23,29 @@ uqlab; % initialize uqlab
 % plot_Inverse_ParameterDistribution.m 
 % !!! Make sure that the order of priors is consistent with how the
 % customLogLikelihood function expects the parameters as input. Check
-% that these are also the parameters in emulator prepare_perturbationresults_for_emulators.m 
+% that these are also the parameters in emulator prepare_data_for_***_emulators.m 
 % for which the emulators have been trained. By default, we use
 % X = [log10(gaA) log10(gaC) log10(gsA) log10(gsC) m n log10(dhdt_err)];
 PriorOpts.Name = 'Model parameters prior';
 
 ind = 1;
 PriorOpts.Marginals(ind).Name = 'log10(gaA)';
-% PriorOpts.Marginals(ind).Type = 'Gaussian';
-% PriorOpts.Marginals(ind).Parameters = [1 0.5]; % mean and std
+%PriorOpts.Marginals(ind).Type = 'Gaussian';
+%PriorOpts.Marginals(ind).Parameters = [1 0.5]; % mean and std
 PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [-1 log10(200)];
-% PriorOpts.Marginals(ind).Bounds = [-1 log10(200)];
+%PriorOpts.Marginals(ind).Bounds = [-1 log10(200)];
 ind = ind+1;
 PriorOpts.Marginals(ind).Name = 'log10(gaC)';
-% PriorOpts.Marginals(ind).Type = 'Gaussian';
-% PriorOpts.Marginals(ind).Parameters = [1 0.5];
+%PriorOpts.Marginals(ind).Type = 'Gaussian';
+%PriorOpts.Marginals(ind).Parameters = [1 0.5];
 PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [-1 log10(50)];
 %PriorOpts.Marginals(ind).Bounds = [-1 log10(50)];
 ind = ind+1;
 PriorOpts.Marginals(ind).Name = 'log10(gsA)';
-% PriorOpts.Marginals(ind).Type = 'Gaussian';
-% PriorOpts.Marginals(ind).Parameters = [4 0.5];
+%PriorOpts.Marginals(ind).Type = 'Gaussian';
+%PriorOpts.Marginals(ind).Parameters = [4 0.5];
 PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [3 6];
 %PriorOpts.Marginals(ind).Bounds = [3 6];
@@ -79,7 +79,7 @@ myPriorDist = uq_createInput(PriorOpts);
 
 %% define data
 myData.y = loadvelocitydata(dataformat,years); % myData.y.(year).u and myData.y.(year).stdu 
-% are N-by-1 matrices with N the number of nodes in the Ua mesh for that year
+    % are N-by-1 matrices with N the number of nodes in the Ua mesh for that year
 myData.Name = 'velocity observations and errors';
 
 %% define custom likelihood function
@@ -92,8 +92,8 @@ myLogLikelihood = @(params,y) customLogLikelihood(params, y, [dataformat,years,c
 %% define solver options
 mySolver.Type = 'MCMC';
 mySolver.MCMC.Sampler = 'AIES'; % AM, HMS or AIES (default)
-mySolver.MCMC.Steps = 20000; % T=300 default
-mySolver.MCMC.NChains = 20; % C=100 default
+mySolver.MCMC.Steps = 5000; % T=300 default
+mySolver.MCMC.NChains = 100; % C=100 default
 mySolver.MCMC.Visualize.Parameters = 1:numel(PriorOpts.Marginals);
 mySolver.MCMC.Visualize.Interval = 20;
 
@@ -127,27 +127,31 @@ save(fname,"myBayesianAnalysis");
 uq_print(myBayesianAnalysis);
 uq_display(myBayesianAnalysis);
 
-% MAP=myBayesianAnalysis.Results.PostProc.PointEstimate.X{:};
-% % nearest predictor and target
-% load("u_AS_Calv_dh_cycle2_Weertman_2000_2009_2014_2018.mat");
-% Ind_toremove = find(gaC>50);
-% X = [log10(gaA(:)) log10(gaC(:)) log10(gsA(:)) log10(gsC(:)) m(:) n(:)];
-% if cycle==2 % add dhdt_err to predictors
-%     X = [X log10(dhdt_err(:))];
-% end
-% X = double(X);
-% X(Ind_toremove,:)=[];
-% Ind_MAP=knnsearch(X,MAP);
-% MAP
-% X(Ind_MAP,:)
-% deltau = speed.yr2000(Ind_MAP,:);
-% deltau(deltau<0)=nan;
-% out = loadvelocitydata("u",[2000]);
-% figure; PlotMeshScalarVariable([],MUA.yr2000,log10(deltau(:))); 
-% deltau_meas = out.yr2000.u;
-% deltau_meas(deltau_meas<0)=nan;
-% figure; PlotMeshScalarVariable([],MUA.yr2000,log10(deltau_meas(:))); 
-% figure; PlotMeshScalarVariable([],MUA.yr2000,deltau_meas(:)-deltau(:));
+MAP=myBayesianAnalysis.Results.PostProc.PointEstimate.X{:};
+% nearest predictor and target
+load("Delta_u_AS_Weertman_2000-2018.mat");
+Ind_toremove = find(gaC>50);
+X = [log10(gaA(:)) log10(gaC(:)) log10(gsA(:)) log10(gsC(:)) m(:) n(:)];
+if cycle==2 % add dhdt_err to predictors
+    X = [X log10(dhdt_err(:))];
+end
+X = double(X);
+X(Ind_toremove,:)=[];
+Ind_MAP=knnsearch(X,MAP);
+MAP
+X(Ind_MAP,:)
+deltau = Delta_u.Calv_dh.map(Ind_MAP,:,1);
+%deltau(deltau<0)=nan;
+
+out = loadvelocitydata("du","2000-2018");
+deltau_meas = out.yr2000_yr2018.du;
+%deltau_meas(deltau_meas<0)=nan;
+
+deltau(isnan(deltau_meas))=nan;
+figure; PlotMeshScalarVariable([],MUA_yr2,deltau(:)); title("model")
+figure; PlotMeshScalarVariable([],MUA_yr2,deltau_meas(:)); title("measured")
+
+figure; PlotMeshScalarVariable([],MUA_yr2,deltau_meas(:)-deltau(:)); title("meas - model");
 
 
 
@@ -161,7 +165,10 @@ function out = loadvelocitydata(dataformat,years)
 addpath(getenv("froot_data")+"Measures/Measures_annual");
 
 % assemble velocity fields
-for ii=1:numel(years)
+years_tmp = strjoin(years,"-");
+years_unique = unique(split(years_tmp,"-"));
+
+for ii=1:numel(years_unique)
 
     % years_measures = string(years(ii))+"_"+string(years(ii)+1);
     % [vx,x_meas,y_meas]=measures_annual("vx",years_measures); 
@@ -171,73 +178,77 @@ for ii=1:numel(years)
     % y_meas = flip(y_meas,1); [Xm,Ym]=ndgrid(x_meas,y_meas);
     % v(ii).F = griddedInterpolant(Xm,Ym,flip(hypot(vx,vy),2));
     % std(ii).F = griddedInterpolant(Xm,Ym,flip(hypot(stdx,stdy),2));
-    if years(ii)==2000
+    if years_unique(ii)=="2000"
         fname = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
     else
-        fname = "GriddedInterpolants_"+string(years(ii))+"-"+string(years(ii)+1)+"_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
+        fname = "GriddedInterpolants_"+string(years_unique(ii))+"-"+string(double(years_unique(ii))+1)+...
+            "_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
     end
     load("../ANT_Data/ANT_Interpolants/"+fname);
     v_tmp = hypot(Fus.Values,Fvs.Values);
     Fu = Fus; Fu.Values = v_tmp;
     std_tmp = hypot(Fxerr.Values,Fyerr.Values);
     Fstd = Fus; Fstd.Values = std_tmp;
-    v(ii).F = Fu;
-    std(ii).F = Fstd;
+    v.("yr"+years_unique(ii)).F = Fu;
+    std.("yr"+years_unique(ii)).F = Fstd;
 
 end
 
-if dataformat == "du"
-    % assemble velocity differences
-    for ii=1:numel(years)-1
-        % Ua mesh
-        yr1 = string(years(ii));
-        yr2 = string(years(ii+1));
+for dd=1:numel(dataformat)
+
+    if dataformat(dd) == "du"
+        
+        years_tmp = split(years(dd),"-");
+        yr1 = years_tmp(1);
+        yr2 = years_tmp(2);
+
         load("Delta_u_AS_Weertman_"+yr1+"-"+yr2+".mat","MUA_yr2","GF_yr2");
         MUA = MUA_yr2; GF = GF_yr2;
     
         % interpolate initial and final speed onto Ua mesh
-        u_init = v(ii).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-        std_init = std(ii).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-        u_target = v(ii+1).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-        std_target = std(ii+1).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+        u_init = v.("yr"+yr1).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+        std_init = std.("yr"+yr1).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+        u_target = v.("yr"+yr2).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+        std_target = std.("yr"+yr2).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
     
         deltau = u_target-u_init; % measured change in speed (m/yr)
         deltau_err = hypot(std_init,std_target); % error estimate (m/yr)
         
         % remove nans
-        Ind = find(isnan(deltau) | isnan(deltau_err));
-        deltau_err(Ind) = 1e3;
-        deltau(Ind) = 0;
+        %Ind = find(isnan(deltau) | isnan(deltau_err));
+        %deltau_err(Ind) = 1e3;
+        %deltau(Ind) = eps(0);
     
-        % what if we remove the floating ice?
-        %deltau(GF.node<0.5) = 0;
+        %% what if we remove the floating ice?
+        %deltau(GF.node<0.5) = nan;
         %deltau_err(GF.node<0.5) = 1e3;
     
-        out.("yr"+years(ii)+"_yr"+years(ii+1)).du = deltau(:);
-        out.("yr"+years(ii)+"_yr"+years(ii+1)).stddu = deltau_err(:);
-    end
-elseif ismember(dataformat,["u","LOGu"])
-    for ii=1:numel(years)
-        load("u_AS_Calv_dh_cycle2_Weertman_2000_2009_2014_2018.mat","MUA","GF");
-        MUA = MUA.("yr"+years(ii)); GF = GF.("yr"+years(ii));
+        out.("yr"+yr1+"_yr"+yr2).du = deltau(:);
+        out.("yr"+yr1+"_yr"+yr2).stddu = deltau_err(:);
+
+    elseif ismember(dataformat(dd),["u","LOGu"])
+    
+        load("u_AS_Calv_dh_cycle2_Weertman_"+years(dd)+".mat","MUA","GF");
+        MUA = MUA.("yr"+years(dd)); GF = GF.("yr"+years(dd));
 
         % interpolate initial and final speed onto Ua mesh
-        u_tmp = v(ii).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-        std_tmp = std(ii).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+        u_tmp = v.("yr"+years(dd)).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+        std_tmp = std.("yr"+years(dd)).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
         
         % remove nans
-        Ind = find(isnan(u_tmp) | isnan(std_tmp));
-        std_tmp(Ind) = 5e3;
-        u_tmp(Ind) = eps(0);
+        %Ind = find(isnan(u_tmp) | isnan(std_tmp));
+        %std_tmp(Ind) = 5e3;
+        %u_tmp(Ind) = eps(0);
 
         % apply log if needed
-        if dataformat=="LOGu"
-            u_tmp = log10(u_tmp);
-            std_tmp = std_tmp./(u_tmp*log(10));
+        if dataformat(dd)=="LOGu"
+            std_tmp = min(std_tmp./(u_tmp*log(10)),10);
+            u_tmp = log10(u_tmp);    
         end
-        out.("yr"+years(ii)).u = u_tmp(:);
-        out.("yr"+years(ii)).stdu = std_tmp(:);
 
+        out.("yr"+years(dd)).u = u_tmp(:);
+        out.("yr"+years(dd)).stdu = std_tmp(:);
+    
     end
 end
 
@@ -262,51 +273,48 @@ persistent M N
 
 % Initialization
 nReal = size(params,1); % number of queried realizations
-dataformat = mymodel(1);
-years = mymodel(2:end-3);
-cycle = mymodel(end-2);
-pct = mymodel(end-1);
-NN = mymodel(end);
+% mymodel has format [dataformat,years,cycle,pct,NN], each of which is an
+% 1xn vector. 
+N = numel(mymodel)/5;
+dataformat = mymodel(1:N);
+years = mymodel(N+1:2*N);
+cycle = mymodel(2*N+1:3*N);
+pct = mymodel(3*N+1:4*N);
+NN = mymodel(4*N+1:5*N);
 
 % Load forward model(s)
 if isempty(M)
-    if dataformat == "du"
-        N = numel(years)-1;
-        for ii=1:N
-            yearstr(ii) = years(ii)+"-"+years(ii+1);
-        end
-    elseif dataformat == "u"
-        N = numel(years);
-        yearstr = "u"+years;
-    elseif dataformat == "LOGu"
-        N = numel(years);
-        yearstr = "LOGu"+years;
-    end
     for ii=1:N
+        if dataformat(ii) == "LOGu"
+            yearstr = "LOGu"+years(ii); 
+        else
+            yearstr = years(ii);
+        end
+
         % Check prepare_perturbationresults_for_emulators.m to see
         % what parameters the emulator is trained for, and in what order
         % The default is X = [log10(gaA) log10(gaC) log10(gsA) log10(gsC) m n log10(dhdt_err)];
-        if NN=="RNN"
+        if NN(ii)=="RNN"
             net_tmp=importNetworkFromTensorFlow("./RNN/TF_files/tuned_model_Calv_dh_"+...
-            yearstr(ii)+"_Weertman_cycle"+string(cycle)+"_N0k"+string(pct));
+            yearstr+"_Weertman_cycle"+string(cycle(ii))+"_N0k"+string(pct(ii)));
             M(ii).net=initialize(net_tmp);
-            load("./RNN/mat_files/data_Calv_dh_"+yearstr(ii)+"_Weertman_cycle"+string(cycle)+"_N0k"+string(pct)+".mat",...
+            load("./RNN/mat_files/data_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+"_N0k"+string(pct(ii))+".mat",...
                 "X_train_C","X_train_S","T_train_C","T_train_S");
-            load("./RNN/mat_files/SVD_Calv_dh_"+yearstr(ii)+"_Weertman_cycle"+string(cycle)+"_N0k"+string(pct)+".mat",...
+            load("./RNN/mat_files/SVD_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+"_N0k"+string(pct(ii))+".mat",...
                 "T_reproj","T_mean");
-            load("./RNN/mat_files/MSE_RNN_Calv_dh_"+yearstr(ii)+"_Weertman_cycle"+string(cycle)+"_N0k"+string(pct)+".mat");
+            load("./RNN/mat_files/MSE_RNN_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+"_N0k"+string(pct(ii))+".mat");
             MSE = mse_RNN;
-        elseif NN=="FNN"
-            load("./FNN/mat_files/FNN_trainscg_Calv_dh_"+yearstr(ii)+"_Weertman_cycle"+string(cycle)+"_N0k"+string(pct)+".mat",...
+        elseif NN(ii)=="FNN"
+            load("./FNN/mat_files/FNN_trainscg_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+"_N0k"+string(pct(ii))+".mat",...
                 "Net_opt");
-            load("./FNN/mat_files/SVD_Calv_dh_"+yearstr(ii)+"_Weertman_cycle"+string(cycle)+"_N0k"+string(pct)+".mat",...
+            load("./FNN/mat_files/SVD_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+"_N0k"+string(pct(ii))+".mat",...
                 "T_reproj","T_mean");
             M(ii).net=Net_opt.trained;
             X_train_C = Net_opt.X_train_C(:)';
             X_train_S = Net_opt.X_train_S(:)';
             T_train_C = Net_opt.T_train_C(:)';
             T_train_S = Net_opt.T_train_S(:)';
-            load("./FNN/mat_files/MSE_FNN_trainscg_Calv_dh_"+yearstr(ii)+"_Weertman_cycle"+string(cycle)+"_N0k"+string(pct)+".mat");
+            load("./FNN/mat_files/MSE_FNN_trainscg_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+"_N0k"+string(pct(ii))+".mat");
             MSE = mse_FNN;
         else
             error("Unknown emulator type");
@@ -316,37 +324,61 @@ if isempty(M)
         M(ii).X_train_S = X_train_S;
         M(ii).T_train_C = T_train_C;
         M(ii).T_train_S = T_train_S;
-        % Subtract mean and project measurements onto truncated basis.
-        % These are the unnormalized values.
-        if dataformat == "du"
-            yearstr2 = "yr"+years(ii)+"_yr"+years(ii+1);
+        
+        if dataformat(ii) == "du"
             stdstr = "stddu";
             ustr = "du";
+            yearstr2 = "yr"+replace(years(ii),"-","_yr");
         else
-            yearstr2 = "yr"+years(ii);
             stdstr = "stdu";
             ustr = "u";
+            yearstr2 = "yr"+years(ii);
         end
-        M(ii).data = (measurements(1).(yearstr2).(ustr)(:)-T_mean(:))'*T_reproj';
+
+        % Subtract mean and deal with nans in data
+        data_tmp = measurements(1).(yearstr2).(ustr)(:)-T_mean(:);
+        std_tmp = measurements(1).(yearstr2).(stdstr)(:);
+        Indnan = find(isnan(data_tmp) | isnan(std_tmp));
+        if dataformat(ii) == "LOGu"
+            data_tmp(Indnan) = 0; 
+            std_tmp(Indnan) = 3;
+        elseif dataformat(ii) == "u"
+            data_tmp(Indnan) = 0; 
+            std_tmp(Indnan) = 1e3;
+        elseif dataformat(ii) == "du"
+            data_tmp(Indnan) = 0; 
+            std_tmp(Indnan) = 1e3;
+        end
+
+        % Project data onto truncated space. Make sure that this does not
+        % distort the data too much, i.e. the data can be represented well in the
+        % truncated base. To check this, you need to reproject M(ii).data back onto
+        % the nodal base by multiplying with B_trunc, which is saved in SVD_Calv_dh_****
+        % If the data cannot be faithfully represented using the truncated
+        % basis functions then you might want to try adding the data to the SVD
+        % decomposition, or increase the number of basis functions (both
+        % are options in prepare_data_for_***_emulators.m)
+        M(ii).data = data_tmp'*T_reproj';
+
         % Assemble covariance matrices
         % 1. measurement errors
-        S_meas = T_reproj*spdiags(measurements(1).(yearstr2).(stdstr)(:).^2,0,nNodes,nNodes)*T_reproj';
+        S_meas = T_reproj*diag(std_tmp.^2)*T_reproj';
         % 2. Ua errors: obtained from  FIXME
-        s_u = 200; %m/yr
-        if dataformat == "LOGu"
-            s_u = log10(s_u);
-        end
-        l = 200e3; % range in the semivariogram
-        load("u_AS_Calv_dh_cycle2_Weertman_2000_2009_2014_2018.mat","MUA");
-        MUA = MUA.(yearstr2);
-        D_tmp = pdist2(MUA.coordinates,MUA.coordinates,"squaredeuclidean");
-        D_tmp = s_u^2*exp(-D_tmp/(2*l^2));
-        D_tmp = D_tmp*T_reproj';
-        S_ua = T_reproj*D_tmp;
-        clear D_tmp
+        % s_u = 200; %m/yr
+        % if dataformat == "LOGu"
+        %     s_u = log10(s_u);
+        % end
+        % l = 200e3; % range in the semivariogram
+        % load("u_AS_Calv_dh_cycle2_Weertman_2000_2009_2014_2018.mat","MUA");
+        % MUA = MUA.(yearstr2);
+        % D_tmp = pdist2(MUA.coordinates,MUA.coordinates,"squaredeuclidean");
+        % D_tmp = s_u^2*exp(-D_tmp/(2*l^2));
+        % D_tmp = D_tmp*T_reproj';
+        % S_ua = 0*T_reproj*D_tmp;
+        % clear D_tmp
         % 3. Emulator errors: obtained from plot_Emulator_MSE
-        S_emulator = spdiags(MSE(:),0,nModes,nModes);
-        M(ii).S = S_meas + S_ua + S_emulator;
+        S_emulator = diag(MSE);
+        M(ii).S = S_meas + S_emulator;
         M(ii).detS = det(M(ii).S);
         M(ii).Sinv = inv(M(ii).S);
     end    
@@ -355,29 +387,45 @@ end
 % Loop through years and realizations
 logL = zeros(nReal,1);
 
+CM = jet(4);
+
 for ii=1:N
     % Apply normalization to parameters before feeding into emulator
     predictors = (params-repmat(M(ii).X_train_C,nReal,1))./repmat(M(ii).X_train_S,nReal,1);
 
     % Evaluate forward model. 
-    if NN=="RNN"
+    if NN(ii)=="RNN"
         modelRun = double(predict(M(ii).net,predictors)); 
-    elseif NN=="FNN"
+    elseif NN(ii)=="FNN"
         modelRun = double(M(ii).net(predictors')');
     end
+
     % Undo normalization of the output but keep in the projected basis to 
     % make it compatible with data
     modelRun = modelRun.*repmat(M(ii).T_train_S,nReal,1)+repmat(M(ii).T_train_C,nReal,1);
+    Nout = size(modelRun,2);
 
     % Assemble log likelihood
     for jj = 1:nReal
       % Evaluate log-likelihood
-      logLikeli = - 1/2*log(2*pi*M(ii).detS) - 1/2*(M(ii).data...
+      prefac = -0.5*log((2*pi)^Nout*M(ii).detS);
+      Ndistrib = - 0.5*(M(ii).data...
         -modelRun(jj,:))*M(ii).Sinv*(M(ii).data-modelRun(jj,:))';
+      logLikeli = prefac + Ndistrib;
       % Assign to logL vector
       logL(jj) = logL(jj)+logLikeli;
     end
+
+    figure(115); hold on; plot(params(1,5),prefac(1),'.',Color=CM(ii,:)); title('m');
+    plot(params(1,5),Ndistrib(1),'.',Color=CM(ii+2,:)); title('m');
+
 end
+
+%figure(111); hold on; plot(params(1,1),logL(1),'.k'); title('gaA');
+%figure(112); hold on; plot(params(1,2),logL(1),'.k'); title('gaC');
+%figure(113); hold on; plot(params(1,3),logL(1),'.k'); title('gsA');
+%figure(114); hold on; plot(params(1,4),logL(1),'.k'); title('gsC');
+%figure(116); hold on; plot(params(1,6),logL(1),'.k'); title('n');
 
 end
 

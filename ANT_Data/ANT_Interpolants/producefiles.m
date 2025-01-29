@@ -7,10 +7,10 @@ function producefiles
 %     %Klear;
 % end
 % 
-% Velinterpolantfile = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities";
-% Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2000";
-% Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,1);
-% Klear;
+Velinterpolantfile = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2000";
+Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-geom-');
+Klear;
 % 
 % Velinterpolantfile = "GriddedInterpolants_2009-2010_MeaSUREs_ITSLIVE_Velocities";
 % Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2009";

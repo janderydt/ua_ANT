@@ -1,12 +1,21 @@
 function Create_BMv3_B2_Bam2009_RAMP2_RefGeomGriddedInterpolants(CreateGeotiff)
 
 %%  
-% Creates a reference geometry for 2015, based on Bedmachine v3. The
-% data is 
-%
-%
+% Create a reference geometry for 2015, based on Bedmachine v3. As we want
+% to use this product as a reference for earlier ice-sheet geometries, we
+% will extend the ice front beyond its current extent. By default, the 
+% Bedmachine surface and density will be extruded alogn flow lines, beyond 
+% the current ice front. Alternatively, one can include data from Bedmap2, 
+% Bamber 2009 and RAMP2 in areas that were previously ice covered, e.g. the
+% Larsen B ice Shelf, but the quality of those products near the edges of 
+% these ice shelves is generally rather poor.
 
-if nargin==0
+ExtrudeBedMachine = 1;
+UseBedmap2 = 0;
+UseBamber2004 = 0;
+UseRAMP2 = 0;
+
+if nargin==0 
     CreateGeotiff = 1;
 end
 
@@ -17,6 +26,7 @@ addpath(getenv("froot_tools"));
 %% Read/process Bedmachine data
 ncfile = froot_data+"/BedMachine_Antarctica/BedMachineAntarctica-v3.nc";
 fprintf(" Reading BedMachine data from file %s \n",ncfile);
+ncfile_pigdig = froot_data+"/BedMachine_Antarctica/BedMachineAntarctica-v3-PIGdig_PHolland.nc";
 
 x_bm = double(ncread(ncfile,'x'));
 y_bm = double(ncread(ncfile,'y'));
@@ -24,12 +34,15 @@ x_bm = unique(x_bm);
 y_bm = unique(y_bm);
 [X_bm,Y_bm] = ndgrid(x_bm,y_bm);
 
-bed  = double(flipdim(ncread(ncfile,'bed'),2));
+%bed  = double(flipdim(ncread(ncfile,'bed'),2));
+% use the modified bed from P. Holland. This is identical to BMv3, except
+% for some digging downstream of the PIG grounding line
+bed = double(flipdim(ncread(ncfile_pigdig,'bed_pigdig'),2));
 surface = double(flipdim(ncread(ncfile,'surface'),2));
 thickness = double(flipdim(ncread(ncfile,'thickness'),2));
 firn  = double(flipdim(ncread(ncfile,'firn'),2));
 mask  = double(flipdim(ncread(ncfile,'mask'),2));
-geoid = double(flipdim(ncread(ncfile,'geoid'),2));
+% geoid = double(flipdim(ncread(ncfile,'geoid'),2));
 % err =  double(flipdim(ncread(ncfile,'errbed'),2));
 % source_bm =  double(flipdim(ncread(ncfile,'source'),2));
 % R = makerefmat(x_bm(1),y_bm(1),x_bm(2)-x_bm(1),y_bm(2)-y_bm(1));
@@ -62,7 +75,7 @@ h_bm=firn+thickness ; % or just h=s-b
 bed_bm=bed ; 
 rhoi=917 ; 
 rhow = 1027;
-rhoMin=100; 
+rhoMin = 100; 
 %
 % The 'firn' field in the Bedmachine data is not the firn thickness, but
 % `firn air content'
@@ -117,7 +130,7 @@ end
 D_ocean = bwdist(mask_bm==0); % euclidean distance to the nearest non-zero pixel
 % narrow strips of floating ice with thin water column (<15m) exist along
 % the ice front. Remove these by looking in a 5km strip along the open ocean
-% for cells with mask_bm==3 & wct<15m. Then set these cells grounded ice
+% for cells with mask_bm==3 & wct<15m. Then set these cells to grounded ice
 D_grounded = bwdist(mask_bm==2);
 I = D_ocean<1.5 & D_grounded<1.5 & mask_bm==3;% & b_bm-bed_bm<15;
 b_bm(I) = 0; % ocean
@@ -128,70 +141,109 @@ h_bm(I) = 0;
 
 source(I) = 2; 
 
-%% Load Bedmap2 surface
-addpath(froot_data+"/Bedmap2/bedmap2_tif");
-s_b2 = bedmap2_interp(X_bm,Y_bm,'surface');
-isn = ~(s_b2>0);  
-s_b2(isn) = bedmap2_interp(X_bm(isn),Y_bm(isn),'surface','nearest'); 
-s_b2(bwdist(~isfinite(s_b2))*.5<1) = NaN; % Eliminates 1 km perimeter to avoid narrow strip of bedmap2 data along edges
+s_b2 = 0*X_bm+nan; s_bam = s_b2; s_ramp = s_b2;
+if UseBedmap2
+    %% Load Bedmap2 surface
+    addpath(froot_data+"/Bedmap2/bedmap2_tif");
+    s_b2 = bedmap2_interp(X_bm,Y_bm,'surface');
+    isn = ~(s_b2>0);  
+    s_b2(isn) = bedmap2_interp(X_bm(isn),Y_bm(isn),'surface','nearest'); 
+    s_b2(bwdist(~isfinite(s_b2))*.5<1) = NaN; % Eliminates 1 km perimeter to avoid narrow strip of bedmap2 data along edges
+end
 
-%% Load Bamber2004 surface
-addpath(froot_data+"/Bamber_SurfDEM_2004");
-[~,~,s_bam] = read_Bamber_2004(X_bm,Y_bm,1);
-s_bam(bwdist(~isfinite(s_bam))*.5<5) = NaN; % Eliminates 10 km perimeter b/c drooping ice sheet edges in Bamber and RAMP dems
+if UseBamber2004
+    %% Load Bamber2004 surface
+    addpath(froot_data+"/Bamber_SurfDEM_2004");
+    [~,~,s_bam] = read_Bamber_2004(X_bm,Y_bm,1);
+    s_bam(bwdist(~isfinite(s_bam))*.5<5) = NaN; % Eliminates 10 km perimeter b/c drooping ice sheet edges in Bamber and RAMP dems
+end
 
-%% Load RAMP2 surface
-[Iramp,xramp,yramp] = geoimread(froot_data+"/RAMP2/osu91a200m.tif"); % The OSU version of the file is referenced to the geoid whereas the RAM2_DEM.tif is referenced to wgs84. Use OSU.  
-Iramp = double(Iramp); 
-Iramp(Iramp==0) = NaN; % Convert zeros to NaN so interpolation won't produce thin ice shelf edges.  
-s_ramp = interp2(xramp,yramp,Iramp,X_bm,Y_bm); 
-s_ramp(bwdist(~isfinite(s_ramp))*.5<5) = NaN;  % Eliminates 10 km perimeter b/c drooping ice sheet edges in Bamber and RAMP dems
+if UseRAMP2
+    %% Load RAMP2 surface
+    [Iramp,xramp,yramp] = geoimread(froot_data+"/RAMP2/osu91a200m.tif"); % The OSU version of the file is referenced to the geoid whereas the RAM2_DEM.tif is referenced to wgs84. Use OSU.  
+    Iramp = double(Iramp); 
+    Iramp(Iramp==0) = NaN; % Convert zeros to NaN so interpolation won't produce thin ice shelf edges.  
+    s_ramp = interp2(xramp,yramp,Iramp,X_bm,Y_bm); 
+    s_ramp(bwdist(~isfinite(s_ramp))*.5<5) = NaN;  % Eliminates 10 km perimeter b/c drooping ice sheet edges in Bamber and RAMP dems
+end
 
-%% convert surface elevation to thickness, assuming floatation
-% first do some adjustments to rho: remove all rho=917 for ocean cells, and
-% interpolate linearly from grounded/floating ice.
-%Frho = scatteredInterpolant(X_bm(mask_bm~=0),Y_bm(mask_bm~=0),rho(mask_bm~=0),'linear','nearest');
-%rho = Frho(X_bm,Y_bm);
-hydro = rhow./(rhow-rho);
-h_b2 = s_b2.*hydro;
-h_bam = s_bam.*hydro;
-h_ramp = s_ramp.*hydro;
+if UseBedmap2 | UseBamber2004 | UseRAMP2
+    %% convert surface elevation to thickness, assuming floatation
+    % first do some adjustments to rho: remove all rho=917 for ocean cells, and
+    % interpolate linearly from grounded/floating ice.
+    %Frho = scatteredInterpolant(X_bm(mask_bm~=0),Y_bm(mask_bm~=0),rho(mask_bm~=0),'linear','nearest');
+    %rho = Frho(X_bm,Y_bm);
+    hydro = rhow./(rhow-rho);
+    h_b2 = s_b2.*hydro;
+    h_bam = s_bam.*hydro;
+    h_ramp = s_ramp.*hydro;
+    
+    %% Prevent new grounding:
+    h_max = -rhow./rho.*bed_bm; % maximum thickness that could exist at neutral buoyancy (no new grounding).
+    h_b2(h_b2>h_max) = h_max(h_b2>h_max); 
+    h_bam(h_bam>h_max) = h_max(h_bam>h_max); 
+    h_ramp(h_ramp>h_max) = h_max(h_ramp>h_max); 
+    
+    % Eliminate negative thickness: 
+    h_b2(h_b2<0) = nan; 
+    h_bam(h_bam<0) = nan; 
+    h_ramp(h_ramp<0) = nan;
+    
+    %% Combine surface heights 
+    % Distance in kilometers to BedMachine ocean data: 
+    D = bwdist(mask_bm==0)*0.5; % euclidean distance to the nearest non-zero pixel
+    D_thresh_thinice = 10; % replace thin ice within 10 km of ocean (for example, where Mertz Glacier tongue broke off and is now thin on its end in the BedMachine data, overwrite that thin ice with the full thickness from Bedmap2.) 
+    
+    h_bm_adj = h_bm;
+    % Start overwriting BedMachine: 
+    source(h_bm_adj<(h_b2/2) & D<D_thresh_thinice & ~grounded) = 3; 
+    h_bm_adj(source==3) = h_b2(source==3); 
+    
+    source(h_bm_adj<(h_bam/2) & D<D_thresh_thinice & ~grounded) = 4; 
+    h_bm_adj(source==4) = h_bam(source==4); 
+    
+    I = find(h_bm_adj<(h_ramp/2) & D<D_thresh_thinice & ~grounded);
+    % remove ramp2 data from FRISS region due to odd regrounding
+    J = find(Y_bm(I)>840441 & Y_bm(I)<934255 & X_bm(I)>-1182106 & X_bm(I)<-970374); I(J)=[];
+    source(I) = 5;
+    h_bm_adj(source==5) = h_ramp(source==5); 
+    
+    h_bm_adj(h_bm_adj==0 & ~grounded) = nan;
+    
+    L = bwlabel(isnan(h_bm_adj)); 
+    h_bm_adj = regionfill(h_bm_adj,L>1);
+    source(L>1) = 6; % interpolated
+end
 
-%% Prevent new grounding:
-h_max = -rhow./rho.*bed_bm; % maximum thickness that could exist at neutral buoyancy (no new grounding).
-h_b2(h_b2>h_max) = h_max(h_b2>h_max); 
-h_bam(h_bam>h_max) = h_max(h_bam>h_max); 
-h_ramp(h_ramp>h_max) = h_max(h_ramp>h_max); 
+if ExtrudeBedMachine
 
-% Eliminate negative thickness: 
-h_b2(h_b2<0) = nan; 
-h_bam(h_bam<0) = nan; 
-h_ramp(h_ramp<0) = nan;
+    % We will extrude floating ice along flowlines. To know the ice
+    % thickness, we need to extrude surface elevation and ice density.
 
-%% Combine surface heights 
-% Distance in kilometers to BedMachine ocean data: 
-D = bwdist(mask_bm==0)*0.5; % euclidean distance to the nearest non-zero pixel
-D_thresh_thinice = 10; % replace thin ice within 10 km of ocean (for example, where Mertz Glacier tongue broke off and is now thin on its end in the BedMachine data, overwrite that thin ice with the full thickness from Bedmap2.) 
+    % Temporarily create and save interpolants
+    Fs = griddedInterpolant(X_bm,Y_bm,s_bm,'cubic');
+    Fb = Fs; Fb.Values = b_bm; 
+    FB = Fs; FB.Values = bed_bm;
+    Frho = Fs; Frho.Values = rho;
+    Fmask = Fs; Fmask.Values = mask_bm;
 
-h_bm_adj = h_bm;
-% Start overwriting BedMachine: 
-source(h_bm_adj<(h_b2/2) & D<D_thresh_thinice & ~grounded) = 3; 
-h_bm_adj(source==3) = h_b2(source==3); 
+    Velinterpolantfile = "./GriddedInterpolants_2015-2016_MeaSUREs_ITSLIVE_Velocities.mat";
+    Geominterpolantfile =  "BMv3_tmp.mat"; save(Geominterpolantfile,"Fs","Fb","FB","Frho","Fmask","-v7.3");
+    ScalarInterpolant = [];
+    CreateGeotiff = 0;
+    fields_to_extrude = "-geom-";
+    Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,ScalarInterpolant,CreateGeotiff,fields_to_extrude);
 
-source(h_bm_adj<(h_bam/2) & D<D_thresh_thinice & ~grounded) = 4; 
-h_bm_adj(source==4) = h_bam(source==4); 
+    load(Geominterpolantfile+"_EXTRUDED.mat","Fs","Fb","Frho");
+    s_bm = Fs.Values;
+    rho_bm = Frho.Values;
 
-I = find(h_bm_adj<(h_ramp/2) & D<D_thresh_thinice & ~grounded);
-% remove ramp2 data from FRISS region due to odd regrounding
-J = find(Y_bm(I)>840441 & Y_bm(I)<934255 & X_bm(I)>-1182106 & X_bm(I)<-970374); I(J)=[];
-source(I) = 5;
-h_bm_adj(source==5) = h_ramp(source==5); 
+    bfloat = s_bm.*(rho_bm./(rho_bm-rhow));
+    b_bm = max(bfloat,bed_bm);
+    h_bm_adj = s_bm - b_bm;
 
-h_bm_adj(h_bm_adj==0 & ~grounded) = nan;
+end
 
-L = bwlabel(isnan(h_bm_adj)); 
-h_bm_adj = regionfill(h_bm_adj,L>1);
-source(L>1) = 6; % interpolated
 
 % Calculate s and b from h and B
 S = 0*X_bm;
@@ -199,6 +251,7 @@ hf=rhow.*(0*S-bed_bm)./rho;
 GF = HeavisideApprox(100,h_bm-hf,1); % 1 if grounded, 0 if afloat;
 bfloat=S-rho.*h_bm_adj./rhow;
 b_bm_adj=GF.*bed_bm + (1-GF) .* bfloat ;
+
 % Enforce b Above B
 % because the grounding line is `smeared out' a bit for a finite CtrlVar.kH one can
 % have situations where b<B. For CtrlVar.kH>0.1 this is not really much of an issue

@@ -562,47 +562,8 @@ switch diagnostic_to_plot
             ylim(ax(1),[ymin ymax]/CtrlVar.PlotXYscale);
             axis(ax(1),"equal");
 
-            cb2=colorbar(ax(1)); cb2.Label.String="Change in ice thickness [m]";H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
-
-            tlo_fig = tiledlayout(1,1,"TileSpacing","compact"); 
-            ax(1) = nexttile(tlo_fig); hold on;
-
-            PlotNodalBasedQuantities_JDR(ax(1),MUA_target.connectivity,MUA_target.coordinates,dh_meas,CtrlVar);
-            plot(MUA_target.Boundary.x/CtrlVar.PlotXYscale,MUA_target.Boundary.y/CtrlVar.PlotXYscale,'-k');
-            plot(MUA_start.Boundary.x/CtrlVar.PlotXYscale,MUA_start.Boundary.y/CtrlVar.PlotXYscale,'--k');
-            PlotGroundingLines(CtrlVar,MUA_target,GF_yr2,[],[],[],'-k','linewidth',1);
-            %CM = turbo(13); CM(1,:)=[1 1 1];
-            CM = othercolor('RdBu11',15);
-            colormap(ax(1),CM);
-            %title(ax(numel(fields_to_plot)+1),"Observations");
-            axis(ax(1),"off");
-            caxis(ax(1),[-100 100]);
-            xlim(ax(1),[xmin xmax]/CtrlVar.PlotXYscale);
-            ylim(ax(1),[ymin ymax]/CtrlVar.PlotXYscale);
-            axis(ax(1),"equal");
-
-            cb2=colorbar(ax(1)); cb2.Label.String="Change in ice thickness [m]";H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
-
-            tlo_fig = tiledlayout(1,1,"TileSpacing","compact"); 
-            ax(1) = nexttile(tlo_fig); hold on;
-
-            PlotNodalBasedQuantities_JDR(ax(1),MUA_target.connectivity,MUA_target.coordinates,dh_meas,CtrlVar);
-            plot(MUA_target.Boundary.x/CtrlVar.PlotXYscale,MUA_target.Boundary.y/CtrlVar.PlotXYscale,'-k');
-            plot(MUA_start.Boundary.x/CtrlVar.PlotXYscale,MUA_start.Boundary.y/CtrlVar.PlotXYscale,'--k');
-            PlotGroundingLines(CtrlVar,MUA_target,GF_yr2,[],[],[],'-k','linewidth',1);
-            %CM = turbo(13); CM(1,:)=[1 1 1];
-            CM = othercolor('RdBu11',15);
-            colormap(ax(1),CM);
-            %title(ax(numel(fields_to_plot)+1),"Observations");
-            axis(ax(1),"off");
-            caxis(ax(1),[-100 100]);
-            xlim(ax(1),[xmin xmax]/CtrlVar.PlotXYscale);
-            ylim(ax(1),[ymin ymax]/CtrlVar.PlotXYscale);
-            axis(ax(1),"equal");
-
             cb2=colorbar(ax(1)); cb2.Label.String="Change in ice thickness [m]";
-
-
+            
             figure; tlo=tiledlayout(3,2,"TileSpacing","Compact");
 
             nexttile; title("Grounded");

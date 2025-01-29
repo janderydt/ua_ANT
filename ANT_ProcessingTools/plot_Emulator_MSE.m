@@ -1,15 +1,15 @@
 function plot_Emulator_MSE
 
-plotRNN=0;
-plotFNN=1;
+plotRNN=1;
+plotFNN=0;
 
 perturbation='Calv_dh';
-trainingdataformat="LOGu"; % u or LOGu
+trainingdataformat="u"; % u or LOGu
 startyear="2000";
-targetyear=""; % this can be an empty string to plot results for the u emulator, rather than the du emulator
+targetyear="2018"; % this can be an empty string to plot results for the u emulator, rather than the du emulator
 slidinglaw="Weertman";
-cycle=2;
-n_test=1; % index of test data to plot (integer between 1 and size of test dataset)
+cycle=1;
+n_test=[];%[1:20]; % indices of test data to plot (integers between 1 and size of test dataset)
 
 if targetyear ~= ""
     years=startyear+"-"+targetyear;
@@ -20,13 +20,14 @@ if targetyear ~= ""
     
 else
     years = trainingdataformat+startyear;
-    datafile = "u_AS_"+perturbation+"_cycle"+string(cycle)+"_"+slidinglaw+"_2000_2009_2014_2018.mat";
+    datafile = "u_AS_"+perturbation+"_cycle"+string(cycle)+"_"+slidinglaw+"_"+startyear+".mat";
     load(datafile);
     T = speed.("yr"+string(startyear));
     MUA = MUA.("yr"+string(startyear)); GF = GF.("yr"+string(startyear));
     if trainingdataformat=="LOGu"
         T = log10(T);
     end
+    
 end
 
 Ind_toremove=find(gaC>50);
@@ -38,11 +39,10 @@ if any(isnan(T))
     T(rows,:)=[];
 end
 T(Ind_toremove,:)=[];
-T_mean=mean(T,1);
+T_mean = mean(T,1);
 T = T-repmat(T_mean(:)',size(T,1),1);
 
-pct=string([950 960 970 980 990 995]);
-pct = string([960]);
+pct = string([9950]);
 
 %% RNN Tensorflow
 if plotRNN
@@ -63,15 +63,21 @@ if plotRNN
         Y_val=double(predict(netUpdated,X_val));
         Y_test=double(predict(netUpdated,X_test));
     
-        % for m=1:size(T_full,2)
-        %     figure; hold on;
-        %     plot(T_train(:,m),Y_train(:,m),'ok');
-        %     plot(T_val(:,m),Y_val(:,m),'xk');
-        %     plot(T_test(:,m),Y_test(:,m),'dk');
-        %     plot(T_test(10,m),Y_test(10,m),'dr');
-        %     %plotregression(T_full,Y(:,m));
-        %     title("mode "+num2str(m));
-        % end
+        figure;
+        ntiles = size(T_train,2); 
+        tlo = tiledlayout(ceil(sqrt(ntiles)),ceil(sqrt(ntiles)),"TileSpacing","tight");
+        for m=1:size(T_train,2)
+            tile(m)=nexttile; hold on;
+            plot(tile(m),T_train(:,m),Y_train(:,m),'ok');
+            plot(tile(m),T_val(:,m),Y_val(:,m),'xg');
+            plot(tile(m),T_test(:,m),Y_test(:,m),'dm');
+            %plot(T_test(10,m),Y_test(10,m),'dr');
+            %plotregression(T_full,Y(:,m));
+            title(tile(m),"mode "+num2str(m));
+            xvec = xlim(tile(m));           
+            plot(tile(m),[-10 10],[-10 10],'-r');
+            xlim(tile(m),xvec); ylim(tile(m),xvec);
+        end
     
         % reconstruct spatial maps of emulated targets
         Y_test = Y_test.*repmat(T_train_S,num_test,1)+...
@@ -91,26 +97,26 @@ if plotRNN
         % calc mse of test data
         % in nodal basis
         mse_tmp = 1/(num_test-1)*sum((Y_reproj-Ua_orig).^2,1);
-        mse_tmp(mse_tmp>1e6) = 1e6;
-        mse(ii,:) = mse_tmp;
+        %mse_tmp(mse_tmp>1e6) = 1e6;
+        mse(ii,:) = mse_tmp(:);
 
         nNodes = size(Ua_orig,2);
         mse_tmp=spdiags(mse_tmp(:),0,nNodes,nNodes);
 
         % in truncated svd basis
         %mse_RNN = T_reproj*mse_tmp*T_reproj';   
-
         mse_RNN=1/(num_test-1)*sum((Y_test-Ua_proj).^2,1);
 
         save("./RNN/mat_files/MSE_RNN_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_RNN");
 
         % plot some maps for particular test case
-        predictorvalues = X_test(n_test,:).*X_train_S + X_train_C;
-        Ua_orig = Ua_orig(n_test,:);
-        Y_reproj = Y_reproj(n_test,:);
-        T_test = T_test(n_test,:);
-        plot_comparison_emulator_ua(T_mean,Ua_orig,T_test,Y_reproj,MUA,GF,pct(ii),predictorvalues);
-    
+        for nn=n_test
+            predictorvalues = X_test(nn,:).*X_train_S + X_train_C;
+            Ua_orig_tmp = Ua_orig(nn,:);
+            Y_reproj_tmp = Y_reproj(nn,:);
+            T_test_tmp = T_test(nn,:);
+            plot_comparison_emulator_ua(T_mean,Ua_orig_tmp,T_test_tmp,Y_reproj_tmp,MUA,GF,pct(ii),predictorvalues,trainingdataformat);
+        end
     end
 
     % plot mse for different svd trunctions
@@ -132,21 +138,30 @@ if plotFNN
         num_train = size(X_train,1);
         num_val = size(X_val,1);
         num_test = size(X_test,1);
-        
+        T_train = net.T_train';
+        T_val = net.T_val';
+        T_test = net.T_test';
+
         % emulate predictors
         Y_train=double(net.trained(X_train')');
         Y_val=double(net.trained(X_val')');
         Y_test=double(net.trained(X_test')');
     
-        % for m=1:size(T_full,2)
-        %     figure; hold on;
-        %     plot(T_train(:,m),Y_train(:,m),'ok');
-        %     plot(T_val(:,m),Y_val(:,m),'xk');
-        %     plot(T_test(:,m),Y_test(:,m),'dk');
-        %     plot(T_test(10,m),Y_test(10,m),'dr');
-        %     %plotregression(T_full,Y(:,m));
-        %     title("mode "+num2str(m));
-        % end
+        figure;
+        ntiles = size(T_train,2); 
+        tlo = tiledlayout(ceil(sqrt(ntiles)),ceil(sqrt(ntiles)),"TileSpacing","tight");
+        for m=1:size(T_train,2)
+            tile(m)=nexttile; hold on;
+            plot(tile(m),T_train(:,m),Y_train(:,m),'ok');
+            plot(tile(m),T_val(:,m),Y_val(:,m),'xg');
+            plot(tile(m),T_test(:,m),Y_test(:,m),'dm');
+            %plot(T_test(10,m),Y_test(10,m),'dr');
+            %plotregression(T_full,Y(:,m));
+            title(tile(m),"mode "+num2str(m));
+            xvec = xlim(tile(m));           
+            plot(tile(m),[-10 10],[-10 10],'-r');
+            xlim(tile(m),xvec); ylim(tile(m),xvec);
+        end
     
         % reconstruct spatial maps of emulated targets
         Y_test = Y_test.*repmat(net.T_train_S',num_test,1)+...
@@ -186,12 +201,13 @@ if plotFNN
         save("./FNN/mat_files/MSE_FNN_trainscg_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_FNN");
 
         % plot some maps for particular test case
-        predictorvalues = X_test(n_test,:).*net.X_train_S' + net.X_train_C';
-        Ua_orig = Ua_orig(n_test,:);
-        Y_reproj = Y_reproj(n_test,:);
-        T_test = T_test(n_test,:);
-        plot_comparison_emulator_ua(T_mean,Ua_orig,T_test,Y_reproj,MUA,GF,pct(ii),predictorvalues,trainingdataformat);
-    
+        for nn=n_test
+            predictorvalues = X_test(nn,:).*net.X_train_S(:)' + net.X_train_C(:)';
+            Ua_orig_tmp = Ua_orig(nn,:);
+            Y_reproj_tmp = Y_reproj(nn,:);
+            T_test_tmp = T_test(nn,:);
+            plot_comparison_emulator_ua(T_mean,Ua_orig_tmp,T_test_tmp,Y_reproj_tmp,MUA,GF,pct(ii),predictorvalues,trainingdataformat);
+        end
     end
 
     % plot mse for different svd trunctions
@@ -203,8 +219,10 @@ end
 
 function plot_comparison_emulator_ua(T_mean,T_orig,Y_reproj_orig,Y_reproj,MUA,GF,pct,predictorvalues,trainingdataformat)
 
-CM = othercolor('Reds8',15);
-CM2 = flipdim(othercolor('RdBu11',15),1);
+%CM = othercolor('Reds8',15);
+CM = crameri('batlow',15);
+CM2 = flipdim(othercolor('RdYlBu11',15),1);
+
 CtrlVar=Ua2D_DefaultParameters;
 CtrlVar.PlotXYscale=1e3;
 CtrlVar.PlotsXaxisLabel='' ; 
@@ -212,18 +230,21 @@ CtrlVar.PlotsYaxisLabel='' ;
 
 H=fig('units','inches','width',120*12/72.27,'height',60*12/72.27,'fontsize',14,'font','Helvetica');
 
-tlo=tiledlayout(1,3,"TileSpacing","tight");    
+tlo=tiledlayout(H,1,3,"TileSpacing","tight");    
 
 ax(1)=nexttile; hold on;
-PlotMeshScalarVariable(CtrlVar,MUA,T_orig'+T_mean');
+data_to_plot = T_orig(:);
+PlotMeshScalarVariable(CtrlVar,MUA,data_to_plot);
 PlotGroundingLines(CtrlVar,MUA,GF,[],[],[],'color','k');
 plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k','LineWidth',0.5);
-colormap(ax(1),CM); 
-cb=colorbar; cb.Label.String='\Delta u [m/yr]';
+colormap(ax(1),CM2); 
+cb=colorbar; 
 if trainingdataformat == "LOGu"
-    caxis(ax(1),[0 4]); 
+    caxis(ax(1),[-1 1]); 
+    cb.Label.String='log_{10}u [m/yr]';
 else
-    caxis(ax(1),[0 2000]); 
+    caxis(ax(1),[-300 300]); 
+    cb.Label.String='u [m/yr]';
 end
 axis equal; axis tight; 
 grid(ax(1),"off"); box(ax(1),"off"); axis(ax(1),"off");
@@ -231,34 +252,39 @@ yticklabels([]); xticklabels([]);
 title('Ua');
 
 ax(2)=nexttile; hold on;
-PlotMeshScalarVariable(CtrlVar,MUA,Y_reproj_orig'-T_orig');
+data_to_plot = Y_reproj_orig(:);
+PlotMeshScalarVariable(CtrlVar,MUA,data_to_plot);
 PlotGroundingLines(CtrlVar,MUA,GF,[],[],[],'color','k');
 plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k','LineWidth',0.5);
 colormap(ax(2),CM2); colorbar('off');
-if trainingdataformat == "LOGu"
-    caxis(ax(2),[-0.2 0.2]); 
+if trainingdataformat == "LOGu" 
+    caxis(ax(2),[-1 1]); 
 else
     caxis(ax(2),[-300 300]); 
 end
 axis equal; axis tight;
 grid(ax(2),"off"); box(ax(2),"off"); axis(ax(2),"off");
 yticklabels([]); xticklabels([]);
-title("Truncated SVD ("+pct+"%) - Ua");
+title("Truncated SVD ("+pct+"%)");
 
 ax(3)=nexttile; hold on;
-PlotMeshScalarVariable(CtrlVar,MUA,Y_reproj'-T_orig');
+data_toplot = Y_reproj(:);
+PlotMeshScalarVariable(CtrlVar,MUA,data_toplot);
 PlotGroundingLines(CtrlVar,MUA,GF,[],[],[],'color','k');
 plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-k','LineWidth',0.5);
-colormap(ax(3),CM2); cb2=colorbar; cb2.Label.String='\Delta u [m/yr]';
-if trainingdataformat == "LOGu"
-    caxis(ax(3),[-0.2 0.2]); 
+colormap(ax(3),CM2); cb2=colorbar; 
+if trainingdataformat == "LOGu" 
+    cb2.Label.String='u [m/yr]'; 
+    caxis(ax(3),[-1 1]);     
 else
+    cb2.Label.String='\Delta u [m/yr]';
     caxis(ax(3),[-300 300]); 
 end
+title("Emulator");
+
 axis equal; axis tight;
 grid(ax(3),"off"); box(ax(3),"off"); axis(ax(3),"off");
 yticklabels([]); xticklabels([]);
-title("Emulator - Ua");
 
 %xlabel(tlo,'psx [km]');
 %ylabel(tlo,'psy [km]');
