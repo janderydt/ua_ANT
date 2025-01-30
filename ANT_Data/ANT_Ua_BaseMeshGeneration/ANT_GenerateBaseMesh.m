@@ -18,7 +18,7 @@ geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2018_EXT
 % refinement criteria are defined then a mesh with uniform resolution 
 % meshav is produced.
 
-years_to_include = [2000 2009 2014 2020]; %tested with 2000
+years_to_include = [2000 2009 2014 2020];
 ExtrudeMesh = 1;
 VariableBoundaryResolution = 1;
 meshmin = 2e3;
@@ -26,7 +26,6 @@ meshav = 10e3;
 meshmax = 100e3;
 
 if numel(years_to_include)>1 & ExtrudeMesh == 0
-
         error("This script only works with multiple years and internal boundaries if you extrude the mesh");
 end
 
@@ -52,8 +51,22 @@ for ii=1:numel(years_to_include)
     J = find(isnan(xtmp)); J = [0; J; numel(xtmp)+1];
     % extract longest contour line
     dJ = J(2:end)-J(1:end-1); [~,K]=max(dJ);
-    icefront(ii).x = xtmp(J(K)+1:J(K+1)-1);
-    icefront(ii).y = ytmp(J(K)+1:J(K+1)-1);
+    xtmp =  xtmp(J(K)+1:J(K+1)-1);
+    ytmp =  ytmp(J(K)+1:J(K+1)-1);
+    % do some initial subsampling
+    [xtmp2,ytmp2] = Smooth2dPos(xtmp,ytmp,0.2,2e3);
+    % spline fit to smooth
+    options = fitoptions('Method','SmoothingSpline',...
+        'SmoothingParam',0.005);
+    nx=[1:numel(xtmp2)]; ny=[1:numel(ytmp2)];
+    [fx,gof,out]=fit(nx',xtmp2,"SmoothingSpline",options);
+    [fy,gof,out]=fit(ny',ytmp2,"SmoothingSpline",options);
+    icefront(ii).x = fx(nx);
+    icefront(ii).y = fy(ny);
+
+    figure(111); hold on;
+    plot(xtmp,ytmp);
+    plot(icefront(ii).x,icefront(ii).y);
     icefront(ii).year = year(I(1));
 
     fprintf("Done.\n");
@@ -177,8 +190,8 @@ for ii=1:numel(years_to_include)
 end
 
 % now remove any icefront locations that are within tolerance of any other
-% icefront location
-
+% icefront location. Run 2 iterations
+for kk=1:2
 if numel(years_to_include)>1
 
     years_to_compare = flipdim(nchoosek([1:numel(years_to_include)],2),2);
@@ -194,8 +207,7 @@ if numel(years_to_include)>1
         coo = [icefront(yr2).x_vards(:) icefront(yr2).y_vards(:)];
     
         % Now find line segments from yr2 that form the transverse strip to 
-        % each
-        % boundary point along yr1. Then find the nearest normal distance to those
+        % each boundary point along yr1. Then find the nearest normal distance to those
         % line segments. If that distance is less than IF.segments.ds in that region, then 
         % 1. If the AlongDirection is less than NormalTolerance, shift the point to the nearest point on the yr2 boundary
         % 2. If the AlongDistance is more than NormalTolerance, shift the point to that line segment in the normal direction
@@ -223,18 +235,22 @@ if numel(years_to_include)>1
             icefront(yr1).y_vards(Ind(ii)) = NearestPoints(ii,2);
             icefront(yr1).mask(Ind(ii)) = NaN;
         end
+
         %plot(icefront(yr1).x_vards(:),icefront(yr1).y_vards(:),'-or');
 
-        fprintf("Done.\n");
-        fprintf("======================================\n");
+        fprintf("Done %s.\n",string(kk));
+        if kk==2
+            fprintf("======================================\n");
+        end
         
     end
 
 end
+end
 
 if ExtrudeMesh
 
-    fprintf("Define new ice front that allows for future advance, and/or as an efficient" + ...
+    fprintf("Define new ice front that allows for future advance, and/or as an efficient " + ...
         "way to implement internal boundaries along all desired ice fronts...")
     
     % define new mesh boundary of Antarctica, which allows advancing ice
@@ -249,8 +265,8 @@ if ExtrudeMesh
     x = icefront(1).x_vards;
     y = icefront(1).y_vards;
     % resample at regular 5km intervals
-    CtrlVar.GLtension=1; % tension of spline, 1: natural smoothing; 0: straight line
-    CtrlVar.GLds=5e3 ; 
+    CtrlVar.GLtension = 1; % tension of spline, 1: natural smoothing; 0: straight line
+    CtrlVar.GLds = meshmin*2; 
     [x,y,~,~] = Smooth2dPos(x,y,CtrlVar);
     
     vfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
@@ -473,7 +489,7 @@ if ExtrudeMesh
             newsegment = [icefront(ii).segment(kk).x(:), icefront(ii).segment(kk).y(:)];
             
             % points to remove
-            I = find(~inpoly(newsegment,[xouter(:) youter(:)]));
+            I = find(~inpoly2(newsegment,[xouter(:) youter(:)]));
             for rr=1:size(to_remove,1)
                 Itmp = find(icefront(ii).segment(kk).x(:)>to_remove(rr,1) & ...
                     icefront(ii).segment(kk).x(:)<to_remove(rr,2) & ...
@@ -529,6 +545,30 @@ if ExtrudeMesh
     fprintf("======================================\n");
 
 end
+
+%% Remove duplicate nodes and edges
+[node_new,~,IC] = unique(node,"rows","stable");
+edge_new = edge;
+for nn=1:size(node,1)
+    [indx,indy] = find(edge==nn);
+    for mm=1:numel(indx)
+        edge_new(indx(mm),indy(mm)) = IC(nn);
+    end
+end
+edge_new = unique(edge_new,"rows","stable");
+
+%% Look for nodes that appear more than twice in the connectivity
+[GC,GR] = groupcounts(edge_new(:));
+I = find(GC>2);
+% remove corresponding edges
+for ii=1:numel(I)
+    [Irow,Icol] = find(edge_new==I(ii));
+    uniquerows = unique(Irow)
+    edge_new(uniquerows(2:end),:)=[];
+end
+
+node = node_new;
+edge = edge_new;
 
 save("dump2.mat");
 
@@ -636,8 +676,10 @@ patch('faces',tria(:,1:2),'vertices',node, ...
 %    plot(out(ii).points(:,1),out(ii).points(:,2),'-b'); 
 % end
 
-for ii=1:numel(years)
-    plot(icefront(ii).x_vards,icefront(ii).y_vards,'-*r');
+CM = jet(numel(years_to_include));
+markers = ["d" "o" "x" "."];
+for ii=1:numel(years_to_include)
+    plot(icefront(ii).x_vards,icefront(ii).y_vards,"color",CM(ii,:),"Marker",markers(ii));
 end
 axis equal;
 
@@ -823,8 +865,8 @@ function [x,y] = IFresample(xinit,yinit,IF)
             IF.segments(ii).lonlim(2) IF.segments(ii).lonlim(2)];
         latlimits = [IF.segments(ii).latlim(1), IF.segments(ii).latlim(2),...
             IF.segments(ii).latlim(2) IF.segments(ii).latlim(1)];
-        I = find(inpoly([loninit(:) latinit(:)],[lonlimits(:) latlimits(:)]));
-        J = find(inpoly([lontmp(:) lattmp(:)],[lonlimits(:) latlimits(:)]));
+        I = find(inpoly2([loninit(:) latinit(:)],[lonlimits(:) latlimits(:)]));
+        J = find(inpoly2([lontmp(:) lattmp(:)],[lonlimits(:) latlimits(:)]));
         xtmp(J)=[]; ytmp(J)=[];
         [IF.segments(ii).xtmp,IF.segments(ii).ytmp,~,~] = Smooth2dPos(xinit(I(:)),yinit(I(:)),CtrlVar);
         xtmp = [xtmp(1:J(1)-1); IF.segments(ii).xtmp; xtmp(J(1):end)];

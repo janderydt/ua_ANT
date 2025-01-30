@@ -112,7 +112,7 @@ if contains(fields_to_extrude,'-scalar-')
         vy_scal =  Fvs(X_scal,Y_scal);
         %v_source_g =  Fsource(X_g,Y_g);
     
-        save(filetoread,"x_scal","y_scal","H_scal","vx_scal","vy_scal");
+        save(filetoread,"x_scal","y_scal","H_scal","vx_scal","vy_scal","-v7.3");
     else
 
         load(filetoread);
@@ -148,7 +148,7 @@ if contains(fields_to_extrude,'-v-')
     subplot(1,3,2); imagesc(vx_r); caxis([-1 1]); title("vx_r");
     subplot(1,3,3); imagesc(vy_r); caxis([-1 1]); title("vy_r");
 
-    Hvx_r = inpain;t_nans(H_r.*vx_r,4);
+    Hvx_r = inpaint_nans(H_r.*vx_r,4);
     Hvy_r = inpaint_nans(H_r.*vy_r,4);
     fprintf("done.\n");
 
@@ -197,7 +197,7 @@ if contains(fields_to_extrude,'-v-')
 
     if CreateGeotiff
     
-        fprintf('Writing GeoTiff files \n');
+        fprintf('Writing GeoTiff files...');
         
         R = maprefcells([x_v(1) x_v(end)],[y_v(1) y_v(end)],[numel(x_v),numel(y_v)]);
         velfile_prim = "AntarcticVelocity"+erase(Velinterpolantfile,["GriddedInterpolants",...

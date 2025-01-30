@@ -10,10 +10,10 @@ function Create_BMv3_B2_Bam2009_RAMP2_RefGeomGriddedInterpolants(CreateGeotiff)
 % Larsen B ice Shelf, but the quality of those products near the edges of 
 % these ice shelves is generally rather poor.
 
-ExtrudeBedMachine = 1;
-UseBedmap2 = 0;
-UseBamber2004 = 0;
-UseRAMP2 = 0;
+ExtrudeBedMachine = 0;
+UseBedmap2 = 1;
+UseBamber2004 = 1;
+UseRAMP2 = 1;
 
 if nargin==0 
     CreateGeotiff = 1;
@@ -25,7 +25,7 @@ addpath(getenv("froot_tools"));
 %%% GEOMETRY
 %% Read/process Bedmachine data
 ncfile = froot_data+"/BedMachine_Antarctica/BedMachineAntarctica-v3.nc";
-fprintf(" Reading BedMachine data from file %s \n",ncfile);
+fprintf(" Reading BedMachine data from file %s...",ncfile);
 ncfile_pigdig = froot_data+"/BedMachine_Antarctica/BedMachineAntarctica-v3-PIGdig_PHolland.nc";
 
 x_bm = double(ncread(ncfile,'x'));
@@ -48,7 +48,7 @@ mask  = double(flipdim(ncread(ncfile,'mask'),2));
 % R = makerefmat(x_bm(1),y_bm(1),x_bm(2)-x_bm(1),y_bm(2)-y_bm(1));
 % geotiffwrite("./GeoTiffFiles/Bedmachine_v3_error",err',R,'CoordRefSysCode','EPSG:3031');
 % geotiffwrite("./GeoTiffFiles/Bedmachine_v3_source",source_bm',R,'CoordRefSysCode','EPSG:3031');
-fprintf("...done.\n")
+fprintf("Done.\n")
 
 % All heights are referenced to mean sea level using the geod EIGEN-6D4
 % To obtain height with respect to WGS84 add geoid:
@@ -73,7 +73,7 @@ s_bm=surface+firn ;
 b_bm=surface-thickness ;
 h_bm=firn+thickness ; % or just h=s-b 
 bed_bm=bed ; 
-rhoi=917 ; 
+rhoi= 917 ; 
 rhow = 1027;
 rhoMin = 100; 
 %
@@ -93,8 +93,8 @@ rho=(1-firn./(h_bm+eps)).*rhoi ;  % vertically averaged ice density over the dep
 %       when the ice thickness is larger than zero... Possibly some inconsistencies between the data sets providing air content (firn) and
 %       ice thickness. Note: firn is 'air content'
 I=h_bm>0 ; %figure(190) ; histogram(rho(I),'Normalization','probability') ; title('histogram of densities where h>0')
-fprintf('Over glaciated areas %f%% of densities are smaller than %f kg/m^3 \n', 100*numel(find(rho(I)<rhoMin))/numel(find(I)),rhoMin)
-fprintf('These densities are set to %f kg/m^3\n',rhoMin)
+fprintf('Over glaciated areas %f%% of densities are smaller than %f kg/m^3. These densities are set to %f kg/m^3. \n',...
+    100*numel(find(rho(I)<rhoMin))/numel(find(I)),rhoMin,rhoMin);
 I=h_bm>0 & rho<rhoMin ; rho(I)=rhoMin ; 
 % run some consistency checks
 b_bm(mask==0)=0; s_bm(mask==0)=0; % ocean has zero ice draft and surface height
@@ -111,7 +111,7 @@ source(h_bm>0 | grounded) = 1;
 
 if CreateGeotiff
     
-    fprintf('Writing origial Bedmachine GeoTiff files \n');
+    fprintf('Writing origial Bedmachine GeoTiff files...');
     
     R = maprefcells([x_bm(1) x_bm(end)],[y_bm(1) y_bm(end)],[numel(x_bm),numel(y_bm)]);
     geotiffwrite("./GeoTiffFiles/Bedmachine_v3_bed",bed_bm',R,'CoordRefSysCode','EPSG:3031');
@@ -129,13 +129,13 @@ end
 % Distance in kilometers to BedMachine ocean data: 
 D_ocean = bwdist(mask_bm==0); % euclidean distance to the nearest non-zero pixel
 % narrow strips of floating ice with thin water column (<15m) exist along
-% the ice front. Remove these by looking in a 5km strip along the open ocean
-% for cells with mask_bm==3 & wct<15m. Then set these cells to grounded ice
+% the ice front. Remove these by looking in a 1.5km strip along the open ocean
+% for cells with mask_bm==3. Then set these cells to open ocean
 D_grounded = bwdist(mask_bm==2);
 I = D_ocean<1.5 & D_grounded<1.5 & mask_bm==3;% & b_bm-bed_bm<15;
 b_bm(I) = 0; % ocean
 mask_bm(I) = 0;
-rho(I) = 917;
+rho(I) = rhoi;
 s_bm(I) = 0;
 h_bm(I) = 0;
 
@@ -144,35 +144,47 @@ source(I) = 2;
 s_b2 = 0*X_bm+nan; s_bam = s_b2; s_ramp = s_b2;
 if UseBedmap2
     %% Load Bedmap2 surface
+    fprintf('Adding Bedmap2 data...');
     addpath(froot_data+"/Bedmap2/bedmap2_tif");
     s_b2 = bedmap2_interp(X_bm,Y_bm,'surface');
     isn = ~(s_b2>0);  
     s_b2(isn) = bedmap2_interp(X_bm(isn),Y_bm(isn),'surface','nearest'); 
     s_b2(bwdist(~isfinite(s_b2))*.5<1) = NaN; % Eliminates 1 km perimeter to avoid narrow strip of bedmap2 data along edges
+    fprintf('Done. \n');
+else
+    s_b2 = nan*X_bm;
 end
 
 if UseBamber2004
     %% Load Bamber2004 surface
+    fprintf('Adding Bamber2004 data...');
     addpath(froot_data+"/Bamber_SurfDEM_2004");
     [~,~,s_bam] = read_Bamber_2004(X_bm,Y_bm,1);
     s_bam(bwdist(~isfinite(s_bam))*.5<5) = NaN; % Eliminates 10 km perimeter b/c drooping ice sheet edges in Bamber and RAMP dems
+    fprintf('Done. \n');
+else
+    s_bam = nan*X_bm;
 end
 
 if UseRAMP2
     %% Load RAMP2 surface
+    fprintf('Adding RAMP2 data...');
     [Iramp,xramp,yramp] = geoimread(froot_data+"/RAMP2/osu91a200m.tif"); % The OSU version of the file is referenced to the geoid whereas the RAM2_DEM.tif is referenced to wgs84. Use OSU.  
     Iramp = double(Iramp); 
     Iramp(Iramp==0) = NaN; % Convert zeros to NaN so interpolation won't produce thin ice shelf edges.  
     s_ramp = interp2(xramp,yramp,Iramp,X_bm,Y_bm); 
     s_ramp(bwdist(~isfinite(s_ramp))*.5<5) = NaN;  % Eliminates 10 km perimeter b/c drooping ice sheet edges in Bamber and RAMP dems
+    fprintf('Done. \n');
+else
+    s_ramp = nan*X_bm;
 end
 
-if UseBedmap2 | UseBamber2004 | UseRAMP2
+if UseBedmap2 || UseBamber2004 || UseRAMP2
     %% convert surface elevation to thickness, assuming floatation
     % first do some adjustments to rho: remove all rho=917 for ocean cells, and
     % interpolate linearly from grounded/floating ice.
-    %Frho = scatteredInterpolant(X_bm(mask_bm~=0),Y_bm(mask_bm~=0),rho(mask_bm~=0),'linear','nearest');
-    %rho = Frho(X_bm,Y_bm);
+    Frho = scatteredInterpolant(X_bm(mask_bm~=0),Y_bm(mask_bm~=0),rho(mask_bm~=0),'natural');
+    rho = Frho(X_bm,Y_bm);
     hydro = rhow./(rhow-rho);
     h_b2 = s_b2.*hydro;
     h_bam = s_bam.*hydro;
@@ -230,9 +242,8 @@ if ExtrudeBedMachine
     Velinterpolantfile = "./GriddedInterpolants_2015-2016_MeaSUREs_ITSLIVE_Velocities.mat";
     Geominterpolantfile =  "BMv3_tmp.mat"; save(Geominterpolantfile,"Fs","Fb","FB","Frho","Fmask","-v7.3");
     ScalarInterpolant = [];
-    CreateGeotiff = 0;
     fields_to_extrude = "-geom-";
-    Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,ScalarInterpolant,CreateGeotiff,fields_to_extrude);
+    Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,ScalarInterpolant,0,fields_to_extrude);
 
     load(Geominterpolantfile+"_EXTRUDED.mat","Fs","Fb","Frho");
     s_bm = Fs.Values;
@@ -243,7 +254,6 @@ if ExtrudeBedMachine
     h_bm_adj = s_bm - b_bm;
 
 end
-
 
 % Calculate s and b from h and B
 S = 0*X_bm;
@@ -281,7 +291,7 @@ mask_bm_adj(b_bm_adj>bed_bm)=3;
 
 if CreateGeotiff
     
-    fprintf('Writing GeoTiff files \n');
+    fprintf('Writing GeoTiff files for new geometry...');
     
     R = maprefcells([x_bm(1) x_bm(end)],[y_bm(1) y_bm(end)],[numel(x_bm),numel(y_bm)]);
     geotiffwrite("./GeoTiffFiles/Bedmachinev3_Bedmap2_Bamber2009_RAMP2_mask",mask_bm_adj',R,'CoordRefSysCode','EPSG:3031');

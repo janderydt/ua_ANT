@@ -30,7 +30,9 @@ mask = Fmask_ref.Values;
 
 [X,Y] = ndgrid(x,y);
 
-if ~exist("ds_"+string(targettime)+".mat","file")
+ds_file = "ds_Nilsson_Paolo_"+string(targettime)+".mat";
+
+if ~exist(ds_file,"file")
 
     fprintf("Calculating surface correction.\n");
 
@@ -55,13 +57,13 @@ if ~exist("ds_"+string(targettime)+".mat","file")
 
     end
 
-    save("ds_"+string(targettime)+".mat","x","y","ds","ds_source","ds_err");
+    save(ds_file,"x","y","ds","ds_source","ds_err");
 
 else
     
     fprintf("Loading existing surface correction for %s...",string(targettime));
 
-    load("ds_"+string(targettime)+".mat");
+    load(ds_file);
 
     fprintf('done.\n');
 
@@ -94,7 +96,7 @@ rhow = 1027;
 % To avoid grounding along ice front margins, impose that any ice seaward of 
 % BedmapMachine iceshelf mask is floating
 ncfile = getenv("froot_data")+"/BedMachine_Antarctica/BedMachineAntarctica-v3.nc";
-fprintf("Reading mask from BedMachine data.\n");
+fprintf("Reading mask from BedMachine data...");
 mask_bm  = double(flipdim(ncread(ncfile,'mask'),2));
 I = find(b_new<=B & mask_bm==0);
 b_new(I) = B(I) + 10;
@@ -112,7 +114,7 @@ mask_new(h_new==0 & B>0) = 1;
 mask_new(b_new<=B) = 2;
 mask_new(b_new>B) = 3;
 
-fprintf('done.\n')
+fprintf('Done.\n')
 
 %% Save interpolants
 fprintf("Creating and saving gridded interpolants for modified geometry...");
@@ -141,7 +143,7 @@ if CreateGeotiff
     geotiffwrite("./GeoTiffFiles/draft_"+string(targettime)+".tif",b_new',R,'CoordRefSysCode','EPSG:3031');
     geotiffwrite("./GeoTiffFiles/mask_"+string(targettime)+".tif",mask_new',R,'CoordRefSysCode','EPSG:3031');
 
-    fprintf("done.\n");
+    fprintf("Done.\n");
 
 end
 

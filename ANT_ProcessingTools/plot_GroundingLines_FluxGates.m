@@ -31,8 +31,8 @@ plot(MUA.Boundary.x/CtrlVar.PlotXYscale,MUA.Boundary.y/CtrlVar.PlotXYscale,'-','
 
 %% observed GL
 S_insar = shaperead(froot_data+"/GroundingLine/MEaSUREs_INSAR/InSAR_GL_Antarctica_v02.shp");
-%S_insar_mililloTW = shaperead(froot_data+"/PIG_Thwaites_DotsonCrosson/Milillo_GL_Thwaites/Thwaites_2016-2017.shp");
-%S_insar_mililloDC = shaperead(froot_data+"/PIG_Thwaites_DotsonCrosson/Milillo_GL_CrossonDotson/Grounding_Lines_CSK_Pope_Smith_Kohler.shp");
+S_insar_mililloTW = shaperead(froot_data+"/AmundsenSea/Milillo_GL_Thwaites/Thwaites_2016-2017.shp");
+S_insar_mililloDC = shaperead(froot_data+"/AmundsenSea/Milillo_GL_CrossonDotson/Grounding_Lines_CSK_Pope_Smith_Kohler.shp");
 
 for ii=1:length(S_insar)
     date=S_insar(ii).DATE1;

@@ -34,13 +34,23 @@ end
 %% STEP1
 % Load MeaSUREs annual data
 fprintf("Reading MeaSUREs velocity data for %s-%s",string(year),string(year+1));
-[vxm,x,y] = measures_annual('vx',[num2str(year),'_',num2str(year+1)]);
-vym = measures_annual('vy',[num2str(year),'_',num2str(year+1)]);
-xerrm = measures_annual('vxerr',[num2str(year),'_',num2str(year+1)]); xerrm(isnan(xerrm))=0; % change nan to zero for calculation of  total error.
-yerrm = measures_annual('vyerr',[num2str(year),'_',num2str(year+1)]); yerrm(isnan(yerrm))=0; % change nan to zero for calculation of  total error.
-vm = hypot(vxm,vym);
-errm = hypot(vxm./vm.*xerrm,vym./vm.*yerrm);% propagation of error for velocity v = sqrt(vx^2+vy^2)
-wm = 1./errm.^2; % weights
+try
+    [vxm,x,y] = measures_annual('vx',[num2str(year),'_',num2str(year+1)]);
+    vym = measures_annual('vy',[num2str(year),'_',num2str(year+1)]);
+    xerrm = measures_annual('vxerr',[num2str(year),'_',num2str(year+1)]); xerrm(isnan(xerrm))=0; % change nan to zero for calculation of  total error.
+    yerrm = measures_annual('vyerr',[num2str(year),'_',num2str(year+1)]); yerrm(isnan(yerrm))=0; % change nan to zero for calculation of  total error.
+    vm = hypot(vxm,vym);
+    errm = hypot(vxm./vm.*xerrm,vym./vm.*yerrm);% propagation of error for velocity v = sqrt(vx^2+vy^2)
+    wm = 1./errm.^2; % weights
+catch
+    [~,x,y] = measures_annual('vx','2000_2001');
+    vxm = 0*x+eps(0);
+    vym = 0*x+eps(0);
+    xerrm = 0*x + 1e10;
+    yerrm = 0*x + 1e10;
+    errm = 0*x + 1e10;
+    wm = 0*x;
+end
 
 [X,Y] = ndgrid(x,y);
     
@@ -103,7 +113,7 @@ source_count = source_count + 3;
 nanind = isnan(vx);
 
 %% STEP2
-% MeaSUREs data
+% MeaSUREs mosaic data
 ncfile = froot_data+"/Measures/Measures_v2/antarctica_ice_velocity_450m_v2.nc";
 fprintf("Reading Velocity data from MeaSURES 450m v2");
 
