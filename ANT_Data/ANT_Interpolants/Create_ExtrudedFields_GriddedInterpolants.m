@@ -1,5 +1,7 @@
 function Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,ScalarInterpolant,CreateGeotiff,fields_to_extrude)
 
+persistent Fus Fvs Fxerr Fyerr Fsource Frho Fb Fs
+
 addpath("../ANT_HelperFunctions/");
 
 % This function extrudes surface velocities, ice geometry (surface and draft), 
@@ -43,8 +45,10 @@ if contains(fields_to_extrude,'-v-')
 
     fprintf("Load velocity and geometry interpolants...");
 
-    load(Velinterpolantfile);
-    load(Geominterpolantfile);
+    if isempty(Fus)
+        load(Velinterpolantfile,"Fus","Fvs","Fxerr","Fyerr","Fsource");
+        load(Geominterpolantfile,"Frho","Fb","Fs");
+    end
     
     fprintf("done.\n");
 
@@ -55,6 +59,7 @@ if contains(fields_to_extrude,'-v-')
     vx_v = Fus.Values';
     vy_v = Fvs.Values';
     v_source_v = Fsource.Values';
+    err_v = hypot(Fxerr.Values',Fyerr.Values');
     H_v = Fs(X_v,Y_v) - Fb(X_v,Y_v);
 
 end
@@ -63,8 +68,10 @@ if contains(fields_to_extrude,'-geom-')
 
     fprintf("Load velocity and geometry interpolants...");
 
-    load(Velinterpolantfile);
-    load(Geominterpolantfile);
+    if isempty(Fus)
+        load(Velinterpolantfile,"Fus","Fvs","Fxerr","Fyerr");
+        load(Geominterpolantfile,"Frho","Fb","Fs","Fmask","FB");
+    end
     
     fprintf("done.\n");
 
@@ -80,8 +87,13 @@ if contains(fields_to_extrude,'-geom-')
     
     H_g = s-b;
 
+    % remove velocities with large errors || they will not be used to
+    % extrude the geometry
+    err_tmp = hypot(Fxerr.Values',Fyerr.Values');
+    Fus.Values(err_tmp>15)=nan;
+    Fvs.Values(err_tmp>15)=nan;
     vx_g = Fus(X_g,Y_g);
-    vy_g =  Fvs(X_g,Y_g);
+    vy_g = Fvs(X_g,Y_g);
     %v_source_g =  Fsource(X_g,Y_g);
 
 end
@@ -95,8 +107,10 @@ if contains(fields_to_extrude,'-scalar-')
         
         fprintf("Load velocity and geometry interpolants...");
     
-        load(Velinterpolantfile);
-        load(Geominterpolantfile);
+        if isempty(Fus)
+            load(Velinterpolantfile,"Fus","Fvs","Fxerr","Fyerr");
+            load(Geominterpolantfile,"Frho","Fb","Fs");
+        end
         
         fprintf("done.\n");
     
@@ -108,6 +122,11 @@ if contains(fields_to_extrude,'-scalar-')
         s(s==0) = nan; b(b==0) = nan;    
         H_scal = s-b;
         
+        % remove velocities with large errors || they will not be used to
+        % extrude the scalar field
+        err_tmp = hypot(Fxerr.Values',Fyerr.Values');
+        Fus.Values(err_tmp>15)=nan;
+        Fvs.Values(err_tmp>15)=nan;
         vx_scal = Fus(X_scal,Y_scal);
         vy_scal =  Fvs(X_scal,Y_scal);
         %v_source_g =  Fsource(X_g,Y_g);
@@ -125,6 +144,8 @@ if contains(fields_to_extrude,'-scalar-')
 
 end
 
+clear X_g X_v Y_g Y_v
+
 fprintf("done.\n");
 
 %% -v-
@@ -132,15 +153,29 @@ if contains(fields_to_extrude,'-v-')
     fprintf("Processing velocity fields.\n");
 
     fprintf("  > Inpaint nan regions...");
-    L = bwlabel(isnan(vx_v)); % Label the nan regions, and the ocean will be L=1.  
+
+    % Remove any velocities with high errors as we don't want these to be
+    % used to interpolate/extrude the velocity field. The values will be 
+    % added back at the end
+    I_higherr = find(err_v>15);
+    vx_v_orig = vx_v; vx_v(I_higherr) = nan;
+    vy_v_orig = vy_v; vy_v(I_higherr) = nan;
+
+    % Label the nan regions, and the ocean will be L=1. 
+    L = bwlabel(isnan(vx_v)); 
+
+    % Fill any nan regions that are not ocean, and assign label
     vx_v = regionfill(vx_v,L>1); 
     vy_v = regionfill(vy_v,L>1);
-    %v_source(L>1) = 4; % interpolated
-    v = hypot(vx_v,vy_v);
+    v_source_v(L>1) = max(v_source_v(:))+1; % interpolated
+    %v = hypot(vx_v,vy_v);
+
+    clear L;
     
-    sc = 1/4; % scale for resizing velocity (for flow *directions* only) 
+    % subsample velocities for flow *directions*
+    sc = 1;%/2; % scale for resizing velocity
     [vx_r,x_r,y_r] = demresize(vx_v,x_v,y_v,sc); 
-    vy_r = imresize(vy_v,sc); 
+    vy_r = imresize(vy_v,sc);
     H_r = imresize(H_v,sc);
     
     figure; hold on; 
@@ -150,6 +185,9 @@ if contains(fields_to_extrude,'-v-')
 
     Hvx_r = inpaint_nans(H_r.*vx_r,4);
     Hvy_r = inpaint_nans(H_r.*vy_r,4);
+
+    clear H_r vx_r vy_r;
+
     fprintf("done.\n");
 
     fprintf("  > Extrude velocity field...");
@@ -165,35 +203,36 @@ if contains(fields_to_extrude,'-v-')
     %dx = interp2(x_r,y_r,vx_r./v_r,X_v,Y_v); 
     %dy = interp2(x_r,y_r,vy_r./v_r,X_v,Y_v); 
     
-    vx_ext = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_v,y_v,vx_v,0.03,25000);
+    vx_ext = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_v,y_v,vx_v,0.03,35000);
     fprintf("done vx...");
-    vy_ext = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_v,y_v,vy_v,0.03,25000);
+    vy_ext = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_v,y_v,vy_v,0.03,35000);
     fprintf("done vy.\n");
 
-    fprintf("  > Combine with original data and fill remaining nan regions...");
-    % Create temporary grids so we don't accidentally do anything dumb and
-    % overwrite any good data: 
-    tmpvx = vx_v; 
-    tmpvy = vy_v; 
-    % Wherever gridbin gives us data, overwrite tmpvx, tmpvy:  
-    isf = isfinite(vx_ext);
-    %tmpvx(isf) = dx(isf).*vx_g(isf); 
-    tmpvx(isf) = vx_ext(isf);
-    %tmpvy(isf) = dy(isf).*vg(isf); 
-    isf = isfinite(vy_ext);
-    tmpvy(isf) = vy_ext(isf);
+    clear x_r y_r Hvx_r Hvy_r
+
+    fprintf("  > Combine with original data and fill remaining nan regions..."); 
+    % Wherever original data is nan and gridbin gives us data, 
+    % overwrite vx_v, vy_v:  
+    isf = isfinite(vx_ext) & ~isfinite(vx_v); 
+    vx_v(isf) = vx_ext(isf); 
+    isf = isfinite(vy_ext) & ~isfinite(vy_v);
+    vy_v(isf) = vy_ext(isf);
+
+    clear vx_ext vy_ext isf
     
     % Fill holes in the velocity data: 
-    tmpvx2 = regionfill(tmpvx,isnan(tmpvx)); 
-    tmpvy2 = regionfill(tmpvy,isnan(tmpvy)); 
-    
-    vx_v = tmpvx2; 
-    vy_v = tmpvy2; 
+    vx_v = regionfill(vx_v,isnan(vx_v)); 
+    vy_v = regionfill(vy_v,isnan(vy_v)); 
+
+    % Restore original values with large errors
+    vx_v(I_higherr) = vx_v_orig(I_higherr);
+    vy_v(I_higherr) = vy_v_orig(I_higherr);
+     
     v_source_v(v_source_v==0 & isfinite(vx_v)) = max(v_source_v(:))+1; 
 
     fprintf("done.\n");
 
-    clear tmp*
+    clear vx_v_orig vy_v_orig I_higherr
 
     if CreateGeotiff
     
@@ -218,6 +257,8 @@ if contains(fields_to_extrude,'-v-')
 
     save(Velinterpolantfile+"_EXTRUDED.mat","Fus","Fvs","Fsource","Fxerr","Fyerr","-v7.3");
 
+    clear vx_v vy_v v_source_v
+
     fprintf("done.\n");
 
 end
@@ -234,8 +275,10 @@ if contains(fields_to_extrude,'-geom-')
     vy_g = regionfill(vy_g,L>1);
     %v_source(L>1) = 4; % interpolated
     %v = hypot(vx_g,vy_g);
+
+    clear L;
     
-    sc = 1/4; % scale for resizing velocity (for flow *directions* only) 
+    sc = 1;%1/4; % scale for resizing velocity (for flow *directions* only) 
     [vx_r,x_r,y_r] = demresize(vx_g,x_g,y_g,sc);
     vy_r = imresize(vy_g,sc); 
     H_r = imresize(H_g,sc);
@@ -247,6 +290,8 @@ if contains(fields_to_extrude,'-geom-')
     
     Hvx_r = inpaint_nans(H_r.*vx_r,4);
     Hvy_r = inpaint_nans(H_r.*vy_r,4);
+
+    clear H_r vx_r vy_r
 
     fprintf("done.\n");
 
@@ -260,32 +305,34 @@ if contains(fields_to_extrude,'-geom-')
     isf = isfinite(sg); tmps(isf) = sg(isf); 
     fprintf("done s...");
 
-    clear sf isf
+    clear sf sg isf
 
     bf = filt2(b,x_g(2)-x_g(1),5e3,'lp'); 
     bg = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_g,y_g,bf,0.1,10000);
     tmpb = b; isf = isfinite(bg); tmpb(isf) = bg(isf); 
     bg = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_g,y_g,bf,0.01,10000);
     isf = isfinite(bg); tmpb(isf) = bg(isf); 
-    fprintf("done b...");
+    fprintf("done b. \n");
 
-    clear bf isf
+    clear bf bg isf
 
-    rhof = filt2(rho,x_g(2)-x_g(1),5e3,'lp'); 
-    rhof(Fmask.Values'==0)=nan;
-    rhog = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_g,y_g,rhof,0.1,10000);
-    tmprho = rho; isf = isfinite(rhog); tmprho(isf) = rhog(isf); 
-    rhog = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_g,y_g,rhof,0.01,10000);
-    isf = isfinite(rhog); tmprho(isf) = rhog(isf); 
-    fprintf("done rho...");
-
-    clear rhof isf
+    %% commented out because it is better to interpolate/extrapolate rho 
+    %% from bedmachine
+    % rhof = filt2(rho,x_g(2)-x_g(1),5e3,'lp'); 
+    % rhof(Fmask.Values'==0)=nan;
+    % rhog = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_g,y_g,rhof,0.1,10000);
+    % tmprho = rho; isf = isfinite(rhog); tmprho(isf) = rhog(isf); 
+    % rhog = ExtrudeField(x_r,y_r,Hvx_r,Hvy_r,x_g,y_g,rhof,0.01,10000);
+    % isf = isfinite(rhog); tmprho(isf) = rhog(isf); 
+    % fprintf("done rho...");
+    % 
+    % clear rhof isf
 
     fprintf("  > Combine with original data and fill remaining nan regions...");
 
     s = regionfill(tmps,isnan(tmps)); 
     b = regionfill(tmpb,isnan(tmpb)); 
-    rho = regionfill(tmprho,isnan(tmprho));
+    %rho = regionfill(tmprho,isnan(tmprho));
 
     clear tmp*
 
@@ -293,7 +340,7 @@ if contains(fields_to_extrude,'-geom-')
     
     if CreateGeotiff
     
-        fprintf('Writing GeoTiff files \n');
+        fprintf('Writing GeoTiff files...');
         
         geomfile_prim = erase(Geominterpolantfile,"GriddedInterpolants_Geometry");
 
@@ -314,7 +361,9 @@ if contains(fields_to_extrude,'-geom-')
 
     save(Geominterpolantfile+"_EXTRUDED.mat","Fs","Fb","Frho","FB","Fmask","-v7.3");
 
-    fprintf("done.\n");
+    clear tmp* s b rho
+
+    fprintf("Done.\n");
 
 
 end

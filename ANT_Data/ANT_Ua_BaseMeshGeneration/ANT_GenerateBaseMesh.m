@@ -2,11 +2,11 @@ function ANT_GenerateBaseMesh
 
 warning('off','all');
 
-%velocityfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
+velocityfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
 %velocityfile = "/mnt/md0/Ua/cases/ANT/ANT_Inverse/ANT_Inverse_1035/ANT_Inverse_1035-RestartFile.mat";
-velocityfile = "../ANT_Interpolants/GriddedInterpolants_2018-2019_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
+%velocityfile = "../ANT_Interpolants/GriddedInterpolants_2018-2019_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
 %geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXTRUDED";
-geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2018_EXTRUDED";
+geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXTRUDED";
 
 % This function generates boundary and internal coordinates for Antarctica,
 % based on calving front outlines from C. Greene et al. (2022) for years 
@@ -21,7 +21,7 @@ geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2018_EXT
 years_to_include = [2000 2009 2014 2020];
 ExtrudeMesh = 1;
 VariableBoundaryResolution = 1;
-meshmin = 2e3;
+meshmin = 1.5e3;
 meshav = 10e3;
 meshmax = 100e3;
 
@@ -57,7 +57,7 @@ for ii=1:numel(years_to_include)
     [xtmp2,ytmp2] = Smooth2dPos(xtmp,ytmp,0.2,2e3);
     % spline fit to smooth
     options = fitoptions('Method','SmoothingSpline',...
-        'SmoothingParam',0.005);
+        'SmoothingParam',0.05);
     nx=[1:numel(xtmp2)]; ny=[1:numel(ytmp2)];
     [fx,gof,out]=fit(nx',xtmp2,"SmoothingSpline",options);
     [fy,gof,out]=fit(ny',ytmp2,"SmoothingSpline",options);
@@ -78,7 +78,8 @@ for ii=1:numel(years_to_include)
         fprintf("Sampling Boundary at variable resolution...\n")
     
         [xtmp,ytmp,FdesiredEleSize] = GenerateBoundaryWithVariableResolution(velocityfile,geometryfile,icefront(ii).x,icefront(ii).y,...
-            FdesiredEleSize,{'speed','floatation','thickness_gradient'},meshmin,meshmax);
+            FdesiredEleSize,{'speed','floatation','thickness_gradient','effective_strain_rate_gradient'},...
+            meshmin,meshmax);
 
         fprintf("Done.\n");
         fprintf("======================================\n");
@@ -189,8 +190,13 @@ for ii=1:numel(years_to_include)
     fprintf("======================================\n");
 end
 
-% now remove any icefront locations that are within tolerance of any other
-% icefront location. Run 2 iterations
+% now remove any icefront locations that are "within tolerance" of any other
+% icefront location. "within tolerance" refers to 2 checks:
+% 1. node-to-node distance: any node in yr1 that is within tolerance of a
+% node in yr2 is replaced by the node in yr2.
+% 2. point-to-face distance: for any node in yr1 that is within tolerance of a
+% line segment of yr2, this node is added to yr2
+% Run 2 iterations.
 for kk=1:2
 if numel(years_to_include)>1
 
@@ -206,21 +212,11 @@ if numel(years_to_include)>1
         p = [icefront(yr1).x_vards(:) icefront(yr1).y_vards(:)];
         coo = [icefront(yr2).x_vards(:) icefront(yr2).y_vards(:)];
     
-        % Now find line segments from yr2 that form the transverse strip to 
-        % each boundary point along yr1. Then find the nearest normal distance to those
-        % line segments. If that distance is less than IF.segments.ds in that region, then 
-        % 1. If the AlongDirection is less than NormalTolerance, shift the point to the nearest point on the yr2 boundary
-        % 2. If the AlongDistance is more than NormalTolerance, shift the point to that line segment in the normal direction
-        [Ind,NearestPoints] = ShiftFront(p, coo, FdesiredEleSize);
+        % STEP 1: check node-to-node distance
+        [Ind,NearestPoints] = Node_to_node_distance(p, coo, FdesiredEleSize);
 
-        fprintf("Year %s: found %s points to within tolerance of the %s ice front.\n",...
+        fprintf("Year %s: found %s nodes to within tolerance of the %s nodes.\n",...
             string(years_to_include(yr1)),string(numel(Ind)),string(years_to_include(yr2)));
-        % shift Ind to point on nearest segment of the other icefront, year(1) ice front
-        % remains intact, other ice fronts are adjusted. A mask keeps track of
-        % which segments remain intact
-        %figure; hold on;
-        %plot(icefront(yr2).x_vards(:),icefront(yr2).y_vards(:),'-xb');
-        %plot(icefront(yr1).x_vards(:),icefront(yr1).y_vards(:),'--r');
 
         for ii=1:numel(Ind)
             %[~,J] = min(sqrt((icefront(yr2).x_vards(:)-icefront(yr1).x_vards(Ind(ii))).^2+...
@@ -236,7 +232,46 @@ if numel(years_to_include)>1
             icefront(yr1).mask(Ind(ii)) = NaN;
         end
 
-        %plot(icefront(yr1).x_vards(:),icefront(yr1).y_vards(:),'-or');
+
+        % STEP 2: check node-to-face distance
+        p = [icefront(yr1).x_vards(:) icefront(yr1).y_vards(:)];
+        coo = [icefront(yr2).x_vards(:) icefront(yr2).y_vards(:)];
+        [Ind,NearestPoints] = Node_to_face_distance(p, coo, FdesiredEleSize, meshmin);
+
+        fprintf("Year %s: found %s points to within tolerance of the %s faces.\n",...
+            string(years_to_include(yr1)),string(numel(Ind)),string(years_to_include(yr2)));
+
+        % Add NearestPoints for coo to line segment Ind in p.
+        mask = icefront(yr1).mask;
+        for ii=1:numel(Ind)
+            p = [p(1:Ind(ii),:); NearestPoints(ii,:); p(Ind(ii)+1:end,:)];
+            mask = [mask(1:Ind(ii)) NaN mask(Ind(ii)+1:end)];
+            Ind = Ind+1;
+        end
+        
+        icefront(yr1).x_vards = p(:,1);
+        icefront(yr1).y_vards = p(:,2);        
+        icefront(yr1).mask = mask;
+
+        % And the other way around:
+        p = [icefront(yr2).x_vards(:) icefront(yr2).y_vards(:)];
+        coo = [icefront(yr1).x_vards(:) icefront(yr1).y_vards(:)];
+        [Ind,NearestPoints] = Node_to_face_distance(p, coo, FdesiredEleSize, meshmin);
+
+        fprintf("Year %s: found %s points to within tolerance of the %s faces.\n",...
+            string(years_to_include(yr2)),string(numel(Ind)),string(years_to_include(yr1)));
+
+        % Add NearestPoints for coo to line segment Ind in p.
+        mask = icefront(yr2).mask;
+        for ii=1:numel(Ind)
+            p = [p(1:Ind(ii),:); NearestPoints(ii,:); p(Ind(ii)+1:end,:)];
+            mask = [mask(1:Ind(ii)) NaN mask(Ind(ii)+1:end)];
+            Ind = Ind+1;
+        end
+        
+        icefront(yr2).x_vards = p(:,1);
+        icefront(yr2).y_vards = p(:,2);
+        icefront(yr2).mask = mask;
 
         fprintf("Done %s.\n",string(kk));
         if kk==2
@@ -248,6 +283,24 @@ if numel(years_to_include)>1
 end
 end
 
+%% remove self-intersecting elements
+for ii=1:numel(years_to_include)
+    xtmp=icefront(ii).x_vards(:); 
+    ytmp=icefront(ii).y_vards(:);
+    masktmp=icefront(ii).mask(:);
+    [~,~,segments]=selfintersect(xtmp,ytmp);
+    while ~isempty(segments)
+        xtmp(segments(1,1):segments(1,2))=[];
+        ytmp(segments(1,1):segments(1,2))=[];  
+        masktmp(segments(1,1):segments(1,2))=[];
+        [~,~,segments]=selfintersect(xtmp,ytmp);
+    end
+    icefront(ii).x_vards = xtmp(:);
+    icefront(ii).y_vards = ytmp(:);
+    icefront(ii).mask = masktmp;
+end
+
+%% Extrude mesh
 if ExtrudeMesh
 
     fprintf("Define new ice front that allows for future advance, and/or as an efficient " + ...
@@ -264,9 +317,9 @@ if ExtrudeMesh
     % Antarctia.
     x = icefront(1).x_vards;
     y = icefront(1).y_vards;
-    % resample at regular 5km intervals
+    % resample at regular intervals
     CtrlVar.GLtension = 1; % tension of spline, 1: natural smoothing; 0: straight line
-    CtrlVar.GLds = meshmin*2; 
+    CtrlVar.GLds = meshmin*4; 
     [x,y,~,~] = Smooth2dPos(x,y,CtrlVar);
     
     vfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
@@ -303,10 +356,10 @@ if ExtrudeMesh
     yout = U.Vertices(1:I(1)-1,2);
 
     CtrlVar.GLtension=0.5; % tension of spline, 1: natural smoothing; 0: straight line
-    CtrlVar.GLds=25e3 ; 
+    CtrlVar.GLds=25e3; 
     [xout,yout,~,~] = Smooth2dPos(xout,yout,CtrlVar);
     CtrlVar.GLtension=1; % tension of spline, 1: natural smoothing; 0: straight line
-    CtrlVar.GLds=25e3 ; 
+    CtrlVar.GLds=meshav; 
     [xouter,youter,~,~] = Smooth2dPos(xout,yout,CtrlVar);
     plot(xouter,youter,'-m');
 
@@ -563,7 +616,7 @@ I = find(GC>2);
 % remove corresponding edges
 for ii=1:numel(I)
     [Irow,Icol] = find(edge_new==I(ii));
-    uniquerows = unique(Irow)
+    uniquerows = unique(Irow);
     edge_new(uniquerows(2:end),:)=[];
 end
 
@@ -632,6 +685,26 @@ MUA = CreateMUA(CtrlVar,connectivity,coordinates);
 Tarea=TriAreaFE(MUA.coordinates,MUA.connectivity);
 Tlength=sqrt(2*Tarea) ;
 
+%% SAVE MESH and BOUNDARY COORDINATES
+fname = "";
+for ii=1:numel(years_to_include)
+    fname = fname + "_" +string(years_to_include(ii));
+end
+fname = fname + "_meshmin" + string(meshmin) + "_meshmax" + string(meshmax) + ...
+    "_extrudemesh" + string(ExtrudeMesh) + "_variableboundaryres" + ...
+    string(VariableBoundaryResolution) ;
+
+fname_MUA = "ANT_basemesh" + fname;
+save(fname_MUA,"MUA","CtrlVar","FdesiredEleSize");
+
+fname_Boundary = "ANT_meshboundarycoordinates" + fname;
+
+MeshBoundaryCoordinates.outer = [MUA.Boundary.x(:) MUA.Boundary.y(:)];
+
+save(fname_Boundary,"MeshBoundaryCoordinates");
+
+%% PLOT SOME FIGURES
+
 figure; hold on;
 %PlotMeshScalarVariable(CtrlVar,MUA,FdesiredEleSize(MUA.coordinates(:,1),MUA.coordinates(:,2))); hold on;
 %caxis([0 5e3]);
@@ -646,42 +719,25 @@ hold on
 plot(node(:,1)/1e3,node(:,2)/1e3,'xg');
 plot(xEle(I),yEle(I),'or');
 
-fname = "";
-for ii=1:numel(years_to_include)
-    fname = fname + "_" +string(years_to_include(ii));
-end
-fname = fname + "_meshmin" + string(meshmin) + "_meshmax" + string(meshmax) + ...
-    "_extrudemesh" + string(ExtrudeMesh) + "_variableboundaryres" + ...
-    string(VariableBoundaryResolution) ;
-
-fname_MUA = "ANT_basemesh" + fname;
-save(fname_MUA,"MUA","CtrlVar");
-
-fname_Boundary = "ANT_meshboundarycoordinates" + fname;
-
-MeshBoundaryCoordinates.outer = [MUA.Boundary.x(:) MUA.Boundary.y(:)];
-
-save(fname_Boundary,"MeshBoundaryCoordinates");
-
-figure; hold on;
-patch('faces',tria(:,1:3),'vertices',vert, ...
-    'facecolor','w', ...
-    'edgecolor',[0.2 0.2 0.2]);
-patch('faces',tria(:,1:2),'vertices',node, ...
-    'facecolor','w', ...
-    'edgecolor',[0.1 0.1 0.1], ...
-    'linewidth',1.5);
-
-% for ii=1:length(out)
-%    plot(out(ii).points(:,1),out(ii).points(:,2),'-b'); 
+% figure; hold on;
+% patch('faces',tria(:,1:3),'vertices',vert, ...
+%     'facecolor','w', ...
+%     'edgecolor',[0.2 0.2 0.2]);
+% patch('faces',tria(:,1:2),'vertices',node, ...
+%     'facecolor','w', ...
+%     'edgecolor',[0.1 0.1 0.1], ...
+%     'linewidth',1.5);
+% 
+% % for ii=1:length(out)
+% %    plot(out(ii).points(:,1),out(ii).points(:,2),'-b'); 
+% % end
+% 
+% CM = jet(numel(years_to_include));
+% markers = ["d" "o" "x" "."];
+% for ii=1:numel(years_to_include)
+%     plot(icefront(ii).x_vards,icefront(ii).y_vards,"color",CM(ii,:),"Marker",markers(ii));
 % end
-
-CM = jet(numel(years_to_include));
-markers = ["d" "o" "x" "."];
-for ii=1:numel(years_to_include)
-    plot(icefront(ii).x_vards,icefront(ii).y_vards,"color",CM(ii,:),"Marker",markers(ii));
-end
-axis equal;
+% axis equal;
 
 fprintf("Done.\n");
 

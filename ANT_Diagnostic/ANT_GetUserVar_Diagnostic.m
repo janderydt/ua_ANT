@@ -4,7 +4,7 @@ function UserVar = ANT_GetUserVar_Diagnostic(RunTable,ind,UserVar)
 %% ICE SHELF
 UserVar.ISGeometry = RunTable{ind,"ISthick"};
 switch UserVar.ISGeometry
-    case {2000,2009,2014,2018}
+    case {2000,2009,2014,2018,2020}
         UserVar.ISGeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.ISGeometry)+"_EXTRUDED.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise ISthick flag in RunTable.']);
@@ -13,7 +13,7 @@ end
 %% GROUNDED ICE
 UserVar.GIGeometry = RunTable{ind,"GIthick"};
 switch UserVar.GIGeometry
-    case {2000,2009,2014,2018}
+    case {2000,2009,2014,2018,2020}
         UserVar.GIGeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.GIGeometry)+"_EXTRUDED.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise GIthick flag in RunTable.']);

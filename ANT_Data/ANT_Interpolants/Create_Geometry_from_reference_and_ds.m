@@ -91,30 +91,37 @@ ds(mask==0)=nan;
 s_new = s - ds; % subtract ds here because it is negative for thinning
 rhow = 1027;
 
+% remove negative surface
+s_new(s_new<0)=0;
+
 [b_new,h_new] = Calc_dh_from_ds(X,Y,s_new,B,rho,rhow);
 
 % To avoid grounding along ice front margins, impose that any ice seaward of 
 % BedmapMachine iceshelf mask is floating
-ncfile = getenv("froot_data")+"/BedMachine_Antarctica/BedMachineAntarctica-v3.nc";
-fprintf("Reading mask from BedMachine data...");
-mask_bm  = double(flipdim(ncread(ncfile,'mask'),2));
-I = find(b_new<=B & mask_bm==0);
-b_new(I) = B(I) + 10;
-% recalculate s and h
-s_new(I) = b_new(I).*(rho(I)-rhow)./rho(I);
-h_new(I) = s_new(I) - b_new(I);
+% ncfile = getenv("froot_data")+"/BedMachine_Antarctica/BedMachineAntarctica-v3.nc";
+% fprintf("Reading mask from BedMachine data...");
+% mask_bm  = double(flipdim(ncread(ncfile,'mask'),2));
+% I = find(b_new<=B & mask_bm==0);
+% b_new(I) = B(I) + 10;
+% % recalculate s and h
+% s_new(I) = b_new(I).*(rho(I)-rhow)./rho(I);
+% h_new(I) = s_new(I) - b_new(I);
 
+%% Apply some checks and set mask
 %  ocean/ice/land mask
 %  0 = ocean
 %  1 = ice-free land
 %  2 = grounded
 %  3 = floating ice 
 mask_new = 0*X;
+% no ice above sea level: ice-free land
 mask_new(h_new==0 & B>0) = 1;
-mask_new(b_new<=B) = 2;
-mask_new(b_new>B) = 3;
+% draft below or equal to bed? grounded 
+mask_new(b_new<=B) = 2; b_new(b_new<B)=B(b_new<B);
+% draft non-zero and above bed? floating
+mask_new(b_new~=0 & b_new>B) = 3;
 
-fprintf('Done.\n')
+fprintf('Done.\n');
 
 %% Save interpolants
 fprintf("Creating and saving gridded interpolants for modified geometry...");

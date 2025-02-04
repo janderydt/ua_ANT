@@ -79,7 +79,7 @@ end
 
 if isempty(FdesiredEleSize)
     %% Define desired element sizes
-    desiredEleSize = 0*X+100e3;
+    desiredEleSize = 0*X+meshmax;
     
     for ii=1:numel(elesizemetric)
 
@@ -95,7 +95,7 @@ if isempty(FdesiredEleSize)
             case 'speed'
                 fprintf('  > Implementing speed for desiredEleSize matrix...');
                 if isempty(Fus)
-                    load(velocityfile);
+                    load(velocityfile,"Fus","Fvs");
                     if isempty(Fus)
                         Fu = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),hypot(F.ub,F.vb));
                         U = Fu(X,Y);
@@ -116,19 +116,16 @@ if isempty(FdesiredEleSize)
 %                 else
 %                     load('../ANT_Interpolants/ScatteredInterpolant_Nearest_MeaSUREs_FU_2016.mat');
 %                 end
-                
-                
-                % evolve mesh resolution from meshmax km where U<3m/yr to meshmin km for
+                 
+                % evolve mesh resolution from meshmax km where U<1m/yr to meshmin km for
                 % U>1km/yr
                 desiredEleSize(U<1) = meshmax;
-                I = find(U>=10 & U<1000);
-                % linear dependency of mesh size on speed
-                %desiredEleSize(I) = 100e3 + (5e3-100e3)/(1000-5)*(U(I)-5);
                 % log dependency of mesh size on speed
-                desiredEleSize(I) = 15e3 + (meshmin-15e3)/(3-log10(10))*(log10(U(I))-log10(10));
-                I = find(U>=1 & U<10);
-                desiredEleSize(I) = 100e3 + (15e3-meshmax)/log10(10)*log10(U(I));
-                desiredEleSize(U>=1000) = meshmin;
+                I = find(U>=1 & U<15);
+                desiredEleSize(I) = meshmax + (10e3-meshmax)/log10(15)*log10(U(I));
+                I = find(U>=15 & U<250);
+                desiredEleSize(I) = 10e3 + (2*meshmin-10e3)/(log10(250)-log10(15))*(log10(U(I))-log10(15));               
+                desiredEleSize(U>=250) = 2*meshmin;
                 desiredEleSize(desiredEleSize==0) = meshmax;
                 fprintf('Done.\n');
     
@@ -138,8 +135,8 @@ if isempty(FdesiredEleSize)
                     load(geometryfile,"Fmask");
                 end
                 Fmask.Method = 'nearest'; Fmask.ExtrapolationMethod = 'nearest';
-                Mask = Fmask(X,Y); % 3 is floating ice
-                desiredEleSize(Mask==3 & desiredEleSize>meshmin) = meshmin; % meshmin km resolution for ice shelves
+                Mask = Fmask(X,Y); % 3 is floating ice, 0 is open ocean
+                desiredEleSize((Mask==3 | Mask==0) & desiredEleSize>2*meshmin) = 2*meshmin; % meshmin km resolution for ice shelves
                 fprintf('Done.\n');
     
             case 'thickness_gradient'  % unrefine some areas that are very flat, such as the large ice shelves   
@@ -156,30 +153,25 @@ if isempty(FdesiredEleSize)
                 [Dhx,Dhy] = gradient(h,x,y);
                 Dh = 0.5*(Dhx+Dhy);
                 % do some smoothing
-                Dh = imgaussfilt(abs(Dh),'FilterSize',101);
-                I = find(Dh<0.005 & Mask==3);
-                desiredEleSize(I) = max(desiredEleSize(I),10e3); % 10 km resolution for floating regions with low thickness gradient
+                Dh = imgaussfilt(abs(Dh),'FilterSize',201);
+                I = find(Dh<0.005 & (Mask==3 | Mask==0));
+                desiredEleSize(I) = max(desiredEleSize(I),meshmin*4); % lower resolution for floating regions with low thickness gradient
                 fprintf('Done.\n');
 
             case 'effective_strain_rate_gradient'
+
+                fprintf('  > Implementing effective strain rate gradients for desiredEleSize matrix...');
                 
-                Uafile = "/mnt/md0/Ua/cases/ANT/ANT_Inverse/ANT_Inverse_1035/ANT_Inverse_1035-RestartFile.mat"; % file from Ua inversion to obtain velocities
-                if exist(Uafile,"file")
-                    fprintf('  > Implementing effective strain rate gradients for desiredEleSize matrix...');
-                    tmp = load(Uafile,"CtrlVarInRestartFile","MUA","F");
-                    [~,~,~,ErrorProxy]=CalcHorizontalNodalStrainRates(tmp.CtrlVarInRestartFile,tmp.MUA,tmp.F.ub,tmp.F.vb); % the next 4 lines are taken from Ua function NewDesiredEleSizesAndElementsToRefineOrCoarsen2.m
-                    [dfdx,dfdy]=calcFEderivativesMUA(ErrorProxy,tmp.MUA);
-                    [dfdx,dfdy]=ProjectFintOntoNodes(tmp.MUA,dfdx,dfdy);
-                    ErrorProxy=sqrt(dfdx.*dfdx+dfdy.*dfdy);
-                    I = ErrorProxy > 1e-6;
-                    desiredEleSize(I) = min(desiredEleSize(I),meshmin);
-
-                else
-                    fprintf('  > !!! Uafile %s does not exist. Skip implementing effective strain rate gradients for desiredEleSize matrix!!!',Uafile);
-
-                end
-
-                
+                % calc effective strain rate
+                [dudx,dudy] = gradient(Fus(X,Y),x,y);
+                [dvdx,dvdy] = gradient(Fvs(X,Y),x,y);
+                e=real(sqrt(dudx.^2+dvdy.^2+(dudy+dvdx).^2/2));
+                % do some smoothing
+                e = imgaussfilt(abs(e),'FilterSize',501);
+                I = find(e>0.03);
+                desiredEleSize(I) = min(desiredEleSize(I),meshmin);
+                         
+                fprintf('Done.\n');
                 
             otherwise
                 error('unkown case \n');

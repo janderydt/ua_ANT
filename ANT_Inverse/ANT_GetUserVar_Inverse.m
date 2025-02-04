@@ -46,7 +46,7 @@ UserVar.NameOfRestartFiletoRead = UserVar.Experiment + "-RestartFile.mat";
 % Density
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
-    case {2000,2009,2014,2018}
+    case {2000,2009,2014,2018,2020}
         UserVar.DensityInterpolant = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.Geometry)+"_EXTRUDED.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
@@ -155,7 +155,7 @@ UserVar.Velocity = RunTable{ind,"Velocity"};
 switch UserVar.Velocity
     case 2000
         UserVar.VelocityInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat";
-    case {2009,2014,2018} 
+    case {2009,2014,2018,2020} 
         UserVar.VelocityInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_"+num2str(UserVar.Velocity)+"-"+num2str(UserVar.Velocity+1)+"_MeaSUREs_ITSLIVE_Velocities.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
@@ -211,7 +211,7 @@ end
 %% Read geometry interpolants from Runtable
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
-    case {2000,2009,2014,2018}
+    case {2000,2009,2014,2018,2020}
         UserVar.GeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.Geometry)+"_EXTRUDED.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
@@ -261,7 +261,7 @@ UserVar.Inverse.logAGlen.ga = RunTable{ind,"gaA"};
 %% Read geometry interpolants from Runtable
 UserVar.Geometry = RunTable{ind,"startGeometry"};
 switch UserVar.Geometry
-    case {2000,2009,2014,2018}
+    case {2000,2009,2014,2018,2020}
         UserVar.GeometryInterpolants = UserVar.datafolder+"ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.Geometry)+"_EXTRUDED.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Geometry flag in RunTable.']);
@@ -275,7 +275,7 @@ UserVar.Velocity = RunTable{ind,"Velocity"};
 switch UserVar.Velocity
     case 2000
         UserVar.VelocityInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat";
-    case {2009,2014,2018} 
+    case {2009,2014,2018,2020} 
         UserVar.VelocityInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_"+num2str(UserVar.Velocity)+"-"+num2str(UserVar.Velocity+1)+"_MeaSUREs_ITSLIVE_Velocities.mat";
     otherwise
         error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
@@ -326,7 +326,7 @@ if RunTable{ind,"startAglen"} > 0
             UserVar.casefolder+"/"+string(UserVar.Domain)+"_Inverse_"+string(RunTable{ind,"ExpID"})+...
             "/"+UserVar.NameOfFileForReadingAGlenEstimate);
     end 
-elseif RunTable{ind,"startAGlen"} == -9999
+elseif RunTable{ind,"startAglen"} == -9999
     UserVar.Inverse.startAGlen = -9999;
     UserVar.NameOfFileForReadingAGlenEstimate="";  
 else

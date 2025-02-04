@@ -1,4 +1,4 @@
-function [Ind,NearestPoints] = ShiftFront(p, coo, FdesiredEleSize)
+function [Ind,NearestPoints] = Node_to_face_distance(p, coo, FdesiredEleSize)
 
 %INPUTS
 % p: icefront 1, to be adjusted
