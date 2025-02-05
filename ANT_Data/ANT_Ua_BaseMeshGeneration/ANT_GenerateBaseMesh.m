@@ -32,19 +32,19 @@ MeshRefinementCriteria = ["speed","floatation","thickness_gradient","effective_s
 % You can select any combination; the criteria will be applied in the order in which they appear in the array
 
 velocityfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
-% This file contains velocity interpolants; the names of the interpolants 
-% are expect to be 
-% Fus: x velocity at the surface, 
-% Fvs: y velocity at the surface, 
-% Fxerr: velocity error in the x direction, 
-% Fyerr: velocity error in the y direction
+% This file contains velocity interpolants needed for the "speed" and 
+% "effective_strain_rate_gradient" criteria. The names of the required 
+% interpolants are expect to be 
+% > Fus: x velocity at the surface, 
+% > Fvs: y velocity at the surface, 
 
 geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXTRUDED";
-% This file contains geometry interpolants; the names of the interpolants 
+% This file contains geometry interpolants, needed for the "floatation" and 
+% "thickness_gradient" criteria. The names of the required interpolants 
 % are expect to be 
-% Fs: surface in meters above sea level, 
-% Fb: draft in meters above sea level, i.e. negative below sea level 
-% Fmask: mask with 0=ocean, 1=ice-free land, 2=grounded ice, 3=floating ice
+% > Fs: surface in meters above sea level, 
+% > Fb: draft in meters above sea level, i.e. negative below sea level 
+% > Fmask: mask with 0=ocean, 1=ice-free land, 2=grounded ice, 3=floating ice
 
 %% -----------------------------------------------------------------------%%
 %% -----------------------------------------------------------------------%%

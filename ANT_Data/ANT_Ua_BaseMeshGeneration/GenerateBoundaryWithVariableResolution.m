@@ -128,6 +128,7 @@ if isempty(FdesiredEleSize)
                 fprintf('Done.\n');
     
             case 'floatation' % floating areas have meshmin km resolution or more
+
                 fprintf('  > Implementing floatation for desiredEleSize matrix...');
                 if isempty(Fmask)
                     load(geometryfile,"Fmask");
@@ -137,7 +138,8 @@ if isempty(FdesiredEleSize)
                 desiredEleSize((Mask==3 | Mask==0) & desiredEleSize>2*meshmin) = 2*meshmin; % meshmin km resolution for ice shelves
                 fprintf('Done.\n');
     
-            case 'thickness_gradient'  % unrefine some areas that are very flat, such as the large ice shelves   
+            case 'thickness_gradient'  % unrefine some areas that are very flat, such as the large ice shelves 
+                
                 fprintf('  > Implementing thickness gradients for desiredEleSize matrix...');
                 if isempty(Fmask)
                     load(geometryfile,"Fmask");
