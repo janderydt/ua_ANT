@@ -60,8 +60,6 @@ load(froot_data+"Antarctica_IceFronts/icemask_composite_CGreene_2022.mat");
 year = floor(year);
 year = year(:)'; % need row format
 
-figure; hold on;
-
 % assemble ice front locations for different years 
 FdesiredEleSize = [];
 
@@ -88,10 +86,10 @@ for ii=1:numel(years_to_include)
     icefront(ii).x = fx(nx);
     icefront(ii).y = fy(ny);
 
-    figure(111); hold on;
-    plot(xtmp,ytmp);
-    plot(icefront(ii).x,icefront(ii).y);
-    icefront(ii).year = year(I(1));
+    % figure(111); hold on;
+    % plot(xtmp,ytmp);
+    % plot(icefront(ii).x,icefront(ii).y);
+    % icefront(ii).year = year(I(1));
 
     fprintf("Done.\n");
     fprintf("======================================\n");
@@ -223,6 +221,7 @@ end
 for kk=1:2
 if numel(years_to_include)>1
 
+
     years_to_compare = flipdim(nchoosek([1:numel(years_to_include)],2),2);
     
     for yr=1:size(years_to_compare,1)
@@ -298,14 +297,17 @@ if numel(years_to_include)>1
         icefront(yr2).y_vards = p(ip,2);        
         icefront(yr2).mask = mask(ip);
 
-        fprintf("Done %s.\n",string(kk));
-        if kk==2
-            fprintf("======================================\n");
-        end
+       
+        
         
     end
 
 end
+
+fprintf("======================================\n");
+fprintf("Done iteration %s.\n",string(kk));
+fprintf("======================================\n");
+
 end
 
 %% remove self-intersecting elements
