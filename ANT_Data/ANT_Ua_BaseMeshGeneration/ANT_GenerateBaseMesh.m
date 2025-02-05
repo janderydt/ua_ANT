@@ -248,10 +248,11 @@ if numel(years_to_include)>1
             mask = [mask(1:Ind(ii)) NaN mask(Ind(ii)+1:end)];
             Ind = Ind+1;
         end
-        
-        icefront(yr1).x_vards = p(:,1);
-        icefront(yr1).y_vards = p(:,2);        
-        icefront(yr1).mask = mask;
+
+        [~,ip,~] = unique(p,'rows','stable');
+        icefront(yr1).x_vards = p(ip,1);
+        icefront(yr1).y_vards = p(ip,2);        
+        icefront(yr1).mask = mask(ip);
 
         % And the other way around:
         p = [icefront(yr2).x_vards(:) icefront(yr2).y_vards(:)];
@@ -269,9 +270,10 @@ if numel(years_to_include)>1
             Ind = Ind+1;
         end
         
-        icefront(yr2).x_vards = p(:,1);
-        icefront(yr2).y_vards = p(:,2);
-        icefront(yr2).mask = mask;
+        [~,ip,~] = unique(p,'rows','stable');
+        icefront(yr2).x_vards = p(ip,1);
+        icefront(yr2).y_vards = p(ip,2);        
+        icefront(yr2).mask = mask(ip);
 
         fprintf("Done %s.\n",string(kk));
         if kk==2
