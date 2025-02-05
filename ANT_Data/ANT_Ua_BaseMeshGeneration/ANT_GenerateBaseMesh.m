@@ -33,15 +33,15 @@ MeshRefinementCriteria = ["speed","floatation","thickness_gradient","effective_s
 
 velocityfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
 % This file contains velocity interpolants needed for the "speed" and 
-% "effective_strain_rate_gradient" criteria. The names of the required 
-% interpolants are expect to be 
+% "effective_strain_rate_gradient" criteria, and if ExtrudeMesh=True.
+% The names of the required interpolants are expect to be 
 % > Fus: x velocity at the surface, 
 % > Fvs: y velocity at the surface, 
 
 geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXTRUDED";
 % This file contains geometry interpolants, needed for the "floatation" and 
-% "thickness_gradient" criteria. The names of the required interpolants 
-% are expect to be 
+% "thickness_gradient" refinement criteria. The names of the required 
+% interpolants are expect to be 
 % > Fs: surface in meters above sea level, 
 % > Fb: draft in meters above sea level, i.e. negative below sea level 
 % > Fmask: mask with 0=ocean, 1=ice-free land, 2=grounded ice, 3=floating ice
@@ -349,8 +349,7 @@ if ExtrudeMesh
     CtrlVar.GLds = meshmin*4; 
     [x,y,~,~] = Smooth2dPos(x,y,CtrlVar);
     
-    vfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
-    load(vfile,"Fus","Fvs");
+    load(velocityfile,"Fus","Fvs");
     N=5;
     xu = Fus.GridVectors{1}; yu = Fus.GridVectors{2}; 
     xu=xu(1:N:end); yu=yu(1:N:end);
