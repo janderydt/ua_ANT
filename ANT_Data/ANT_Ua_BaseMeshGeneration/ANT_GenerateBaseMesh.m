@@ -2,12 +2,6 @@ function ANT_GenerateBaseMesh
 
 warning('off','all');
 
-velocityfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
-%velocityfile = "/mnt/md0/Ua/cases/ANT/ANT_Inverse/ANT_Inverse_1035/ANT_Inverse_1035-RestartFile.mat";
-%velocityfile = "../ANT_Interpolants/GriddedInterpolants_2018-2019_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
-%geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXTRUDED";
-geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXTRUDED";
-
 % This function generates boundary and internal coordinates for Antarctica,
 % based on calving front outlines from C. Greene et al. (2022) for years 
 % specified below. You can choose multiple years, in which case you need to
@@ -18,12 +12,42 @@ geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXT
 % refinement criteria are defined then a mesh with uniform resolution 
 % meshav is produced.
 
-years_to_include = [2000 2009 2014 2020];
+%% -----------------------------------------------------------------------%%
+%% USER VARIABLES
+%% -----------------------------------------------------------------------%%
+
+years_to_include = [2000 2009 2014 2020]; % an array of doubles
+
 ExtrudeMesh = 1;
-VariableBoundaryResolution = 1;
-meshmin = 1.5e3;
-meshav = 10e3;
-meshmax = 100e3;
+
+VariableBoundaryResolution = 1; % if True then the resolution at the 
+% boundary is adjusted to be consistent with the refinement criteria
+
+meshmin = 1.5e3; % minimum mesh size in meters
+meshav = 10e3; % average mesh size in meters
+meshmax = 100e3; % maximum mesh size in meters
+
+MeshRefinementCriteria = ["speed","floatation","thickness_gradient","effective_strain_rate_gradient"]; 
+% String array with valid entries "speed", "floatation", "thickness_gradient" or "effective_strain_rate_gradient".
+% You can select any combination; the criteria will be applied in the order in which they appear in the array
+
+velocityfile = "../ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED";
+% This file contains velocity interpolants; the names of the interpolants 
+% are expect to be 
+% Fus: x velocity at the surface, 
+% Fvs: y velocity at the surface, 
+% Fxerr: velocity error in the x direction, 
+% Fyerr: velocity error in the y direction
+
+geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXTRUDED";
+% This file contains geometry interpolants; the names of the interpolants 
+% are expect to be 
+% Fs: surface in meters above sea level, 
+% Fb: draft in meters above sea level, i.e. negative below sea level 
+% Fmask: mask with 0=ocean, 1=ice-free land, 2=grounded ice, 3=floating ice
+
+%% -----------------------------------------------------------------------%%
+%% -----------------------------------------------------------------------%%
 
 if numel(years_to_include)>1 & ExtrudeMesh == 0
         error("This script only works with multiple years and internal boundaries if you extrude the mesh");
@@ -78,8 +102,7 @@ for ii=1:numel(years_to_include)
         fprintf("Sampling Boundary at variable resolution...\n")
     
         [xtmp,ytmp,FdesiredEleSize] = GenerateBoundaryWithVariableResolution(velocityfile,geometryfile,icefront(ii).x,icefront(ii).y,...
-            FdesiredEleSize,{'speed','floatation','thickness_gradient','effective_strain_rate_gradient'},...
-            meshmin,meshmax);
+            FdesiredEleSize,MeshRefinementCriteria,meshmin,meshmax);
 
         fprintf("Done.\n");
         fprintf("======================================\n");

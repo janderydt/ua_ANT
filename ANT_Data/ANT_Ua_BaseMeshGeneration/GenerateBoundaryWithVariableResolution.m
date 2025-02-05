@@ -7,9 +7,6 @@ function [xB,yB,FdesiredEleSize] = GenerateBoundaryWithVariableResolution(veloci
 % gridded interpolant will be constructed, based on a range of criteria
 % such as speed, floatation, thickness_gradient etc, defined in elesizemetric.
 
-% elesizemetric = {'speed','floatation','thickness_gradient'}; or any
-% combination thereof
-
 persistent Fus Fvs Fmask;
 
 if nargin < 2
@@ -24,7 +21,8 @@ else
 end
 
 if nargin < 4
-    elesizemetric = {'speed','floatation','thickness_gradient','effective_strain_rate_gradient'}; % any combination of {speed, floatation, thickness_gradient, effective_strain_rate_graident}
+    elesizemetric = ["speed","floatation","thickness_gradient","effective_strain_rate_gradient"]; 
+    % any combination of {speed, floatation, thickness_gradient, effective_strain_rate_graident}
 end
 
 if nargin < 5
@@ -65,7 +63,7 @@ switch geometry
         yB = linspace(y(1),y(end),ny);
         boundary = [xB(1)+0*yB(2:end) xB(1:end-1) xB(end)+0*yB(2:end) flipdim(xB(1:end),2);...
             yB(1:end-1) yB(end)+0*xB(2:end) flipdim(yB(2:end),2) yB(1)+0*xB(1:end)]';
-        elesizemetric = {'checkerboard'};
+        elesizemetric = "checkerboard";
     case 'antarctica'
         boundary = MeshBoundaryCoordinates;
     case 'user'
@@ -83,7 +81,7 @@ if isempty(FdesiredEleSize)
     
     for ii=1:numel(elesizemetric)
 
-        metric = elesizemetric{ii};
+        metric = elesizemetric(ii);
     
         switch metric
             case 'checkerboard'
