@@ -18,7 +18,7 @@ switch char(BaseMesh)
 	    UserVar.BaseMesh.BCs = froot + "BoundaryCoordinates_1996_v2.mat";
         UserVar.BaseMesh.Mesh = froot + "MeshFileAdapt_Ele159177_Nod3.mat";
         UserVar.BaseMesh.FixedBoundaryPoints = froot + "FixedBoundaryPoints_1996_v2.mat";
-    case {'AMUND_2000_2009_2014_2020_meshmin3000_meshmax100000_refined'}
+    case {'AMUND_2000_2009_2014_2020_meshmin1500_meshmax100000_refined'}
     % adjust and copy mesh files
 	    UserVar.BaseMesh.BCs = UserVar.datafolder+"ANT_Ua_BaseMeshGeneration/AMUND_meshboundarycoordinates_"+erase(BaseMesh,"AMUND_")+...
             "_extrudemesh1_variableboundaryres1.mat";

@@ -25,15 +25,15 @@ RunTable = ANT_ReadWritetable(UserVar,UserVar.Table,[],'read');
 
 for ind=1:size(X,1)
 
-    startMesh = "2000_2009_2014_2018_meshmin3000_meshmax100000_refined";
+    startMesh = "AMUND_2000_2009_2014_2020_meshmin1500_meshmax100000_refined";
 
-    m = round(X.m(ind)*100)/100;
-    n = round(X.n(ind)*100)/100; 
-    gsC = round(X.gsC(ind)*10)/10;         %gsC
-    gsA = round(X.gsA(ind)*10)/10;         %gsA
-    gaC = round(X.gaC(ind)*10)/10;         %gaC
-    gaA = round(X.gaA(ind)*10)/10;         %gaA
-    dhdt_err = round(X.dhdt_err(ind)*1000)/1000;
+    m = round(X.m(ind)*1e4)/1e4;
+    n = round(X.n(ind)*1e4)/1e4; 
+    gsC = round(X.gsC(ind)*1e4)/1e4;         %gsC
+    gsA = round(X.gsA(ind)*1e4)/1e4;         %gsA
+    gaC = round(X.gaC(ind)*1e4)/1e4;         %gaC
+    gaA = round(X.gaA(ind)*1e4)/1e4;         %gaA
+    dhdt_err = round(X.dhdt_err(ind)*1e4)/1e4;
 
     taub = 80;  
     ub = 100;%X(ind,6);
@@ -56,7 +56,7 @@ for ind=1:size(X,1)
         if ind == 1
             UserVar2.type = "Inverse";
             UserVar2.home = pwd; 
-            UserVar2.Table = "RunTable_sauron_FixPoint.csv";
+            UserVar2.Table = "RunTable_C23000100_FixPoint.csv";
             RunTable_FixPoint = ANT_ReadWritetable(UserVar2,UserVar2.Table,[],'read');
             % scan table for ExpID, m and n
             ExpID_FixPoint = RunTable_FixPoint{:,'ExpID'};
@@ -66,8 +66,8 @@ for ind=1:size(X,1)
         [~,Ind] = min(hypot(m_FixPoint-m,n_FixPoint-n));
         startC = ExpID_FixPoint(Ind);
         startAGlen = 0;
-        iterations = "15000+1000";
-        spinupyears = "1";
+        iterations = "10000+10000";
+        spinupyears = "3";
         invertfor = "-logC-logA-";
 
      elseif GradientCalc == "Adjoint" && (Enrich == 1 || UseCatalogue == 1)
@@ -111,7 +111,7 @@ for ind=1:size(X,1)
         invertfor = "-logC-";
     end
 
-    Newrow = {'ANT_nsmbl',...               %Domain
+    Newrow = {'AMUND_nsmbl',...             %Domain
         0,...                               %pgid
         0,...                               %ExpID
         0,...                               %Submitted

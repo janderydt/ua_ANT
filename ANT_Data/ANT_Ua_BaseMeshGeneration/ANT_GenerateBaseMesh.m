@@ -297,9 +297,6 @@ if numel(years_to_include)>1
         icefront(yr2).y_vards = p(ip,2);        
         icefront(yr2).mask = mask(ip);
 
-       
-        
-        
     end
 
 end

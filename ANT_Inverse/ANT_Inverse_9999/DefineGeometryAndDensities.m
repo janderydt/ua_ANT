@@ -61,7 +61,7 @@ else
             rho = Frho(MUA.coordinates(:,1),MUA.coordinates(:,2));
             clearvars Frho;
         end    
-        %save(filename_geometryfields,"B","b","S","s","rho");
+        save(filename_geometryfields,"B","b","S","s","rho");
         fprintf('done.\n');
         fprintf('Used geometry interpolants from %s.\n',UserVar.GeometryInterpolants);
     else

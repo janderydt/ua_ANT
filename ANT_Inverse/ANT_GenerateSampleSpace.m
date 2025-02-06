@@ -11,7 +11,7 @@ SlidingLaw = "Weertman";
 SampleSize = 1000;
 Enrich = 0; % enriches the existing Latin Hypercube
 EnrichSampleSize = 180;
-UseCatalogueOfFinishedSimulations=1;
+UseCatalogueOfFinishedSimulations=0;
 
 Input.Name = 'Parameter array for inverse simulations';
 ind = 1;
@@ -42,8 +42,8 @@ switch GradientCalc
         Input.Marginals(ind).Name = 'gaC';
         %Input.Marginals(ind).Parameters = log10([1 100]);
         %Input.Marginals(ind).Bounds = log10([1 100]);
-        Input.Marginals(ind).Parameters = [0 (log(200)-log(0.1))/log(2)];
-        Input.Marginals(ind).Bounds = [0 (log(200)-log(0.1))/log(2)];
+        Input.Marginals(ind).Parameters = [0 (log(50)-log(0.1))/log(2)];
+        Input.Marginals(ind).Bounds = [0 (log(50)-log(0.1))/log(2)];
         ind = ind + 1;
         
         Input.Marginals(ind).Name = 'gaA';
@@ -75,8 +75,8 @@ switch GradientCalc
         
         %% Ice Rheology
         Input.Marginals(ind).Name = 'n';
-        Input.Marginals(ind).Parameters = [2 4];
-        Input.Marginals(ind).Bounds = [2 4];
+        Input.Marginals(ind).Parameters = [2 5];
+        Input.Marginals(ind).Bounds = [2 5];
         %Input.Marginals(ind).Moments = [0];
         %ind = ind + 1;
         
