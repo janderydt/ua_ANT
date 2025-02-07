@@ -36,7 +36,7 @@ NameOfFiletoRead="../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserV
 if exist(NameOfFiletoRead,"file")
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
     C = F.C; m = F.m;
-    UserVar.NameOfFileForReadingSlipperinessEstimate = "ANT_Inverse_"+string(UserVar.InverseC)+"_C-Estimate.mat";
+    UserVar.NameOfFileForReadingSlipperinessEstimate = UserVar.Domain+"_Inverse_"+string(UserVar.InverseC)+"_C-Estimate.mat";
     save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimate,"MUA","C","m");
     UserVar.SlidingLaw = CtrlVarInRestartFile.SlidingLaw;
 else
@@ -52,7 +52,7 @@ NameOfFiletoRead="../ANT_Inverse/cases/"+UserVar.Domain+"_Inverse_"+string(UserV
 if exist(NameOfFiletoRead,"file")
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
     AGlen = F.AGlen; n = F.n;
-    UserVar.NameOfFileForReadingAGlenEstimate = "ANT_Inverse_"+string(UserVar.InverseA)+"_AGlen-Estimate.mat";
+    UserVar.NameOfFileForReadingAGlenEstimate = UserVar.Domain+"_Inverse_"+string(UserVar.InverseA)+"_AGlen-Estimate.mat";
     save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,"MUA","AGlen","n");
 else
     error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy AGlen field: "+NameOfFiletoRead);

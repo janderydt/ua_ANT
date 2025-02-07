@@ -2,7 +2,7 @@ function Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterp
 
 persistent Fus Fvs Fxerr Fyerr Fsource Frho Fb Fs
 
-addpath("../ANT_HelperFunctions/");
+%addpath("../ANT_HelperFunctions/");
 
 % This function extrudes surface velocities, ice geometry (surface and draft), 
 % densities or any other scalar quantity from the present-day ice edge of Antarctica along flowlines
@@ -10,8 +10,6 @@ addpath("../ANT_HelperFunctions/");
 % C. Greene
 % (https://github.com/chadagreene/ice-shelf-geometry/blob/main/code/flow_dem_extend.m).
 
-%Velinterpolantfile = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities";
-%Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jan-2000";
 if nargin==0
     Velinterpolantfile = "GriddedInterpolants_2009-2010_MeaSUREs_ITSLIVE_Velocities";
     Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2009";
@@ -26,13 +24,13 @@ end
 
 if nargin==2
     ScalarInterpolant = [];
-    CreateGeotiff = 1;
+    CreateGeotiff = 0;
     fields_to_extrude = '-v-geom-';
 end
 
 if nargin==3
     fields_to_extrude = '-scalar-';
-    CreateGeotiff = 1;
+    CreateGeotiff = 0;
 end
 
 if nargin==4

@@ -8,9 +8,9 @@ muk=0.5 ;
 tmp = load(CFile,'MUA','C','m');
 m = tmp.m(1);
 
-prefix_ExtrudedSlipperinessFileToRead = "ANT_Inverse_"+string(UserVar.InverseC)+"_C-Estimate";
+prefix_ExtrudedSlipperinessFileToRead = UserVar.Domain+"_Inverse_"+string(UserVar.InverseC)+"_C-Estimate";
 
-% check if we need to extrude AGlen by comparing the current mesh with the mesh from the inversion
+% check if we need to extrude C by comparing the current mesh with the mesh from the inversion
 if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
 
     % which nodes are included in the original mesh and what are the corresponding node ids?
@@ -35,9 +35,11 @@ if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
         % set values outside original boundary to zero
         Ind = find(~inpoly2([X_r(:) Y_r(:)],[tmp.MUA.Boundary.x(:) tmp.MUA.Boundary.y(:)]));
         C_r(Ind) = 0;
-        % define gridded interpolant of original AGlen
+        % define gridded interpolant of original C
         FC_r = griddedInterpolant(X_r,Y_r,C_r);
-        Create_ExtrudedFields_GriddedInterpolants([],[],FC_r,0,"-scalar-"+prefix_ExtrudedSlipperinessFileToRead); clearvars FC_r;
+        Velinterpolantfile = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat";
+        Geominterpolantfile = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000.mat";
+        Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,FC_r,0,"-scalar-"+prefix_ExtrudedSlipperinessFileToRead); clearvars FC_r;
     end
 
     fprintf("Using C from file %s.\n",prefix_ExtrudedSlipperinessFileToRead+"_EXTRUDED.mat");

@@ -1,7 +1,6 @@
 function vg = ExtrudeField(x,y,vx,vy,x_orig,y_orig,v_orig,step,nsteps)
 
 % Adapted from Chad Greene
- 
 [X,Y] = meshgrid(x_orig,y_orig);
 
 perim = bwperim(isfinite(v_orig));
@@ -15,8 +14,8 @@ clear x y vx vy X Y
 % Remove empty entries
 IndEmpty = find(cellfun(@isempty,XY));
 XY(IndEmpty)=[];
-xseed(IndEmpty)=[];
-yseed(IndEmpty)=[];
+% xseed(IndEmpty)=[];
+% yseed(IndEmpty)=[];
 row(IndEmpty)=[];
 col(IndEmpty)=[];
 

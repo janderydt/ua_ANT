@@ -16,16 +16,18 @@ warning('off','all');
 %% USER VARIABLES
 %% -----------------------------------------------------------------------%%
 
+regional_domain = 1; 
+
 years_to_include = [2000 2009 2014 2020]; % an array of doubles
 
-ExtrudeMesh = 1;
+ExtrudeMesh = 0;
 
 VariableBoundaryResolution = 1; % if True then the resolution at the 
 % boundary is adjusted to be consistent with the refinement criteria
 
-meshmin = 1.5e3; % minimum mesh size in meters
-meshav = 10e3; % average mesh size in meters
-meshmax = 100e3; % maximum mesh size in meters
+meshmin = 1e3; % minimum mesh size in meters
+meshav = 2e3; % average mesh size in meters
+meshmax = 10e3; % maximum mesh size in meters
 
 MeshRefinementCriteria = ["speed","floatation","thickness_gradient","effective_strain_rate_gradient"]; 
 % String array with valid entries "speed", "floatation", "thickness_gradient" or "effective_strain_rate_gradient".
@@ -49,13 +51,39 @@ geometryfile = "../ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000_EXT
 %% -----------------------------------------------------------------------%%
 %% -----------------------------------------------------------------------%%
 
-if numel(years_to_include)>1 & ExtrudeMesh == 0
-        error("This script only works with multiple years and internal boundaries if you extrude the mesh");
+if ~regional_domain & numel(years_to_include)>1 & ExtrudeMesh == 0
+   error("This script only works with multiple years and internal boundaries if you extrude the mesh");
+end
+
+if regional_domain & ExtrudeMesh == 1
+    warning("For a regional domain I cannot guarantee that ExtrudeMesh=1 works, so better to turn it off.");
+    ExtrudeMesh = 0;
+end
+
+if regional_domain
+    [boundary_file,folder] = uigetfile(".mat","Select file with regional domain.");
+    tmp=load(string(folder)+string(boundary_file));
+    if isfield(tmp,"MUA")
+        xouter = tmp.MUA.Boundary.x;
+        youter = tmp.MUA.Boundary.y;
+    elseif isfield(tmp,"MeshBoundaryCoordinates")
+        xouter = tmp.MeshBoundaryCoordinates(:,1);
+        youter = tmp.MeshBoundaryCoordinates(:,2);
+    else
+        error("Expect input file with MUA or MeshBoundaryCoordinates variable");
+    end
+    % make sure the outer boundary is not a closed loop
+    outer = unique([xouter(:) youter(:)],"rows","stable");
+    xouter = outer(:,1);
+    youter = outer(:,2);
 end
 
 % first we read data from Green et al. (2022)
+fprintf("======================================\n");
+fprintf("Reading C. Green data...");
 froot_data = getenv("froot_data");
 load(froot_data+"Antarctica_IceFronts/icemask_composite_CGreene_2022.mat");
+fprintf("Done. \n");
 
 year = floor(year);
 year = year(:)'; % need row format
@@ -66,7 +94,7 @@ FdesiredEleSize = [];
 for ii=1:numel(years_to_include)
 
     fprintf("======================================\n");
-    fprintf("Collecting initial ice front data for %s...",string(years_to_include(ii)));
+    fprintf("Assembling initial ice front data for year %s...",string(years_to_include(ii)));
 
     I = find(year == years_to_include(ii));
     xtmp = cx{I(1)}; ytmp = cy{I(1)};
@@ -75,21 +103,44 @@ for ii=1:numel(years_to_include)
     dJ = J(2:end)-J(1:end-1); [~,K]=max(dJ);
     xtmp =  xtmp(J(K)+1:J(K+1)-1);
     ytmp =  ytmp(J(K)+1:J(K+1)-1);
+
+    if regional_domain
+        IND=inpoly2([xtmp(:) ytmp(:)],[xouter(:) youter(:)]);
+        xtmp=xtmp(IND); ytmp=ytmp(IND);
+    end
+
+    % For 2020 (I didn't check any other years) the ice front of Thwaites
+    % Ice Shelf is rather different from what I expect it to be. In particular,
+    % the pinning points from Easter Thwaites are lost. I therefore replace
+    % C.Greene's data with data from C.Baumhoer's IceLines      
+    % (https://download.geoservice.dlr.de/icelines/files/)
+    if years_to_include(ii) == 2020
+
+        % extend for which data is replaced
+        xmin = -1666840;
+        xmax = -1485820;
+        ymin = -710532;
+        ymax = -281037;
+
+        %[xtmp,ytmp] = replace_Greene_with_Baumhoer(xtmp,ytmp,[xmin xmax ymin ymax],years_to_include(ii));
+
+    end
+
     % do some initial subsampling
-    [xtmp2,ytmp2] = Smooth2dPos(xtmp,ytmp,0.2,2e3);
+    [xtmp2,ytmp2] = Smooth2dPos(xtmp,ytmp,0.2,meshmin);
     % spline fit to smooth
     options = fitoptions('Method','SmoothingSpline',...
-        'SmoothingParam',0.05);
+        'SmoothingParam',0.1); % for less smoothing change 0.05 to a larger number, e.g. 0.1
     nx=[1:numel(xtmp2)]; ny=[1:numel(ytmp2)];
     [fx,gof,out]=fit(nx',xtmp2,"SmoothingSpline",options);
     [fy,gof,out]=fit(ny',ytmp2,"SmoothingSpline",options);
     icefront(ii).x = fx(nx);
     icefront(ii).y = fy(ny);
 
-    % figure(111); hold on;
-    % plot(xtmp,ytmp);
-    % plot(icefront(ii).x,icefront(ii).y);
-    % icefront(ii).year = year(I(1));
+    figure(111); hold on;
+    plot(xtmp,ytmp);
+    plot(icefront(ii).x,icefront(ii).y);
+    icefront(ii).year = year(I(1));
 
     fprintf("Done.\n");
     fprintf("======================================\n");
@@ -99,8 +150,13 @@ for ii=1:numel(years_to_include)
         % resample according to DesiredEleSize
         fprintf("Sampling Boundary at variable resolution...\n")
     
+        if regional_domain && isempty(FdesiredEleSize)
+            [xouter,youter,FdesiredEleSize] = GenerateBoundaryWithVariableResolution(velocityfile,geometryfile,xouter,youter,...
+                FdesiredEleSize,MeshRefinementCriteria,meshmin,meshmax);
+        end
+
         [xtmp,ytmp,FdesiredEleSize] = GenerateBoundaryWithVariableResolution(velocityfile,geometryfile,icefront(ii).x,icefront(ii).y,...
-            FdesiredEleSize,MeshRefinementCriteria,meshmin,meshmax);
+                            FdesiredEleSize,MeshRefinementCriteria,meshmin,meshmax);
 
         fprintf("Done.\n");
         fprintf("======================================\n");
@@ -219,6 +275,7 @@ end
 % line segment of yr2, this node is added to yr2
 % Run 2 iterations.
 for kk=1:2
+
 if numel(years_to_include)>1
 
 
@@ -319,8 +376,8 @@ for ii=1:numel(years_to_include)
         masktmp(segments(1,1):segments(1,2))=[];
         [~,~,segments]=selfintersect(xtmp,ytmp);
     end
-    icefront(ii).x_vards = xtmp(:);
-    icefront(ii).y_vards = ytmp(:);
+    icefront(ii).x_vards = xtmp(:)';
+    icefront(ii).y_vards = ytmp(:)';
     icefront(ii).mask = masktmp;
 end
 
@@ -393,7 +450,7 @@ if ExtrudeMesh
 
 else
 
-    if numel(years_to_include)==1
+    if ~regional_domain && numel(years_to_include)==1
 
         xouter = icefront(1).x_vards;
         youter = icefront(1).y_vards;
@@ -407,6 +464,7 @@ else
         %cv = csaps(t,xy,1e-12);
         %X=fnval(cv,t);
         %xouter = X(1,:); youter = X(2,:);
+        
 
     end
 
@@ -425,7 +483,7 @@ save("dump.mat");
 
 figure(111); plot(xouter,youter,'-k'); hold on;
 
-if ExtrudeMesh
+%if ExtrudeMesh
 
     fprintf("Assembling segments for internal constraints...");
 
@@ -552,11 +610,12 @@ if ExtrudeMesh
 
     fprintf("Restructuring data to appropriate mesh2d format...");
 
-    to_remove = [-1765 -1760 996 997.2; ...
-        -1725 -1724 984.8 985.4;...
-        -1452 -1450 788 790;...
-        -470.4 -470 1913.6 1914;...
-        800 801 2064 2064.5]*1e3; %xmin xmax ymin ymax
+    to_remove = [];
+    %-1765 -1760 996 997.2; ...
+    %    -1725 -1724 984.8 985.4;...
+    %    -1452 -1450 788 790;...
+    %    -470.4 -470 1913.6 1914;...
+    %    800 801 2064 2064.5]*1e3; %xmin xmax ymin ymax
 
     for ii=1:numel(years_to_include)
 
@@ -620,7 +679,7 @@ if ExtrudeMesh
     fprintf("Done.\n");
     fprintf("======================================\n");
 
-end
+%end
 
 %% Remove duplicate nodes and edges
 [node_new,~,IC] = unique(node,"rows","stable");
@@ -668,6 +727,8 @@ save("dump2.mat");
 % colormap(jet)
 % axis equal;
 % axis tight;
+
+
 
 part{1} = [1:numel(xouter)];
 

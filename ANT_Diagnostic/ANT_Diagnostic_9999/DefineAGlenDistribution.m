@@ -5,7 +5,7 @@ AGlenFile = UserVar.NameOfFileForReadingAGlenEstimate;
 tmp = load(AGlenFile,'MUA','AGlen','n'); % load results from inversion
 n = tmp.n(1);
 
-prefix_ExtrudedAGlenFileToRead = "ANT_Inverse_"+string(UserVar.InverseA)+"_AGlen-Estimate";
+prefix_ExtrudedAGlenFileToRead = UserVar.Domain+"_Inverse_"+string(UserVar.InverseA)+"_AGlen-Estimate";
 
 % check if we need to extrude AGlen by comparing the current mesh with the mesh from the inversion
 if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
@@ -34,7 +34,9 @@ if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
         AGlen_r(Ind) = 0;
         % define gridded interpolant of original AGlen
         FAGlen_r = griddedInterpolant(X_r,Y_r,AGlen_r);
-        Create_ExtrudedFields_GriddedInterpolants([],[],FAGlen_r,0,"-scalar-"+prefix_ExtrudedAGlenFileToRead); clearvars FAGlen_r;
+        Velinterpolantfile = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat";
+        Geominterpolantfile = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-2000.mat";
+        Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,FAGlen_r,0,"-scalar-"+prefix_ExtrudedAGlenFileToRead); clearvars FAGlen_r;
     end
 
     fprintf("Using AGlen from file %s.\n",prefix_ExtrudedAGlenFileToRead+"_EXTRUDED.mat");

@@ -28,8 +28,8 @@ if isempty(FC) & exist(CFile,"file")
     m1 = tmp.m(1);
     m2 = m; % new
 
-    if m1 ~= m2
-        velfile = UserVar.casefolder+"/"+erase(CFile,"_C-Estimate.mat")+"/"+strrep(CFile,"_C-Estimate.mat","-RestartFile_InverseCycle1.mat");
+    velfile = UserVar.casefolder+"/"+erase(CFile,"_C-Estimate.mat")+"/"+strrep(CFile,"_C-Estimate.mat","-RestartFile_InverseCycle1.mat");
+    if m1 ~= m2       
         fprintf("Rescaling C values from m=%s to m=%s using measured velocities from %s.\n",string(m1),string(m2),velfile);
         tmp = load(velfile,'MUA','Meas');
         [~,v1] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,0,hypot(tmp.Meas.us,tmp.Meas.vs));
@@ -37,6 +37,23 @@ if isempty(FC) & exist(CFile,"file")
         C = max((max(C+CtrlVar.Czero,CtrlVar.Cmin)).^(m2/m1).*(v1.^2+CtrlVar.SpeedZero^2).^((m1-m2)/(2*m1))-CtrlVar.Czero,CtrlVar.Cmin);
     end
 
+    % this script is typically used after a fixpoint inversion, and the
+    % resulting C field is used as an input to the adjoint inversion.
+    % If so, the C field will have short wavelength - high amplitude 
+    % variations, which we might not want to feed into the algorithm as a
+    % starting point for the adjoint. Here we apply a Helmholtz smoothing
+    % to remove the short wavelength variations
+    tmp = load(velfile,"UserVarInRestartFile");
+    if isfield(tmp.UserVarInRestartFile.Inverse,"GradientCalculation")
+        if tmp.UserVarInRestartFile.Inverse.GradientCalculation == "FixPoint"
+            L=5e3 ;  % Smoothing length scale 
+            [~,log10C_smooth]=HelmholtzEquation([],CtrlVar,MUA,1,L^2,log10(C),0); 
+            C = 10.^log10C_smooth;
+            C(C < CtrlVar.Cmin) = CtrlVar.Cmin; 
+            C(C > CtrlVar.Cmax) = CtrlVar.Cmax;
+        end   
+    end
+    
     save("C_interpolated.mat","CtrlVar","MUA","C");
 
     FC = scatteredInterpolant(MUA.coordinates(:,1),MUA.coordinates(:,2),C,'linear');

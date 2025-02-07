@@ -68,7 +68,7 @@ else
         rho = Frho(MUA.coordinates(:,1),MUA.coordinates(:,2));
         clearvars Frho;
         
-        %save(filename_GIgeometryfields,"B","b","S","s","rho");
+        save(filename_GIgeometryfields,"B","b","S","s","rho");
         fprintf('done.\n');
         fprintf('Used geometry interpolants from %s for grounded ice.\n',UserVar.GIGeometryInterpolants);
     else
@@ -77,7 +77,7 @@ else
 end
 
 rho(rho<100)=100;
-rho(rho>917)=917;
+rho(rho>917 | ~isfinite(rho))=917;
 
 %% where is the grounding line?
 h = s-b;
