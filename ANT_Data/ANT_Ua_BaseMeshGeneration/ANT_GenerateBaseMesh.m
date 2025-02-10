@@ -2,12 +2,20 @@ function ANT_GenerateBaseMesh
 
 warning('off','all');
 
-% This function generates boundary and internal coordinates for Antarctica,
-% based on calving front outlines from C. Greene et al. (2022) for years 
-% specified below. You can choose multiple years, in which case you need to
-% set ExtrudeMesh=1. The icefronts for different years will be imposed as internal
-% boundaries in the extruded mesh. This is probably only useful if you want to 
-% study calving processes. Mesh refinement is based on a number of criteria
+% This function generates a mesh with known calving front locations
+% as internal boundaries of a regional or circum-Antarctic domain. 
+% The internal constraints are based on calving front outlines from 
+% C. Greene et al. (2022) for years specified below. 
+% 
+% For a regional domain, you will be asked to specify a file containing 
+% either an existing MUA structure with MUA.Boundary the required boundary
+% or a file with a MeshBoundaryCoordinates file.
+% 
+% For a circum-Antarctic domain, you will need to set ExtrudeMesh=1. The 
+% icefronts for different years will be imposed as internal boundaries in 
+% the extruded mesh.
+% 
+% Mesh refinement is based on a number of criteria
 % that are specified in GenerateBoundaryWithVariableResolution.m. If no
 % refinement criteria are defined then a mesh with uniform resolution 
 % meshav is produced.
@@ -16,18 +24,19 @@ warning('off','all');
 %% USER VARIABLES
 %% -----------------------------------------------------------------------%%
 
-regional_domain = 1; 
+regional_domain = 0; % if False then a circum-Antarctic mesh will be generated
+    % if True then the use will be asked to provide a domain boundary 
 
 years_to_include = [2000 2009 2014 2020]; % an array of doubles
 
-ExtrudeMesh = 0;
+ExtrudeMesh = 1;
 
 VariableBoundaryResolution = 1; % if True then the resolution at the 
 % boundary is adjusted to be consistent with the refinement criteria
 
-meshmin = 1e3; % minimum mesh size in meters
-meshav = 2e3; % average mesh size in meters
-meshmax = 10e3; % maximum mesh size in meters
+meshmin = 1.5e3; % minimum mesh size in meters
+meshav = 10e3; % average mesh size in meters
+meshmax = 100e3; % maximum mesh size in meters
 
 MeshRefinementCriteria = ["speed","floatation","thickness_gradient","effective_strain_rate_gradient"]; 
 % String array with valid entries "speed", "floatation", "thickness_gradient" or "effective_strain_rate_gradient".
@@ -104,25 +113,27 @@ for ii=1:numel(years_to_include)
     xtmp =  xtmp(J(K)+1:J(K+1)-1);
     ytmp =  ytmp(J(K)+1:J(K+1)-1);
 
+    % for regional domain: only keep section of calving front within the
+    % bounds of the regional domain
     if regional_domain
         IND=inpoly2([xtmp(:) ytmp(:)],[xouter(:) youter(:)]);
         xtmp=xtmp(IND); ytmp=ytmp(IND);
     end
 
     % For 2020 (I didn't check any other years) the ice front of Thwaites
-    % Ice Shelf is rather different from what I expect it to be. In particular,
+    % Ice Shelf is rather different from what I expect it to be. Most notably,
     % the pinning points from Easter Thwaites are lost. I therefore replace
     % C.Greene's data with data from C.Baumhoer's IceLines      
     % (https://download.geoservice.dlr.de/icelines/files/)
     if years_to_include(ii) == 2020
 
-        % extend for which data is replaced
+        % data is ony replaced in this box (covers PIG, TG, Crosson, Dotson)
         xmin = -1666840;
         xmax = -1485820;
         ymin = -710532;
         ymax = -281037;
 
-        %[xtmp,ytmp] = replace_Greene_with_Baumhoer(xtmp,ytmp,[xmin xmax ymin ymax],years_to_include(ii));
+        [xtmp,ytmp] = Replace_Greene_with_Baumhoer(xtmp,ytmp,[xmin xmax ymin ymax],years_to_include(ii));
 
     end
 
@@ -137,10 +148,10 @@ for ii=1:numel(years_to_include)
     icefront(ii).x = fx(nx);
     icefront(ii).y = fy(ny);
 
-    figure(111); hold on;
-    plot(xtmp,ytmp);
-    plot(icefront(ii).x,icefront(ii).y);
-    icefront(ii).year = year(I(1));
+    %figure(111); hold on;
+    %plot(xtmp,ytmp);
+    %plot(icefront(ii).x,icefront(ii).y);
+    %icefront(ii).year = year(I(1));
 
     fprintf("Done.\n");
     fprintf("======================================\n");
@@ -481,205 +492,201 @@ edge = [[1:nBoundary]' [2:nBoundary 1]'];
 
 save("dump.mat");
 
-figure(111); plot(xouter,youter,'-k'); hold on;
+%figure(111); plot(xouter,youter,'-k'); hold on;
 
-%if ExtrudeMesh
+fprintf("Assembling segments for internal constraints...");
 
-    fprintf("Assembling segments for internal constraints...");
-
-    for ii=1:numel(years_to_include)
-        icefront(ii).internalnodes=[];
-        kk=1; ll=1; mm=1; firstnan=0;
-        while kk<numel(icefront(ii).x_vards(:))
-            if ~isnan(icefront(ii).mask(kk))
-                firstnan=1;
-                icefront(ii).segment(ll).x(mm) = icefront(ii).x_vards(kk);
-                icefront(ii).segment(ll).y(mm) = icefront(ii).y_vards(kk);
-                icefront(ii).segment(ll).ind(mm) = kk;
-                mm=mm+1;
-            else
-                if firstnan
-                    ll=ll+1;
-                    mm=1;
-                    firstnan=0;
-                end
-            end
-            kk=kk+1;
-        end
-
-    end
-
-    fprintf("Done.\n");
-    fprintf("======================================\n");
-
-    fprintf("Checking for intersecting segments...");
-
-    pairs = nchoosek([1:numel(years_to_include)],2);
-
-    for ii=1:size(pairs,1)  
-        yr1 = pairs(ii,1); yr2 = pairs(ii,2);
-        for l1=1:numel(icefront(yr1).segment)
-            x1 = icefront(yr1).segment(l1).x(:)';
-            y1 = icefront(yr1).segment(l1).y(:)';
-            ind1 = icefront(yr1).segment(l1).ind(:)';
-            %plot(x1,y1,'-b');
-            for l2=1:numel(icefront(yr2).segment)
-                x2 = icefront(yr2).segment(l2).x(:)';
-                y2 = icefront(yr2).segment(l2).y(:)';
-                ind2 = icefront(yr2).segment(l2).ind(:)';
-                %plot(x2,y2,'-b');
-                [xi,yi,segind] = polyxpoly(x1',y1',x2',y2');
-                indi = [ind1(segind(:,1))' ind2(segind(:,2))'];
-
-                plot(xi,yi,'or');
-                
-                % reassemble line segments with intersection points at
-                % correct locations
-
-                if ~isempty(xi) & numel(x1)>1 & numel(x2)>1
-                    seg1=[]; seg2=[]; orig1=[]; orig2=[];
-                    for i=1:numel(xi)
-                        % check that xi is not too close to any of the
-                        % already existing nodes
-                        L1 = hypot(xi(i) - [x1(segind(i,1):segind(i,1)+1)],...
-                            yi(i)-[y1(segind(i,1):segind(i,1)+1)]);
-                        L2 = hypot(xi(i)-[x2(segind(i,2):segind(i,2)+1)],...
-                            yi(i)-[y2(segind(i,2):segind(i,2)+1)]);
-                        L = [L1(:); L2(:)];
-                        [minL,indL] = min(L);
-                        if minL<FdesiredEleSize(xi(i),yi(i))
-                            if indL==1
-                                xi(i) = x1(segind(i,1));
-                                yi(i) = y1(segind(i,1));
-                            elseif indL==2
-                                xi(i) = x1(min(segind(i,1),numel(x1)));
-                                yi(i) = y1(min(segind(i,1),numel(y1)));
-                            elseif indL==3
-                                xi(i) = x2(segind(i,2));
-                                yi(i) = y2(segind(i,2));
-                            elseif indL==4
-                                xi(i) = x2(min(segind(i,2),numel(x2)));
-                                yi(i) = y2(min(segind(i,2),numel(y2)));
-                            end
-                        end
-                        if i==1
-                            seg1(i).x = [x1(1:segind(i,1)),xi(i)];
-                            seg1(i).y = [y1(1:segind(i,1)),yi(i)];
-                            seg2(i).x = [x2(1:segind(i,2)),xi(i)];
-                            seg2(i).y = [y2(1:segind(i,2)),yi(i)];  
-                            orig1(i).x = [icefront(yr1).x_vards(1:indi(i,1)),xi(i)];
-                            orig1(i).y = [icefront(yr1).y_vards(1:indi(i,1)),yi(i)];
-                            orig2(i).x = [icefront(yr2).x_vards(1:indi(i,2)),xi(i)];
-                            orig2(i).y = [icefront(yr2).y_vards(1:indi(i,2)),yi(i)];
-                        else
-                            seg1(i).x = [x1(segind(i-1,1)+1:segind(i,1)),xi(i)];
-                            seg1(i).y = [y1(segind(i-1,1)+1:segind(i,1)),yi(i)];
-                            seg2(i).x = [x2(segind(i-1,2)+1:segind(i,2)),xi(i)];
-                            seg2(i).y = [y2(segind(i-1,2)+1:segind(i,2)),yi(i)];
-                            orig1(i).x = [icefront(yr1).x_vards(indi(i-1,1)+1:indi(i,1)),xi(i)];
-                            orig1(i).y = [icefront(yr1).y_vards(indi(i-1,1)+1:indi(i,1)),yi(i)];
-                            orig2(i).x = [icefront(yr2).x_vards(indi(i-1,2)+1:indi(i,2)),xi(i)];
-                            orig2(i).y = [icefront(yr2).y_vards(indi(i-1,2)+1:indi(i,2)),yi(i)];
-                        end
-                        plot([x1(segind(i,1)),xi(i),x1(segind(i,1)+1)],...
-                                [y1(segind(i,1)),yi(i),y1(segind(i,1)+1)],'x-b');
-                        plot([x2(segind(i,2)),xi(i),x2(segind(i,2)+1)],...
-                            [y2(segind(i,2)),yi(i),y2(segind(i,2)+1)],'+-g');
-                        % insert xi at correct place in original icefront 
-
-                    end  
-                    icefront(yr1).segment(l1).x = [seg1(:).x, x1(segind(end,1)+1:end)];
-                    icefront(yr1).segment(l1).y = [seg1(:).y, y1(segind(end,1)+1:end)];
-                    icefront(yr2).segment(l2).x = [seg2(:).x, x2(segind(end,2)+1:end)];
-                    icefront(yr2).segment(l2).y = [seg2(:).y, y2(segind(end,2)+1:end)];
-
-                    icefront(yr1).x_vards = [orig1(:).x, icefront(yr1).x_vards(indi(end,1)+1:end)];
-                    icefront(yr1).y_vards = [orig1(:).y, icefront(yr1).y_vards(indi(end,1)+1:end)];
-                    icefront(yr2).x_vards = [orig2(:).x, icefront(yr2).x_vards(indi(end,2)+1:end)];
-                    icefront(yr2).y_vards = [orig2(:).y, icefront(yr2).y_vards(indi(end,2)+1:end)];
-
-                    %plot(icefront(yr1).segment(l1).x,icefront(yr1).segment(l1).y,'-.m');
-                    %plot(icefront(yr2).segment(l2).x,icefront(yr2).segment(l2).y,'-xg');
-                end
+for ii=1:numel(years_to_include)
+    icefront(ii).internalnodes=[];
+    kk=1; ll=1; mm=1; firstnan=0;
+    while kk<numel(icefront(ii).x_vards(:))
+        if ~isnan(icefront(ii).mask(kk))
+            firstnan=1;
+            icefront(ii).segment(ll).x(mm) = icefront(ii).x_vards(kk);
+            icefront(ii).segment(ll).y(mm) = icefront(ii).y_vards(kk);
+            icefront(ii).segment(ll).ind(mm) = kk;
+            mm=mm+1;
+        else
+            if firstnan
+                ll=ll+1;
+                mm=1;
+                firstnan=0;
             end
         end
+        kk=kk+1;
     end
 
-    fprintf("Done.\n");
-    fprintf("======================================\n");
+end
 
-    fprintf("Restructuring data to appropriate mesh2d format...");
+fprintf("Done.\n");
+fprintf("======================================\n");
 
-    to_remove = [];
-    %-1765 -1760 996 997.2; ...
-    %    -1725 -1724 984.8 985.4;...
-    %    -1452 -1450 788 790;...
-    %    -470.4 -470 1913.6 1914;...
-    %    800 801 2064 2064.5]*1e3; %xmin xmax ymin ymax
+fprintf("Checking for intersecting segments...");
 
-    for ii=1:numel(years_to_include)
+pairs = nchoosek([1:numel(years_to_include)],2);
 
-        for kk=1:numel(icefront(ii).segment)
+for ii=1:size(pairs,1)  
+    yr1 = pairs(ii,1); yr2 = pairs(ii,2);
+    for l1=1:numel(icefront(yr1).segment)
+        x1 = icefront(yr1).segment(l1).x(:)';
+        y1 = icefront(yr1).segment(l1).y(:)';
+        ind1 = icefront(yr1).segment(l1).ind(:)';
+        %plot(x1,y1,'-b');
+        for l2=1:numel(icefront(yr2).segment)
+            x2 = icefront(yr2).segment(l2).x(:)';
+            y2 = icefront(yr2).segment(l2).y(:)';
+            ind2 = icefront(yr2).segment(l2).ind(:)';
+            %plot(x2,y2,'-b');
+            [xi,yi,segind] = polyxpoly(x1',y1',x2',y2');
+            indi = [ind1(segind(:,1))' ind2(segind(:,2))'];
 
-            newsegment = [icefront(ii).segment(kk).x(:), icefront(ii).segment(kk).y(:)];
+            plot(xi,yi,'or');
             
-            % points to remove
-            I = find(~inpoly2(newsegment,[xouter(:) youter(:)]));
-            for rr=1:size(to_remove,1)
-                Itmp = find(icefront(ii).segment(kk).x(:)>to_remove(rr,1) & ...
-                    icefront(ii).segment(kk).x(:)<to_remove(rr,2) & ...
-                    icefront(ii).segment(kk).y(:)>to_remove(rr,3) & ...
-                    icefront(ii).segment(kk).y(:)<to_remove(rr,4));
-                I = [I(:); Itmp(:)];
-            end
-            newsegment(I,:)=[];
+            % reassemble line segments with intersection points at
+            % correct locations
 
-            n = size(newsegment,1);
+            if ~isempty(xi) & numel(x1)>1 & numel(x2)>1
+                seg1=[]; seg2=[]; orig1=[]; orig2=[];
+                for i=1:numel(xi)
+                    % check that xi is not too close to any of the
+                    % already existing nodes
+                    L1 = hypot(xi(i) - [x1(segind(i,1):segind(i,1)+1)],...
+                        yi(i)-[y1(segind(i,1):segind(i,1)+1)]);
+                    L2 = hypot(xi(i)-[x2(segind(i,2):segind(i,2)+1)],...
+                        yi(i)-[y2(segind(i,2):segind(i,2)+1)]);
+                    L = [L1(:); L2(:)];
+                    [minL,indL] = min(L);
+                    if minL<FdesiredEleSize(xi(i),yi(i))
+                        if indL==1
+                            xi(i) = x1(segind(i,1));
+                            yi(i) = y1(segind(i,1));
+                        elseif indL==2
+                            xi(i) = x1(min(segind(i,1),numel(x1)));
+                            yi(i) = y1(min(segind(i,1),numel(y1)));
+                        elseif indL==3
+                            xi(i) = x2(segind(i,2));
+                            yi(i) = y2(segind(i,2));
+                        elseif indL==4
+                            xi(i) = x2(min(segind(i,2),numel(x2)));
+                            yi(i) = y2(min(segind(i,2),numel(y2)));
+                        end
+                    end
+                    if i==1
+                        seg1(i).x = [x1(1:segind(i,1)),xi(i)];
+                        seg1(i).y = [y1(1:segind(i,1)),yi(i)];
+                        seg2(i).x = [x2(1:segind(i,2)),xi(i)];
+                        seg2(i).y = [y2(1:segind(i,2)),yi(i)];  
+                        orig1(i).x = [icefront(yr1).x_vards(1:indi(i,1)),xi(i)];
+                        orig1(i).y = [icefront(yr1).y_vards(1:indi(i,1)),yi(i)];
+                        orig2(i).x = [icefront(yr2).x_vards(1:indi(i,2)),xi(i)];
+                        orig2(i).y = [icefront(yr2).y_vards(1:indi(i,2)),yi(i)];
+                    else
+                        seg1(i).x = [x1(segind(i-1,1)+1:segind(i,1)),xi(i)];
+                        seg1(i).y = [y1(segind(i-1,1)+1:segind(i,1)),yi(i)];
+                        seg2(i).x = [x2(segind(i-1,2)+1:segind(i,2)),xi(i)];
+                        seg2(i).y = [y2(segind(i-1,2)+1:segind(i,2)),yi(i)];
+                        orig1(i).x = [icefront(yr1).x_vards(indi(i-1,1)+1:indi(i,1)),xi(i)];
+                        orig1(i).y = [icefront(yr1).y_vards(indi(i-1,1)+1:indi(i,1)),yi(i)];
+                        orig2(i).x = [icefront(yr2).x_vards(indi(i-1,2)+1:indi(i,2)),xi(i)];
+                        orig2(i).y = [icefront(yr2).y_vards(indi(i-1,2)+1:indi(i,2)),yi(i)];
+                    end
+                    plot([x1(segind(i,1)),xi(i),x1(segind(i,1)+1)],...
+                            [y1(segind(i,1)),yi(i),y1(segind(i,1)+1)],'x-b');
+                    plot([x2(segind(i,2)),xi(i),x2(segind(i,2)+1)],...
+                        [y2(segind(i,2)),yi(i),y2(segind(i,2)+1)],'+-g');
+                    % insert xi at correct place in original icefront 
 
-            if n>1
-                
-                %plot(newsegment,'.--k');
+                end  
+                icefront(yr1).segment(l1).x = [seg1(:).x, x1(segind(end,1)+1:end)];
+                icefront(yr1).segment(l1).y = [seg1(:).y, y1(segind(end,1)+1:end)];
+                icefront(yr2).segment(l2).x = [seg2(:).x, x2(segind(end,2)+1:end)];
+                icefront(yr2).segment(l2).y = [seg2(:).y, y2(segind(end,2)+1:end)];
 
-                node = [node; newsegment];
-                edge = [edge; nBoundary + [[1:n-1]' [2:n]']];
-                nBoundary = nBoundary + n;     
-                
-            end
-  
-        end 
+                icefront(yr1).x_vards = [orig1(:).x, icefront(yr1).x_vards(indi(end,1)+1:end)];
+                icefront(yr1).y_vards = [orig1(:).y, icefront(yr1).y_vards(indi(end,1)+1:end)];
+                icefront(yr2).x_vards = [orig2(:).x, icefront(yr2).x_vards(indi(end,2)+1:end)];
+                icefront(yr2).y_vards = [orig2(:).y, icefront(yr2).y_vards(indi(end,2)+1:end)];
 
-        % remove self-interesections and duplicate boundary coordinates
-        tmp = [icefront(ii).x_vards(:) icefront(ii).y_vards(:)];
-        [~,~,segtmp] = selfintersect(tmp(:,1),tmp(:,2));
-
-        for kk=1:size(segtmp,1)
-            if years_to_include(ii)~=2018 && kk~=1
-                ind = [segtmp(kk,1)+1:segtmp(kk,2)-1];
-                tmp(ind,:)=nan;
+                %plot(icefront(yr1).segment(l1).x,icefront(yr1).segment(l1).y,'-.m');
+                %plot(icefront(yr2).segment(l2).x,icefront(yr2).segment(l2).y,'-xg');
             end
         end
-        for rr=1:size(to_remove,1)
-            Itmp = find(tmp(:,1)>to_remove(rr,1) & ...
-                tmp(:,1)<to_remove(rr,2) & ...
-                tmp(:,2)>to_remove(rr,3) & ...
-                tmp(:,2)<to_remove(rr,4));
-            tmp(Itmp,:) = nan;
-        end
-        tmp(isnan(tmp(:,1)),:)=[];
-        tmp = unique(tmp,"rows","stable");
-
-        %D=pdist2(tmp,tmp);
-        %D(D==0)=nan;
-        %min(D(:))
-
-        MeshBoundaryCoordinates.(['yr',num2str(years_to_include(ii))]) = tmp;
-
     end
-    
-    fprintf("Done.\n");
-    fprintf("======================================\n");
+end
 
-%end
+fprintf("Done.\n");
+fprintf("======================================\n");
+
+fprintf("Restructuring data to appropriate mesh2d format...");
+
+to_remove = [];
+%-1765 -1760 996 997.2; ...
+%    -1725 -1724 984.8 985.4;...
+%    -1452 -1450 788 790;...
+%    -470.4 -470 1913.6 1914;...
+%    800 801 2064 2064.5]*1e3; %xmin xmax ymin ymax
+%%
+for ii=1:numel(years_to_include)
+
+    for kk=1:numel(icefront(ii).segment)
+
+        newsegment = [icefront(ii).segment(kk).x(:), icefront(ii).segment(kk).y(:)];
+        
+        % points to remove
+        I = find(~inpoly2(newsegment,[xouter(:) youter(:)]));
+        for rr=1:size(to_remove,1)
+            Itmp = find(icefront(ii).segment(kk).x(:)>to_remove(rr,1) & ...
+                icefront(ii).segment(kk).x(:)<to_remove(rr,2) & ...
+                icefront(ii).segment(kk).y(:)>to_remove(rr,3) & ...
+                icefront(ii).segment(kk).y(:)<to_remove(rr,4));
+            I = [I(:); Itmp(:)];
+        end
+        newsegment(I,:)=[];
+
+        n = size(newsegment,1);
+
+        if n>1
+            
+            %plot(newsegment,'.--k');
+
+            node = [node; newsegment];
+            edge = [edge; nBoundary + [[1:n-1]' [2:n]']];
+            nBoundary = nBoundary + n;     
+            
+        end
+
+    end 
+
+    % remove self-interesections and duplicate boundary coordinates
+    tmp = [icefront(ii).x_vards(:) icefront(ii).y_vards(:)];
+    [~,~,segtmp] = selfintersect(tmp(:,1),tmp(:,2));
+
+    for kk=1:size(segtmp,1)
+        if kk~=1
+            ind = [segtmp(kk,1)+1:segtmp(kk,2)-1];
+            tmp(ind,:)=nan;
+        end
+    end
+    for rr=1:size(to_remove,1)
+        Itmp = find(tmp(:,1)>to_remove(rr,1) & ...
+            tmp(:,1)<to_remove(rr,2) & ...
+            tmp(:,2)>to_remove(rr,3) & ...
+            tmp(:,2)<to_remove(rr,4));
+        tmp(Itmp,:) = nan;
+    end
+    tmp(isnan(tmp(:,1)),:)=[];
+    tmp = unique(tmp,"rows","stable");
+
+    %D=pdist2(tmp,tmp);
+    %D(D==0)=nan;
+    %min(D(:))
+
+    MeshBoundaryCoordinates.(['yr',num2str(years_to_include(ii))]) = tmp;
+
+end
+
+fprintf("Done.\n");
+fprintf("======================================\n");
 
 %% Remove duplicate nodes and edges
 [node_new,~,IC] = unique(node,"rows","stable");
@@ -727,8 +734,6 @@ save("dump2.mat");
 % colormap(jet)
 % axis equal;
 % axis tight;
-
-
 
 part{1} = [1:numel(xouter)];
 

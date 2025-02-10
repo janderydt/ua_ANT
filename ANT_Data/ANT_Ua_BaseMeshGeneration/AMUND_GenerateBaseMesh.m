@@ -53,21 +53,16 @@ for yy=1:numel(years)
 
     MeshBoundaryCoordinates = [MUA.Boundary.x(:) MUA.Boundary.y(:)];
 
-    switch years(yy)
-        case "2000"
-            xOuter = MUA.Boundary.x(858:1064);
-            yOuter = MUA.Boundary.y(858:1064);
-        case "2009"
-            xOuter = MUA.Boundary.x(766:971);
-            yOuter = MUA.Boundary.y(766:971);
-        case "2014"
-            xOuter = MUA.Boundary.x(830:1036);
-            yOuter = MUA.Boundary.y(830:1036);
-        case "2020"
-            xOuter = MUA.Boundary.x(627:833);
-            yOuter = MUA.Boundary.y(627:833);
-    end
-
+    % coordinates of boundary points at eastern and western edge, used to
+    % delimit boundary along which fixed boundary conditions nedd to be
+    % applied.
+    xE = -1830660; yE = 300814;
+    xW = -814920; yW = -1324640;
+    [LE,IndE] = min(hypot(MUA.Boundary.x(:)-xE,MUA.Boundary.y(:)-yE));
+    [LW,IndW] = min(hypot(MUA.Boundary.x(:)-xW,MUA.Boundary.y(:)-yW));
+    xOuter = MUA.Boundary.x(min(IndE,IndW):max(IndE,IndW));
+    yOuter = MUA.Boundary.y(min(IndE,IndW):max(IndE,IndW));
+    
     figure; PlotMuaMesh(CtrlVar,MUA,[],'k'); hold on;
     plot(MUA.Boundary.x,MUA.Boundary.y,'-m');
     plot(xOuter,yOuter,'-og');
