@@ -7,6 +7,8 @@ if ~isempty(UserVar.BaseMesh.FixedBoundaryPoints)
     load(UserVar.BaseMesh.FixedBoundaryPoints);
     AA=[xOuter(1:end-1) yOuter(1:end-1)] ; BB=[xOuter(2:end) yOuter(2:end)];
 
+    x = MUA.coordinates(:,1); y = MUA.coordinates(:,2);
+
     % find all boundary nodes within 1m distance from the line segment.
     tolerance=1;
     I = DistanceToLineSegment([x(MUA.Boundary.Nodes) y(MUA.Boundary.Nodes)],AA,BB,tolerance);

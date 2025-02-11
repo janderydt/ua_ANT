@@ -62,9 +62,11 @@ for ind=1:size(X,1)
             ExpID_FixPoint = RunTable_FixPoint{:,'ExpID'};
             m_FixPoint = RunTable_FixPoint{:,'m'};
             n_FixPoint = RunTable_FixPoint{:,'n'};
+            finished = RunTable_FixPoint{:,'Finished'};
         end
-        [~,Ind] = min(hypot(m_FixPoint-m,n_FixPoint-n));
-        startC = 0; %ExpID_FixPoint(Ind);
+        Indfinished = find(finished==1);
+        [~,Ind] = min(hypot(m_FixPoint(Indfinished)-m,n_FixPoint(Indfinished)-n));
+        startC = ExpID_FixPoint(Indfinished(Ind));
         startAGlen = 0;
         iterations = "15000+5000";
         spinupyears = "3";
