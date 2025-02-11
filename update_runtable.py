@@ -40,13 +40,14 @@ for i in range(data_global.shape[0]):
         if os.path.isfile(runtable_exp):
             data_exp = read_runinfo(runtable_exp,runtype)
             if read_table == 'global' and write_table == 'local':
-                # print('Writing data to '+runtable_exp)               
+                print('Writing data to '+runtable_exp)               
                 data_exp.loc[0]=data_global.loc[i]
                 # save modified version of the local runtable
                 save_runinfo(data_exp, runtable_exp)
             elif read_table == 'local' and write_table == 'global':
                 if data_exp.shape[0]>0:
                     data_global.loc[i]=data_exp.loc[0]
+                    print('Modifying global run table '+write_table+' for experiment '+str(ExpID)+'.')
                 else:
                     print('Something went wrong for ExpID '+str(ExpID)+'. Deleting experiment folder and resetting global RunTable.')
                     data_global.at[i,'ExpID']=0
