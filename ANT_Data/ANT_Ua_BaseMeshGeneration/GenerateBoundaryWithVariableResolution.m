@@ -1,4 +1,4 @@
-function [xB,yB,FdesiredEleSize] = GenerateBoundaryWithVariableResolution(velocityfile,geometryfile,xB_init,yB_init,FdesiredEleSize,elesizemetric,meshmin,meshmax)
+function [xB,yB,FdesiredEleSize] = GenerateBoundaryWithVariableResolution(velocityfile,geometryfile,xB_init,yB_init,FdesiredEleSize,elesizemetric,meshmin,meshav,meshmax)
 
 % Create boundary coordinates with variable spacing, starting from xB_init
 % and yB_init as an initial boundary, and using the gridded interpolant
@@ -27,6 +27,7 @@ end
 
 if nargin < 5
     meshmin = 5e3;
+    meshav = 10e3;
     meshmax = 100e3;
 end
 
@@ -116,18 +117,18 @@ if isempty(FdesiredEleSize)
 %                 end
                  
                 % evolve mesh resolution from meshmax km where U<1m/yr to meshmin km for
-                % U>1km/yr
+                % U>250m/yr
                 desiredEleSize(U<1) = meshmax;
                 % log dependency of mesh size on speed
-                I = find(U>=1 & U<15);
-                desiredEleSize(I) = meshmax + (10e3-meshmax)/log10(15)*log10(U(I));
-                I = find(U>=15 & U<250);
-                desiredEleSize(I) = 10e3 + (2*meshmin-10e3)/(log10(250)-log10(15))*(log10(U(I))-log10(15));               
+                I = find(U>=1 & U<20);
+                desiredEleSize(I) = meshmax + (meshav-meshmax)/log10(20)*log10(U(I));
+                I = find(U>=20 & U<250);
+                desiredEleSize(I) = meshav + (2*meshmin-meshav)/(log10(250)-log10(20))*(log10(U(I))-log10(20));               
                 desiredEleSize(U>=250) = 2*meshmin;
                 desiredEleSize(desiredEleSize==0) = meshmax;
                 fprintf('Done.\n');
     
-            case 'floatation' % floating areas have meshmin km resolution or more
+            case 'floatation' % floating areas have 3*meshmin km resolution or more
 
                 fprintf('  > Implementing floatation for desiredEleSize matrix...');
                 if isempty(Fmask)
@@ -135,7 +136,7 @@ if isempty(FdesiredEleSize)
                 end
                 Fmask.Method = 'nearest'; Fmask.ExtrapolationMethod = 'nearest';
                 Mask = Fmask(X,Y); % 3 is floating ice, 0 is open ocean
-                desiredEleSize((Mask==3 | Mask==0) & desiredEleSize>2*meshmin) = 2*meshmin; % meshmin km resolution for ice shelves
+                desiredEleSize((Mask==3 | Mask==0) & desiredEleSize>3*meshmin) = 3*meshmin; % 3*meshmin km resolution for ice shelves
                 fprintf('Done.\n');
     
             case 'thickness_gradient'  % unrefine some areas that are very flat, such as the large ice shelves 
@@ -155,7 +156,7 @@ if isempty(FdesiredEleSize)
                 % do some smoothing
                 Dh = imgaussfilt(abs(Dh),'FilterSize',201);
                 I = find(Dh<0.005 & (Mask==3 | Mask==0));
-                desiredEleSize(I) = max(desiredEleSize(I),meshmin*4); % lower resolution for floating regions with low thickness gradient
+                desiredEleSize(I) = max(desiredEleSize(I),meshmin*5); % lower resolution for floating regions with low thickness gradient
                 fprintf('Done.\n');
 
             case 'effective_strain_rate_gradient'
@@ -198,10 +199,10 @@ x0 = boundary(1,1); y0 = boundary(1,2);
 cutoff = 0.99*interp2(X,Y,desiredEleSize,x0,y0);
 ds = 0; xnew = x0; ynew = y0;
 
-while dx0x1 > cutoff
+while dx0x1 > cutoff && ~isnan(dx0x1)
     step = interp2(X,Y,desiredEleSize,x0,y0);
     ds = ds+step;
-    % walk distance ds along boundary and add increments of 100m to ds as long as
+    % walk distance ds along boundary and add increments of meshmin/4 to ds as long as
     % hypot(xnew-x0,ynew-y0)<step
     Ltmp = 0;
     while Ltmp < step
@@ -209,11 +210,16 @@ while dx0x1 > cutoff
         xtmp = finalPathXY(1);
         ytmp = finalPathXY(2);   
         Ltmp = hypot(xtmp-x0,ytmp-y0);
-        ds = ds + 100;
+        ds = ds + meshmin/4;
     end
-    ds = ds-100;
-    xnew = [xnew xtmp];
-    ynew = [ynew ytmp];
+    ds = ds-meshmin/4;
+    if ~isnan(xtmp) % xtmp can be nan when the [xtmp ytmp] overshoots the initial starting point,
+        % and interp1(dL,boundary,ds) is ill-defined because ds is outside
+        % the range of dL. If xtmp is nan then dx0x1 will return nan and
+        % the algorithm stops
+        xnew = [xnew xtmp];
+        ynew = [ynew ytmp];
+    end   
     dx0x1 = hypot(xtmp-xnew(1),ytmp-ynew(1));
     x0 = xtmp; y0 = ytmp;
 end

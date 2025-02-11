@@ -25,7 +25,7 @@ RunTable = ANT_ReadWritetable(UserVar,UserVar.Table,[],'read');
 
 for ind=1:size(X,1)
 
-    startMesh = "AMUND_2000_2009_2014_2020_meshmin1500_meshmax100000_refined";
+    startMesh = "AMUND_2000_meshmin1500_meshmax100000_refined";
 
     m = round(X.m(ind)*1e4)/1e4;
     n = round(X.n(ind)*1e4)/1e4; 
@@ -64,9 +64,9 @@ for ind=1:size(X,1)
             n_FixPoint = RunTable_FixPoint{:,'n'};
         end
         [~,Ind] = min(hypot(m_FixPoint-m,n_FixPoint-n));
-        startC = ExpID_FixPoint(Ind);
+        startC = 0; %ExpID_FixPoint(Ind);
         startAGlen = 0;
-        iterations = "10000+10000";
+        iterations = "15000+5000";
         spinupyears = "3";
         invertfor = "-logC-logA-";
 

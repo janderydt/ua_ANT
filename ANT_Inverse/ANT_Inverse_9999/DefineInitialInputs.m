@@ -64,6 +64,7 @@ CtrlVar.AdaptMesh=0;
 
 %% Boundary
 load(UserVar.MeshBoundaryCoordinatesFile,"MeshBoundaryCoordinates");
+CtrlVar.UpdateBoundaryConditionsAtEachTimeStep=0;
 
 %% Physics
 CtrlVar.SlidingLaw = UserVar.SlidingLaw;

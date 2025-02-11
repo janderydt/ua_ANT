@@ -25,7 +25,7 @@ warning('off','all');
 %% -----------------------------------------------------------------------%%
 
 regional_domain = 0; % if False then a circum-Antarctic mesh will be generated
-    % if True then the use will be asked to provide a domain boundary 
+    % if True then the user will be asked to provide a domain boundary 
 
 years_to_include = [2000 2009 2014 2020]; % an array of doubles
 
@@ -137,11 +137,13 @@ for ii=1:numel(years_to_include)
 
     end
 
-    % do some initial subsampling
-    [xtmp2,ytmp2] = Smooth2dPos(xtmp,ytmp,0.2,meshmin);
-    % spline fit to smooth
+    % do some initial subsampling; no smoothing is applied at this stage
+    [xtmp2,ytmp2] = Smooth2dPos(xtmp,ytmp,1,meshmin);
+    % spline fit to smooth // this is slow, but thends to give better
+    % results compared to Smooth2dPos
     options = fitoptions('Method','SmoothingSpline',...
-        'SmoothingParam',0.1); % for less smoothing change 0.05 to a larger number, e.g. 0.1
+        'SmoothingParam',0.05); % for less smoothing change the smoothing parameter to a smaller number
+    % The desired amount of smoothing will depend on meshmin
     nx=[1:numel(xtmp2)]; ny=[1:numel(ytmp2)];
     [fx,gof,out]=fit(nx',xtmp2,"SmoothingSpline",options);
     [fy,gof,out]=fit(ny',ytmp2,"SmoothingSpline",options);
@@ -163,11 +165,11 @@ for ii=1:numel(years_to_include)
     
         if regional_domain && isempty(FdesiredEleSize)
             [xouter,youter,FdesiredEleSize] = GenerateBoundaryWithVariableResolution(velocityfile,geometryfile,xouter,youter,...
-                FdesiredEleSize,MeshRefinementCriteria,meshmin,meshmax);
+                FdesiredEleSize,MeshRefinementCriteria,meshmin,meshav,meshmax);
         end
 
         [xtmp,ytmp,FdesiredEleSize] = GenerateBoundaryWithVariableResolution(velocityfile,geometryfile,icefront(ii).x,icefront(ii).y,...
-                            FdesiredEleSize,MeshRefinementCriteria,meshmin,meshmax);
+                            FdesiredEleSize,MeshRefinementCriteria,meshmin,meshav,meshmax);
 
         fprintf("Done.\n");
         fprintf("======================================\n");

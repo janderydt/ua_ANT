@@ -6,7 +6,7 @@ addpath("..");
 %RunTable = "RunTable_ARCHER2_"+string([6])+".csv";
 %RunTable = "RunTable_ARCHER2_10-10-2024_"+string([10 11 12 13])+".csv";
 %RunTable = "RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
-RunTable = "RunTable_ARCHER2_06-02-2025_"+string([20 21 22 23])+".csv";
+RunTable = "RunTable_ARCHER2_10-02-2025_"+string([21 22 23])+".csv";
 
 gaA=[]; gaC=[]; gsA=[]; gsC=[]; m=[]; n=[]; dhdt=[];
 finished=[]; error=[]; running=[]; ExpID=[];
@@ -39,11 +39,11 @@ for tt=1:numel(RunTable)
     Ind_finished_tmp = find(finished_tmp==1);
     Ind_finished = [Ind_finished; Ind_finished_tmp];
 
-    Ind_error_tmp = find(error_tmp==1);
-    Ind_error = [Ind_error; Ind_error_tmp];
-
-    Ind_running_tmp = find(finished_tmp==0 & error_tmp==0);
+    Ind_running_tmp = find((finished_tmp==0 & error_tmp==0) | RunTable_tmp{:,'InverseIterationsDone'}==0);
     Ind_running = [Ind_running; Ind_running_tmp];
+
+    Ind_error_tmp = find(error_tmp==1 & RunTable_tmp{:,'InverseIterationsDone'}~=0);
+    Ind_error = [Ind_error; Ind_error_tmp];
 
     fprintf("%s: Finished %s out of %s. %s ended with an error message. %s still running.\n",...
         RunTable(tt),...
@@ -53,9 +53,9 @@ for tt=1:numel(RunTable)
 
 end
 
-Ind_finished = find(finished==1);
-Ind_error = find(error==1);
-Ind_running = find(running==1);
+%Ind_finished = find(finished==1);
+%Ind_error = find(error==1);
+%Ind_running = find(running==1);
 
 fprintf("TOTAL: Finished %s out of %s. %s ended with an error message. %s still running.\n",...
     string(numel(Ind_finished)),string(numel(finished)),string(numel(Ind_error)),...
