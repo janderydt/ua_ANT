@@ -89,11 +89,11 @@ for tt=1:numel(UserVar.years)
 
             for gg=1:numel(glaciers)
                 SL(gg).V(kk,:) = Fv(SL(gg).x,SL(gg).y);
-                SL(gg).H(kk,:) = Fh(SL(gg).x,SL(gg).y);
+                %SL(gg).H(kk,:) = Fh(SL(gg).x,SL(gg).y);
                 %dHdT = Fdhdt(SLx,SLy);
-                GF = FGF(SL(gg).x,SL(gg).y);
-                I = find(GF<0.9); 
-                SL(gg).SLd_GL(kk) = SL(gg).d(I(1));
+                %GF = FGF(SL(gg).x,SL(gg).y);
+                %I = find(GF<0.9); 
+                %SL(gg).SLd_GL(kk) = SL(gg).d(I(1));
             end
 
             kk=kk+1;
@@ -229,7 +229,7 @@ for ii=1:numel(glaciers)
     SL_tmp=streamline(X,Y,U,V,xstart,ystart);
     SLx=SL_tmp.XData; SLy=SL_tmp.YData;
     % remove SL outside Ua boundary
-    I = find(~inpoly([SLx(:) SLy(:)],[Bx(:) By(:)]));
+    I = find(~inpoly2([SLx(:) SLy(:)],[Bx(:) By(:)]));
     SLx(I)=[]; SLy(I)=[];
     SLd=cumsum(hypot(SLx(2:end)-SLx(1:end-1),SLy(2:end)-SLy(1:end-1)));
 

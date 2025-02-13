@@ -7,6 +7,8 @@ if nargin==0
     CreateGeotiff=1;
 end
 
+years_to_average = [2000:2020];
+
 %% MAR
 ncfile = froot_data+"/SMB_RACMO_MAR/MAR_Kittel2021/year-MAR_ERA5-1979-2019_zen.nc2";
 fprintf(" Reading MAR SMB data from file %s \n",ncfile);
@@ -23,7 +25,7 @@ fprintf("Creating scatteredInterpolants %s \n",ncfile);
 
 epochnum = datenum('1976-03-01 00:00:00');
 t = double(epochnum+t);
-smb = squeeze(double(smb)/1000); % Ua want m/yr in freshwater equivalent
+smb = squeeze(double(smb)/1000); % Ua wants m/yr in freshwater equivalent
 
 [X,Y] = ndgrid(x,y);
 Fsmb_MAR.years = [];
@@ -31,11 +33,12 @@ for ii=1:numel(t)
     field = ['yr',datestr(t(ii),'yyyy')];
     smb_tmp = squeeze(smb(:,:,ii));
     Fsmb_MAR.years = [Fsmb_MAR.years; datestr(t(ii),'yyyy')];
-    Fsmb_MAR.(field) = griddedInterpolant(X,Y,smb_tmp,'linear'); %scatteredInterpolant(X(:),Y(:),T(:),smb_year(:),'linear');
+    Fsmb_MAR.(field) = griddedInterpolant(X,Y,smb_tmp,'cubic','nearest'); %scatteredInterpolant(X(:),Y(:),T(:),smb_year(:),'linear');
 end
 
-smb_climatology = mean(smb,3,"omitmissing");
-Fsmb_MAR.climatology = griddedInterpolant(X,Y,smb_climatology,'linear');
+I = find(double(string(Fsmb_MAR.years))>=years_to_average(1) & double(string(Fsmb_MAR.years))<=years_to_average(end));
+smb_climatology = mean(smb(:,:,I),3,"omitmissing");
+Fsmb_MAR.climatology = griddedInterpolant(X,Y,smb_climatology,'cubic','nearest');
 
 fprintf("Done. \n");
 
@@ -43,9 +46,10 @@ if CreateGeotiff
     
     fprintf('Writing GeoTiff files \n');
     
-    R = makerefmat(x(1),y(1),x(2)-x(1),y(2)-y(1));
-    smb_mean = mean(smb,3);
-    geotiffwrite("./GeoTiffFiles/smb_MAR_mean1979-2019.tif",smb_mean',R,'CoordRefSysCode','EPSG:3031');
+    R = maprefcells([x(1) x(end)],[y(1) y(end)],[numel(x),numel(y)]);
+    smb_mean = mean(smb(:,:,I),3);
+    geotiffwrite("./GeoTiffFiles/smb_MAR_mean"+string(years_to_average(1))+"-"+string(years_to_average(end))+".tif",...
+        smb_mean',R,'CoordRefSysCode','EPSG:3031');
 
     fprintf('Done.\n');
 
@@ -92,11 +96,12 @@ for ii=1:numel(years)
     field = ['yr',datestr(years(ii),'yyyy')];
     smb_tmp = smb_year(:,:,ii);
     Fsmb_RACMO.years = [Fsmb_RACMO.years; datestr(years(ii),'yyyy')];
-    Fsmb_RACMO.(field) = scatteredInterpolant(x(:),y(:),smb_tmp(:),'linear'); %scatteredInterpolant(X(:),Y(:),T(:),smb_year(:),'linear');
+    Fsmb_RACMO.(field) = scatteredInterpolant(x(:),y(:),smb_tmp(:),'natural','nearest'); %scatteredInterpolant(X(:),Y(:),T(:),smb_year(:),'linear');
 end
 
-smb_climatology = mean(smb_year,3,"omitmissing");
-Fsmb_RACMO.climatology = scatteredInterpolant(x(:),y(:),smb_climatology(:),'linear');
+I = find(year(years)>=years_to_average(1) & year(years)<=years_to_average(end));
+smb_climatology = mean(smb_year(:,:,I),3,"omitmissing");
+Fsmb_RACMO.climatology = scatteredInterpolant(x(:),y(:),smb_climatology(:),'natural','nearest');
 
 fprintf("Done. \n");
 
@@ -108,11 +113,13 @@ if CreateGeotiff
     
     fprintf('Writing GeoTiff files \n');
 
-    smb_mean = mean(smb_year,3);
+    smb_mean = mean(smb(:,:,I),3);
+
     R = georasterref('RasterSize',size(smb_mean), ...
-        'LatitudeLimits',[min(lat) max(lat)],'LongitudeLimits',[min(lon) max(lon)]);
+        'LatitudeLimits',[min(lat(1,:)) max(lat(1,:))],'LongitudeLimits',[min(lon(:,1)) max(lon(:,1))]);
        
-    geotiffwrite("./GeoTiffFiles/smb_RACMO_mean1979-2016.tif",smb_mean',R);
+    geotiffwrite("./GeoTiffFiles/smb_RACMO_mean"+string(years_to_average(1))+"-"+string(years_to_average(end))+".tif",...
+        smb_mean',R);
 
     fprintf('Done.\n');
 
