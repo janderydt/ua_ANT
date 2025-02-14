@@ -220,6 +220,17 @@ end
 %% mesh boundary
 UserVar.MeshBoundaryCoordinatesFile = UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
 
+%% velocity interpolants for fixed boundaries
+UserVar.Velocity = RunTable{ind,"Velocity"};
+switch UserVar.Velocity
+    case 2000
+        UserVar.VelocityInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat";
+    case {2009,2014,2018,2020} 
+        UserVar.VelocityInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_"+num2str(UserVar.Velocity)+"-"+num2str(UserVar.Velocity+1)+"_MeaSUREs_ITSLIVE_Velocities.mat";
+    otherwise
+        error(['ExpID ',RunTable{ind,"ExpID"},': Do not recognise Velocity flag in RunTable.']);
+end
+
 %% sliding law
 UserVar.NameOfFileForReadingSlipperinessEstimate=UserVar.NameOfFileForSavingSlipperinessEstimate;
 % C is not updated for floating ice, except for some

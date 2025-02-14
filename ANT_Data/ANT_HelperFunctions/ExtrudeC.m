@@ -14,7 +14,13 @@ C(F.GF.node<0.9)=nan;
 % ExtrudeField requires gridded coordinates
 xmin = min(xUa); ymin = min(yUa);
 xmax = max(xUa); ymax = max(yUa);
-dx = 10e3; dy = 10e3;
+if contains(CtrlVar.Experiment,["ASE","AS_PROPHET","AMUND"])
+    dx = 3e3; dy = 3e3;
+elseif contains(CtrlVar.Experiment,"ANT")
+    dx = 10e3; dy = 10e3;
+else
+    error('Unknown experiment name for extruding C');
+end
 x = [xmin:dx:xmax]; y = [ymin:dy:ymax];
 [X,Y]=ndgrid(x,y);
 Iout = find(~inpoly2([X(:) Y(:)],[MUA.Boundary.x(:) MUA.Boundary.y(:)]));
@@ -35,15 +41,8 @@ vygrid = Fvy(X,Y);
 clear Fvy FC;
 
 % Extrude C and fill nan regions
-if contains(CtrlVar.Experiment,["ASE","AS_PROPHET"])
-    step = 0.01;
-    n = 30000;
-elseif contains(CtrlVar.Experiment,"ANT")
-    step = 0.01;
-    n = 10000;
-else
-    error('Unknown experiment name for extruding C');
-end
+step = 0.01;
+n = 10000;
 
 Cext = ExtrudeField(x,y,vxgrid',vygrid',x,y,Cgrid',step,n);
 Cext = Cext';
