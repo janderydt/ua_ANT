@@ -6,21 +6,23 @@ plotFNN=0;
 perturbation='Calv_dh';
 trainingdataformat="u"; % u or LOGu
 startyear="2000";
-targetyear="2018"; % this can be an empty string to plot results for the u emulator, rather than the du emulator
+targetyear="2020"; % this can be an empty string to plot results for the u emulator, rather than the du emulator
 slidinglaw="Weertman";
-cycle=1;
+cycle=2;
+only_grounded_ice=1;
+pct = string([9843]); % cut-off for SVD (% * 100)
 n_test=[];%[1:20]; % indices of test data to plot (integers between 1 and size of test dataset)
 
 if targetyear ~= ""
     years=startyear+"-"+targetyear;
-    datafile = "Delta_u_AS_"+slidinglaw+"_"+years+".mat";
+    datafile = "Delta_u_AMUND_"+slidinglaw+"_"+years+".mat";
     load(datafile);    
     MUA = MUA_yr2; GF = GF_yr2;
     T = Delta_u.(perturbation).map(:,:,cycle);
     
 else
     years = trainingdataformat+startyear;
-    datafile = "u_AS_"+perturbation+"_cycle"+string(cycle)+"_"+slidinglaw+"_"+startyear+".mat";
+    datafile = "u_AMUND_"+perturbation+"_cycle"+string(cycle)+"_"+slidinglaw+"_"+startyear+".mat";
     load(datafile);
     T = speed.("yr"+string(startyear));
     MUA = MUA.("yr"+string(startyear)); GF = GF.("yr"+string(startyear));
@@ -42,18 +44,28 @@ T(Ind_toremove,:)=[];
 T_mean = mean(T,1);
 T = T-repmat(T_mean(:)',size(T,1),1);
 
-pct = string([9950]);
+% remove floating ice?
+if only_grounded_ice
+    % remove floating nodes
+    load("Delta_u_AMUND_Weertman_"+startyear+"-"+targetyear+".mat","MUA_yr2","GF_yr2");
+    MUA = MUA_yr2; GF = GF_yr2;
+    Nodes_floating = find(GF.node<0.5);
+    T(:,Nodes_floating) = 0;
+    T_mean(Nodes_floating) = 0;  
+end
 
 %% RNN Tensorflow
 if plotRNN
 
     for ii=1:numel(pct)
     
-        net=importNetworkFromTensorFlow("./RNN/TF_files/tuned_model_"+perturbation+"_"+years+"_"+slidinglaw+...
-            "_cycle"+string(cycle)+"_N0k"+pct(ii));
+        net=importNetworkFromTensorFlow("./RNN/TF_files/tuned_model_SVD-nodata_"+perturbation+"_"+years+...
+            "_"+slidinglaw+"_cycle"+string(cycle)+"_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii));
         netUpdated=initialize(net);
-        load("./RNN/mat_files/data_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+string(cycle)+"_N0k"+pct(ii)+".mat");
-        load("./RNN/mat_files/SVD_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+string(cycle)+"_N0k"+pct(ii)+".mat");
+        load("./RNN/mat_files/data_SVD-nodata_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+string(cycle)+...
+            "_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii)+".mat");
+        load("./RNN/mat_files/SVD-nodata_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+string(cycle)+...
+            "_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii)+".mat");
         num_train = size(X_train,1);
         num_val = size(X_val,1);
         num_test = size(X_test,1);
@@ -107,7 +119,8 @@ if plotRNN
         %mse_RNN = T_reproj*mse_tmp*T_reproj';   
         mse_RNN=1/(num_test-1)*sum((Y_test-Ua_proj).^2,1);
 
-        save("./RNN/mat_files/MSE_RNN_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_RNN");
+        save("./RNN/mat_files/MSE_RNN_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+...
+            "_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii),"mse_RNN");
 
         % plot some maps for particular test case
         for nn=n_test
@@ -128,8 +141,10 @@ end
 if plotFNN
     for ii=1:numel(pct)
     
-        tmp=load("./FNN/mat_files/FNN_trainscg_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii)+".mat");
-        load("./FNN/mat_files/SVD_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii)+".mat","B_trunc","T_reproj","seq");
+        tmp=load("./FNN/mat_files/FNN_trainscg_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+...
+            "_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii)+".mat");
+        load("./FNN/mat_files/SVD_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+...
+            "_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii)+".mat","B_trunc","T_reproj","seq");
         net=tmp.Net_opt;
         
         X_train = net.X_train';
@@ -198,7 +213,8 @@ if plotFNN
 
         %mse_FNN=1/(num_test-1)*sum((Y_test-Ua_proj).^2,1);
         
-        save("./FNN/mat_files/MSE_FNN_trainscg_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+"_N0k"+pct(ii),"mse_FNN");
+        save("./FNN/mat_files/MSE_FNN_trainscg_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+...
+            "_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii),"mse_FNN");
 
         % plot some maps for particular test case
         for nn=n_test

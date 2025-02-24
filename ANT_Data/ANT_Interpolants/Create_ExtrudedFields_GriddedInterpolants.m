@@ -45,7 +45,7 @@ if contains(fields_to_extrude,'-v-')
 
     if isempty(Fus)
         load(Velinterpolantfile,"Fus","Fvs","Fxerr","Fyerr","Fsource");
-        load(Geominterpolantfile,"Frho","Fb","Fs");
+        load(Geominterpolantfile,"Fb","Fs");
     end
     
     fprintf("done.\n");
@@ -59,6 +59,8 @@ if contains(fields_to_extrude,'-v-')
     v_source_v = Fsource.Values';
     err_v = hypot(Fxerr.Values',Fyerr.Values');
     H_v = Fs(X_v,Y_v) - Fb(X_v,Y_v);
+
+    Fus=[]; Fvs=[]; Fxerr=[]; Fyerr=[]; Fsource=[]; Fb=[]; Fs=[];
 
 end
 
@@ -102,34 +104,58 @@ if contains(fields_to_extrude,'-scalar-')
     filetoread = "Fields_to_extrude_scalar_nx"+string(nx)+"_ny"+string(ny)+".mat";
 
     if ~exist(filetoread,"file")
-        
-        fprintf("Load velocity and geometry interpolants...");
-    
-        if isempty(Fus)
-            load(Velinterpolantfile,"Fus","Fvs","Fxerr","Fyerr");
-            load(Geominterpolantfile,"Frho","Fb","Fs");
-        end
-        
-        fprintf("done.\n");
-    
+
         x_scal = ScalarInterpolant.GridVectors{1};
         y_scal = ScalarInterpolant.GridVectors{2};
-        [X_scal,Y_scal] = meshgrid(x_scal,y_scal);
-     
-        s = Fs(X_scal,Y_scal); b = Fb(X_scal,Y_scal);
+        [X_scal,Y_scal] = meshgrid(x_scal,y_scal);    
+
+        fprintf("Load geometry interpolants...");
+    
+        if isempty(Fs)
+            load(Geominterpolantfile,"Fs");
+        end
+
+        s = Fs(X_scal,Y_scal);
+        clear Fs
+
+        if isempty(Fb)
+            load(Geominterpolantfile,"Fb");
+        end
+
+        b = Fb(X_scal,Y_scal);
+        clear Fb
+
+        fprintf("done.\n");
+
         s(s==0) = nan; b(b==0) = nan;    
         H_scal = s-b;
-        
+
+        fprintf("Load velocity interpolants...");
+
+        if isempty(Fxerr)
+            load(Velinterpolantfile,"Fxerr","Fyerr");
+        end
+
         % remove velocities with large errors || they will not be used to
         % extrude the scalar field
         err_tmp = hypot(Fxerr.Values',Fyerr.Values');
+
+        clear Fxerr Fyerr
+
+        if isempty(Fus)
+            load(Velinterpolantfile,"Fus","Fvs");
+        end
+
         Fus.Values(err_tmp>15)=nan;
         Fvs.Values(err_tmp>15)=nan;
         vx_scal = Fus(X_scal,Y_scal);
         vy_scal =  Fvs(X_scal,Y_scal);
         %v_source_g =  Fsource(X_g,Y_g);
+
+        clear Fus Fvs
     
         save(filetoread,"x_scal","y_scal","H_scal","vx_scal","vy_scal","-v7.3");
+
     else
 
         load(filetoread);
@@ -171,7 +197,7 @@ if contains(fields_to_extrude,'-v-')
     clear L;
     
     % subsample velocities for flow *directions*
-    sc = 1;%/2; % scale for resizing velocity
+    sc = 1/2;%/2; % scale for resizing velocity
     [vx_r,x_r,y_r] = demresize(vx_v,x_v,y_v,sc); 
     vy_r = imresize(vy_v,sc);
     H_r = imresize(H_v,sc);
@@ -248,6 +274,10 @@ if contains(fields_to_extrude,'-v-')
     end
 
     fprintf(' Creating gridded interpolants...');
+
+    if isempty(Fus)
+        load(Velinterpolantfile,"Fus","Fvs","Fsource","Fxerr","Fyerr");
+    end
 
     Fus.Values = vx_v';
     Fvs.Values = vy_v';
@@ -386,10 +416,10 @@ if contains(fields_to_extrude,'-scalar-')
     vy_r = imresize(vy_scal,sc); 
     H_r = imresize(H_scal,sc);
 
-    figure; hold on; 
-    subplot(1,3,1); imagesc(H_r); caxis([-1 1]); title("H_r");
-    subplot(1,3,2); imagesc(vx_r); caxis([-1 1]); title("vx_r");
-    subplot(1,3,3); imagesc(vy_r); caxis([-1 1]); title("vy_r");
+    % figure; hold on; 
+    % subplot(1,3,1); imagesc(H_r); caxis([-1 1]); title("H_r");
+    % subplot(1,3,2); imagesc(vx_r); caxis([-1 1]); title("vx_r");
+    % subplot(1,3,3); imagesc(vy_r); caxis([-1 1]); title("vy_r");
     
     Hvx_r = inpaint_nans(H_r.*vx_r,4);
     Hvy_r = inpaint_nans(H_r.*vy_r,4);

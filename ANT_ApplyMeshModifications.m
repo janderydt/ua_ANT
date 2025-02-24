@@ -90,5 +90,7 @@ save(InitialMeshFileName,"MUA","CtrlVar");
 
 UserVar.MeshBoundaryCoordinatesFile = "./"+UserVar.Experiment+"_MeshBoundaryCoordinates.mat";
 UserVar.InitialMeshFileName = "./"+UserVar.Experiment+"_InitialMesh.mat";
+UserVar.Nnodes = MUA.Nnodes;
+UserVar.Nele = MUA.Nele;
 
 end 

@@ -63,8 +63,9 @@ for ind=1:size(X,1)
             m_FixPoint = RunTable_FixPoint{:,'m'};
             n_FixPoint = RunTable_FixPoint{:,'n'};
             finished = RunTable_FixPoint{:,'Finished'};
+            sliding = RunTable_FixPoint{:,'SlidingLaw'};
         end
-        Indfinished = find(finished==1);
+        Indfinished = find(finished==1 & sliding==SlidingLaw);
         [~,Ind] = min(hypot(m_FixPoint(Indfinished)-m,n_FixPoint(Indfinished)-n));
         startC = ExpID_FixPoint(Indfinished(Ind));
         startAGlen = 0;

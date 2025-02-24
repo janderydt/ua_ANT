@@ -10,29 +10,34 @@ addpath(getenv("froot_tools"));
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Diagnostic";
 UserVar.year = "2014";
-UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_Weertman_2014.csv";
-UserVar.idrange = [30000 39999];
-inversiondata_filename = "inversiondata_Weertman.mat";
-perturbationdata_filename = "perturbationdata_Weertman.mat";
+UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Weertman_2014.csv";
+UserVar.idrange = [40000 49999];
+inversiondata_filename = "inversiondata_AMUND_Weertman.mat";
+perturbationdata_filename = "perturbationdata_AMUND_Weertman.mat";
 
-basins_to_analyze = {'A-Ap',...  % Queen Maud Land
-    'Ap-B',... % Enderby Land
-    'B-C',...  % Amery
-    'C-Cp',... % 
-    'Cp-D',... % Totton/Wilkes Land
-    'D-Dp',... % George V Coast
-    'Dp-E',... % Victoria Land
-    'E-Ep',... % Ross west
-    'Ep-F',... % Ross east
-    'F-G',...  % Getz
+%% ALL
+% basins_to_analyze = {'A-Ap',...  % Queen Maud Land
+%     'Ap-B',... % Enderby Land
+%     'B-C',...  % Amery
+%     'C-Cp',... % 
+%     'Cp-D',... % Totton/Wilkes Land
+%     'D-Dp',... % George V Coast
+%     'Dp-E',... % Victoria Land
+%     'E-Ep',... % Ross west
+%     'Ep-F',... % Ross east
+%     'F-G',...  % Getz
+%     'G-H',...  % PIG, Thwaites
+%     'H-Hp',... % Abbot
+%     'Hp-I',... % English Coast
+%     'I-Ipp',... % Northern Peninsula
+%     'Ipp-J',... % Eastern Peninsula
+%     'J-Jpp',... % Ronne 
+%     'Jpp-K',... % Filchner
+%     'K-A'}; % Caird Coast
+%% AMUNDSEN SEA
+basins_to_analyze = {'F-G',...  % Getz
     'G-H',...  % PIG, Thwaites
-    'H-Hp',... % Abbot
-    'Hp-I',... % English Coast
-    'I-Ipp',... % Northern Peninsula
-    'Ipp-J',... % Eastern Peninsula
-    'J-Jpp',... % Ronne 
-    'Jpp-K',... % Filchner
-    'K-A'}; % Caird Coast
+    'H-Hp'}; % Abbot
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -97,9 +102,10 @@ for tt=1:numel(UserVar.Table)
 
         perturbation_experiments_analyzed(end+1) = ExpID(Ind(ii));
         InverseExpID = RunTable{Ind(ii),"InverseA"};
-        InverseCycle = RunTable{Ind(ii),"InverseCycleA"};        
+        InverseCycle = RunTable{Ind(ii),"InverseCycleA"};
+        Domain = RunTable{Ind(ii),"Domain"};
         Ind_inverse = find([data_inverse(:).InverseExpID]==InverseExpID);
-        folder = UserVar.home+"/ANT_Diagnostic/cases/ANT_nsmbl_Diagnostic_"+ExpID(Ind(ii));
+        folder = UserVar.home+"/ANT_Diagnostic/cases/"+Domain+"_Diagnostic_"+ExpID(Ind(ii));
         outputfiles = dir(folder+"/ResultsFiles/*.mat");
 
         if ~isempty(outputfiles)
@@ -150,31 +156,9 @@ for tt=1:numel(UserVar.Table)
             data(data_ind).Inverse.misfit(InverseCycle) = data_inverse(Ind_inverse).misfit(InverseCycle);
             data(data_ind).startgeometry = data_inverse(Ind_inverse).startgeometry;
 
-            %initialize structure
-            if ~isfield(data(data_ind),'Original')
-                data(data_ind).Original=[];
-                geomfields = {'Calv','dhIS','dh','Calv_dh'};
-                yearfld="yr"+UserVar.year;
-                for ff=1:numel(geomfields)
-                    %data(data_ind).(geomfields{ff}).geometry=[];
-                    for bb=1:numel(basins_to_analyze)
-                        basin = char(erase(basins_to_analyze(bb),'-'));
-                        data(data_ind).(geomfields{ff}).(yearfld).qGL.(basin)=[];
-                        data(data_ind).(geomfields{ff}).(yearfld).qOB.(basin)=[];
-                    end
-                    data(data_ind).(geomfields{ff}).(yearfld).cycle=[];
-                    data(data_ind).(geomfields{ff}).(yearfld).ExpID=[];
-                    data(data_ind).(geomfields{ff}).(yearfld).speed=[];
-                end
-            end
-
             if contains(expinfo,"Original")
-                year = RunTable{Ind(ii),"Calv"};   
+                year = data(data_ind).startgeometry;   
                 fieldname = 'Original';
-                if ~exist("MUA_2000","var")
-                    MUA_2000=MUA;
-                    GF_2000=F.GF;
-                end
             elseif contains(expinfo,"Ice front geometry")
                 year = RunTable{Ind(ii),"Calv"};
                 fieldname = 'Calv';
@@ -187,12 +171,36 @@ for tt=1:numel(UserVar.Table)
             elseif contains(expinfo,"Ice front and thickness")
                 year = RunTable{Ind(ii),"Calv"};
                 fieldname = 'Calv_dh';
-                if ~exist("MUA_2014","var")
-                    MUA_2014=MUA;
-                    GF_2014=F.GF;
-                end
             else
                 error("Unknown experiment info "+expinfo);
+            end
+
+            %initialize structure
+            if ~isfield(data(data_ind),'Original') || isempty(data(data_ind).Original) || ...
+                    ~isfield(data(data_ind).Original,"yr"+string(year))
+
+                startyear = "yr"+string(data(data_ind).startgeometry);
+
+                if string(year)==startyear 
+                    geomfields = {'Original','Calv','dhIS','dh','Calv_dh'};
+                    yearfld=[startyear,repmat("yr"+UserVar.year,1,4)];
+                else
+                    geomfields = {'Calv','dhIS','dh','Calv_dh'};
+                    yearfld=repmat("yr"+UserVar.year,1,4);
+                end
+
+                for ff=1:numel(geomfields)
+                    %data(data_ind).(geomfields{ff}).geometry=[];
+                    for bb=1:numel(basins_to_analyze)
+                        basin = char(erase(basins_to_analyze(bb),'-'));
+                        data(data_ind).(geomfields{ff}).(yearfld(ff)).qGL.(basin)=[];
+                        data(data_ind).(geomfields{ff}).(yearfld(ff)).qOB.(basin)=[];
+                    end
+                    data(data_ind).(geomfields{ff}).(yearfld(ff)).cycle=[];
+                    data(data_ind).(geomfields{ff}).(yearfld(ff)).ExpID=[];
+                    data(data_ind).(geomfields{ff}).(yearfld(ff)).speed=[];
+                end
+
             end
 
             % save data

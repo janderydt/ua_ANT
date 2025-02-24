@@ -14,13 +14,15 @@ GLgeo=GLgeometry(MUA.connectivity,MUA.coordinates,GF,CtrlVar);
 xa=GLgeo(:,3) ;  xb=GLgeo(:,4) ; ya=GLgeo(:,5) ;  yb=GLgeo(:,6) ;
 [xGL,yGL]=LineUpEdges2(CtrlVar,xa,xb,ya,yb);
 
-% add breaks in middle of Ross, FilchnerRonne and Peninsula:
+% add breaks in middle of Ross, FilchnerRonne and Peninsula if needed:
 breakx = [-2.11e6 -6.13e5 -2.6e5];
 breaky = [1.065e6 3.37e5 -4.35e5];
 for ii=1:numel(breakx)
-    [~,I]=min(hypot(xGL-breakx(ii),yGL-breaky(ii)),[],'all');
-    xGL = [xGL(1:I); nan; xGL(I+1:end)];
-    yGL = [yGL(1:I); nan; yGL(I+1:end)];
+    [D,I]=min(hypot(xGL-breakx(ii),yGL-breaky(ii)),[],'all');
+    if D<100e3 % if D>100km then it is assumed that these areas are not part of the Ua domain
+        xGL = [xGL(1:I); nan; xGL(I+1:end)];
+        yGL = [yGL(1:I); nan; yGL(I+1:end)];
+    end
 end
 
 % GL fluxes will be defined at midpoints

@@ -9,7 +9,7 @@ function prepare_data_for_u_emulators
 addpath(getenv("froot_tools"));
 addpath("..");
 
-years_to_analyze = [2000]; % can be 2000, 2009, 2014 or 2018
+years_to_analyze = [2020];
 perturbation = 'Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
 trainingdataformat = "LOGu"; % u or LOGu
 basins_to_analyze = {'F-G',...  % Getz
@@ -21,11 +21,11 @@ FNNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feed
 trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine, 
 % alternatives that seem to work well are trainlm
 UseGPU = 0; % UseGPU=1 only works with trainFcn="trainscg"
-doplots = 0;
+doplots = 1;
 writeoutputsforTF = 1;
 
-file_with_perturbation_data_to_read = "perturbationdata_"+slidinglaw+".mat";
-file_with_speedmaps_to_read = "u_AS_"+perturbation+"_cycle"+string(cycle)+"_"+slidinglaw+"_"+strjoin(string(years_to_analyze),"_")+".mat";
+file_with_perturbation_data_to_read = "perturbationdata_AMUND_"+slidinglaw+".mat";
+file_with_speedmaps_to_read = "u_AMUND_"+perturbation+"_cycle"+string(cycle)+"_"+slidinglaw+"_"+strjoin(string(years_to_analyze),"_")+".mat";
 
 %% Gather speed maps
 if ~exist(file_with_speedmaps_to_read,"file")
@@ -33,57 +33,88 @@ if ~exist(file_with_speedmaps_to_read,"file")
     load(file_with_perturbation_data_to_read);
     load("perturbation_grids.mat");
     % load basins
-    filename = 'basins_IMBIE_v2.mat'; 
-    B = load(filename);
-    B = RemoveIceRisesAndIslands(B,1e10); % cutoff=1e10: remove all ice rises and islands
+    % filename = 'basins_IMBIE_v2.mat'; 
+    % B = load(filename);
+    % B = RemoveIceRisesAndIslands(B,1e10); % cutoff=1e10: remove all ice rises and islands
     % prepare meshes
     CtrlVar = Ua2D_DefaultParameters;
-    UserVar.casefolder=pwd;
-    UserVar.datafolder=pwd+"/../ANT_Data/";
-    UserVar.Experiment="";
-    BaseMesh='2000_2009_2014_2018_meshmin3000_meshmax100000_refined';
-    UserVar = ANT_DefineBaseMesh(UserVar,BaseMesh);
+    % UserVar.casefolder=pwd;
+    % UserVar.datafolder=pwd+"/../ANT_Data/";
+    % UserVar.Experiment="";
+    % BaseMesh='2000_2009_2014_2018_meshmin3000_meshmax100000_refined';
+    % UserVar = ANT_DefineBaseMesh(UserVar,BaseMesh);
     for yy=1:numel(years_to_analyze)
         yrstring = "yr"+string(years_to_analyze(yy));
-        UserVar.Geometry=double(years_to_analyze(yy));
-        UserVar=ANT_ApplyMeshModifications(UserVar);
-        tmp = load(UserVar.InitialMeshFileName);
-        MUA.(yrstring) = tmp.MUA; 
-        % identify basin id of each MUA node
-        [MUA.(yrstring).basins,~] = Define_Quantity_PerBasin(MUA.(yrstring).coordinates(:,1),MUA.(yrstring).coordinates(:,2),B,0);
-        MUA_basinnames = erase({MUA.(yrstring).basins(:).name},'-');
-        basinnodes_all = [];
-        for bb=1:numel(basins_to_analyze) 
-            basin = char(erase(basins_to_analyze{bb},'-'));
-            [~,BasinInd] = ismember(basin,MUA_basinnames);
-            basinnodes = MUA.(yrstring).basins(BasinInd).ind;
-            basinnodes_all = [basinnodes_all; basinnodes];
-        end
-        ElementsToBeDeactivated=any(~ismember(MUA.(yrstring).connectivity,basinnodes_all),2);
-        [MUA.(yrstring),MUA.(yrstring).k,MUA.(yrstring).l]=DeactivateMUAelements(CtrlVar,MUA.(yrstring),ElementsToBeDeactivated);
-        Ind_nan = find(isnan(MUA.(yrstring).Boundary.x));
-        if ~isempty(Ind_nan)
-            MUA.(yrstring).Boundary.x = MUA.(yrstring).Boundary.x(1:Ind_nan(1)-1);
-            MUA.(yrstring).Boundary.y = MUA.(yrstring).Boundary.y(1:Ind_nan(1)-1);
-        end
-        original_node_numbers = MUA.(yrstring).k(find(~isnan(MUA.(yrstring).k)));
+        % UserVar.Geometry=double(years_to_analyze(yy));
+        % UserVar=ANT_ApplyMeshModifications(UserVar);
+        % tmp = load(UserVar.InitialMeshFileName);
+        % MUA.(yrstring) = tmp.MUA; 
+        % % identify basin id of each MUA node
+        % [MUA.(yrstring).basins,~] = Define_Quantity_PerBasin(MUA.(yrstring).coordinates(:,1),MUA.(yrstring).coordinates(:,2),B,0);
+        % MUA_basinnames = erase({MUA.(yrstring).basins(:).name},'-');
+        % basinnodes_all = [];
+        % for bb=1:numel(basins_to_analyze) 
+        %     basin = char(erase(basins_to_analyze{bb},'-'));
+        %     [~,BasinInd] = ismember(basin,MUA_basinnames);
+        %     basinnodes = MUA.(yrstring).basins(BasinInd).ind;
+        %     basinnodes_all = [basinnodes_all; basinnodes];
+        % end
+        % ElementsToBeDeactivated=any(~ismember(MUA.(yrstring).connectivity,basinnodes_all),2);
+        % [MUA.(yrstring),MUA.(yrstring).k,MUA.(yrstring).l]=DeactivateMUAelements(CtrlVar,MUA.(yrstring),ElementsToBeDeactivated);
+        % Ind_nan = find(isnan(MUA.(yrstring).Boundary.x));
+        % if ~isempty(Ind_nan)
+        %     MUA.(yrstring).Boundary.x = MUA.(yrstring).Boundary.x(1:Ind_nan(1)-1);
+        %     MUA.(yrstring).Boundary.y = MUA.(yrstring).Boundary.y(1:Ind_nan(1)-1);
+        % end
+        % original_node_numbers = MUA.(yrstring).k(find(~isnan(MUA.(yrstring).k)));
+        % switch yrstring
+        %     case "yr2000"
+        %         GF.(yrstring).node = GF_2000.node(original_node_numbers);
+        %     case "yr2009"
+        %         GF.(yrstring).node = GF_2009.node(original_node_numbers);
+        %     case "yr2014"
+        %         GF.(yrstring).node = GF_2014.node(original_node_numbers);
+        %     case "yr2018"
+        %         GF.(yrstring).node = GF_2018.node(original_node_numbers);
+        %     case "yr2020"
+        %         GF.(yrstring).node = GF_2020.node(original_node_numbers);
+        % end
         switch yrstring
             case "yr2000"
-                GF.(yrstring).node = GF_2000.node(original_node_numbers);
+                MUA = MUA_2000;
+                GF = GF_2000;
             case "yr2009"
-                GF.(yrstring).node = GF_2009.node(original_node_numbers);
+                MUA = MUA_2009;
+                GF = GF_2009;
             case "yr2014"
-                GF.(yrstring).node = GF_2014.node(original_node_numbers);
+                MUA = MUA_2014;
+                GF = GF_2014;
             case "yr2018"
-                GF.(yrstring).node = GF_2018.node(original_node_numbers);
+                MUA = MUA_2018;
+                GF = GF_2018;
+            case "yr2020"
+                MUA = MUA_2020;
+                GF = GF_2020;
         end
+        % for ii=1:numel(data)
+        %     if yrstring=="yr2000"                
+        %         speed.(yrstring)(ii,:) = data(ii).Original.(yrstring).speed(original_node_numbers,cycle)';
+        %     else
+        %         Ind_tmp = find(data(ii).(perturbation).(yrstring).cycle==cycle);
+        %         if ~isempty(Ind_tmp)
+        %             speed.(yrstring)(ii,:) = data(ii).(perturbation).(yrstring).speed(original_node_numbers,Ind_tmp)';
+        %         else
+        %             speed.(yrstring)(ii,:) = nan*original_node_numbers';
+        %         end
+        %     end   
+        % end
         for ii=1:numel(data)
             if yrstring=="yr2000"                
-                speed.(yrstring)(ii,:) = data(ii).Original.speed(original_node_numbers,cycle)';
+                speed.(yrstring)(ii,:) = data(ii).Original.(yrstring).speed(:,cycle)';
             else
                 Ind_tmp = find(data(ii).(perturbation).(yrstring).cycle==cycle);
                 if ~isempty(Ind_tmp)
-                    speed.(yrstring)(ii,:) = data(ii).(perturbation).(yrstring).speed(original_node_numbers,Ind_tmp)';
+                    speed.(yrstring)(ii,:) = data(ii).(perturbation).(yrstring).speed(:,Ind_tmp)';
                 else
                     speed.(yrstring)(ii,:) = nan*original_node_numbers';
                 end
@@ -152,11 +183,12 @@ for yy=1:numel(years_to_analyze)
     end
     % take log
     if trainingdataformat == "LOGu"
+        T(T<0.001)=0.001;
         T = log10(T);
     end
     % remove mean
     T_mean=mean(T,1);
-    T = T-repmat(T_mean(:)',size(T,1),1);
+    %T = T-repmat(T_mean(:)',size(T,1),1);
 
     %% DIMENSIONALITY REDUCTION: use singular value decomposition of targets to
     %% express each map of \Delta u in terms of its k dominant principal components
@@ -165,7 +197,7 @@ for yy=1:numel(years_to_analyze)
     [~,S,~] = svd(T,'econ');
     
     seq = randperm(num_exp);
-    pct = [0.9];
+    pct = [0.95];
     
     for ii=1:numel(pct)
 
@@ -205,6 +237,13 @@ for yy=1:numel(years_to_analyze)
         B_trunc = S_trunc*V_trunc';
         T_reproj = (B_trunc*B_trunc')\B_trunc; % equivalent to inv(B*B')*B
         T_hat = T*T_reproj';
+
+        %% Plot eigen basis
+        for jj=1:10%T_nComp
+            figure; PlotMeshScalarVariable([],MUA,V_trunc(:,jj));...
+            axis equal; axis tight; axis off; 
+            title(string(pct)+" SVD eigenfunction "+string(jj));
+        end
         
         data = T_hat(seq,:);
         predictors = X(seq,:);

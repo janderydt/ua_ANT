@@ -10,7 +10,7 @@ addpath(getenv("froot_tools"));
 
 perturbation = 'Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
 startyear = "2000";
-targetyear = "2018";
+targetyear = "2009";
 slidinglaw = "Weertman";
 cycle=1; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
 FNNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
@@ -18,12 +18,20 @@ trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine,
 % alternatives that seem to work well are trainscg
 UseGPU = 0; % UseGPU=1 only works with trainFcn="trainscg"
 doplots = 0;
-writeoutputsforTF = 1;
-add_data_to_SVD = 1;
+write_outputs_for_TF = 1;
+add_measurements_to_SVD = 0;
+only_grounded_ice = 0;
+if only_grounded_ice
+    pct = 0.99; %% chose high enough value so we can adequately represent 
+% the measurements in the truncated basis
+else
+    pct = 0.999; %% chose high enough value so we can adequately represent 
+% the measurements in the truncated basis
+end
 
 % load data file || this file is produced by the
 % plot_PerturbationResults_Ensemble.m function
-load("Delta_u_AS_"+slidinglaw+"_"+startyear+"-"+targetyear+".mat");
+load("Delta_u_AMUND_"+slidinglaw+"_"+startyear+"-"+targetyear+".mat");
 
 %% PREDICTORS
 Ind_toremove = find(gaC>50);
@@ -35,7 +43,7 @@ X = double(X);
 X(Ind_toremove,:)=[];
 
 %% TARGETS (training/input data). In this case, input data consists of 
-%% simulated instanteneous changes in surface speed in response to changes
+%% simulated instantaneous changes in surface speed in response to changes
 %% in ice-sheet geometry (ice thickness, calving front location). The input
 %% data consists of num_nodes nodal values for nun_exp experiments.
 T = Delta_u.(perturbation).map(:,:,cycle);
@@ -63,46 +71,71 @@ end
 T_mean = mean(T,1);
 T = T-repmat(T_mean(:)',size(T,1),1);
 
-%% Load data if required
-if add_data_to_SVD
-    for yy=[startyear targetyear]
-        if yy=="2000"
-            fname = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
-        else
-            fname = "GriddedInterpolants_"+yy+"-"+string(double(yy)+1)+...
-            "_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
-        end
-        load("../ANT_Data/ANT_Interpolants/"+fname);
-        v_tmp = hypot(Fus.Values,Fvs.Values);
-        Fu = Fus; Fu.Values = v_tmp;
-        std_tmp = hypot(Fxerr.Values,Fyerr.Values);
-        Fstd = Fus; Fstd.Values = std_tmp;
-        v.("yr"+yy).F = Fu;
-        std.("yr"+yy).F = Fstd;
+%% Load observations
+for yy=[startyear targetyear]
+    if yy=="2000"
+        fname = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
+    else
+        fname = "GriddedInterpolants_"+string(double(yy)-1)+"-"+yy+...
+        "_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
     end
-    load("Delta_u_AS_Weertman_"+startyear+"-"+targetyear+".mat","MUA_yr2","GF_yr2");
-    MUA = MUA_yr2; GF = GF_yr2;
-    % interpolate initial and final speed onto Ua mesh
-    u_init = v.("yr"+yr1).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-    std_init = std.("yr"+yr1).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-    u_target = v.("yr"+yr2).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-    std_target = std.("yr"+yr2).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-    deltau = u_target-u_init; % measured change in speed (m/yr)
-    T_meas = deltau(:) - T_mean(:);
-    T = [T_meas(:)' ; T];
+    load("../ANT_Data/ANT_Interpolants/"+fname);
+    v_tmp = hypot(Fus.Values,Fvs.Values);
+    Fu = Fus; Fu.Values = v_tmp;
+    std_tmp = hypot(Fxerr.Values,Fyerr.Values);
+    Fstd = Fus; Fstd.Values = std_tmp;
+    v.("yr"+yy).F = Fu;
+    std.("yr"+yy).F = Fstd;
 end
+load("Delta_u_AMUND_Weertman_"+startyear+"-"+targetyear+".mat","MUA_yr2","GF_yr2");
+MUA = MUA_yr2; GF = GF_yr2;
+% interpolate initial and final speed onto Ua mesh
+u_init = v.("yr"+startyear).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+std_init = std.("yr"+startyear).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+u_target = v.("yr"+targetyear).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+std_target = std.("yr"+targetyear).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
+deltau = u_target-u_init; % measured change in speed (m/yr)
+% subtract model ensemble mean
+T_meas = deltau(:) - T_mean(:);
+if any(isnan(T_meas))
+    error("dT_meas contains nans. Consider using extruded field.");
+end
+
+if only_grounded_ice
+    %% remove floating nodes
+    Nodes_floating = find(GF.node<0.5);
+    T(:,Nodes_floating) = 0;
+    T_meas(Nodes_floating) = 0;
+    T_mean(Nodes_floating) = 0;
+end
+
+if add_measurements_to_SVD
+    T = [T_meas(:)' ; T];
+    datastr = "withdata";
+else
+    datastr = "nodata";
+end    
 
 %% DIMENSIONALITY REDUCTION: use singular value decomposition of targets to
 %% express each map of \Delta u in terms of its k dominant principal components
-%% do the full svd to calculate how many components are required for each
-%% increment in pct
+% do the full svd to calculate how many components are required for each
+% increment in pct
 [~,S,~] = svd(T,'econ');
 
 seq = randperm(num_exp);
-pct = [0.995]; %% required so we can adequately represent the data in the truncated basis
 
 for ii=1:numel(pct)
-    T_nComp = find((cumsum(diag(S).^2)./sum(diag(S).^2))>pct(ii),1,'first');
+    tmp = (cumsum(diag(S).^2)./sum(diag(S).^2));
+    T_nComp = find(tmp>pct(ii),1,'first');
+
+    if T_nComp>25
+        pct(ii) = tmp(25);
+        T_nComp = 25;
+    end
+
+    fprintf("Retaining %s components in the SVD with %s percentage of the variance explained.\n",...
+        string(T_nComp),string(pct(ii)));
+
     T_pct1 = diag(S).^2./sum(diag(S).^2);
     T_pct = T_pct1(1:T_nComp);
 
@@ -119,9 +152,9 @@ for ii=1:numel(pct)
     % T = U*S*V' = U*B with B=S*V' with [B]=n-by-m
     % truncate decomposation at rank r:
     % [T_trunc]=n-by-m
-    % [U_trunc]=n-by-r 
-    % [S_trunc]=r-by-r
-    % [V_trunc']=r-by-m
+    % [U_trunc]=n-by-r
+    % [S_trunc]=r-by-r: the eigen values
+    % [V_trunc']=r-by-m: the eigen basis
     % T_trunc = U_trunc*S_trunc*V_trunc' = U_trunc*B_trunc with 
     % B_trunc=S_trunc*V_trunc' with [B_trunc]=r-by-m
     % So T_trunc = U_trunc*B_trunc
@@ -138,22 +171,44 @@ for ii=1:numel(pct)
     B_trunc = S_trunc*V_trunc';
     T_reproj = (B_trunc*B_trunc')\B_trunc; % equivalent to inv(B*B')*B
 
-    if add_data_to_SVD
-        T_hat = T(2:end,:)*T_reproj'; % we remove the first line here, which contains the data
-        datastr = "nodata";
+    %% Plot eigen basis
+    %for jj=1:T_nComp
+     %   figure; PlotMeshScalarVariable([],MUA,V_trunc(:,jj));...
+     %   axis equal; axis tight; axis off; 
+     %   title(string(pct)+" SVD eigenfunction "+string(jj)+" ("+string(T_pct(jj)*100)+"%)");
+    %end
+   
+    if add_measurements_to_SVD
+        T_hat = T(2:end,:)*T_reproj'; 
+        % we remove the first line here, which contains the measurements
+        % because we don't want to include them in the training data        
     else
         T_hat = T*T_reproj';
-        datastr = "withdata";
     end
+
+    %% Can measurements be represented adequately in truncated basis?
+    T_meas_trunc = T_meas(:)'*T_reproj';
+    T_meas_reproj = T_meas_trunc*B_trunc; % reproject truncated field onto nodal basis
+
+    figure; subplot(1,3,1); hold on; PlotMeshScalarVariable([],MUA,T_meas(:)+T_mean(:)); title('\Delta U_{meas}');
+    axis equal; axis tight; caxis([0 1000]);
     
+    subplot(1,3,2); hold on; PlotMeshScalarVariable([],MUA,T_meas_reproj(:)+T_mean(:)); title('Reprojected \Delta U_{meas}');
+    axis equal; axis tight; caxis([0 1000]);
+
+    subplot(1,3,3); hold on; PlotMeshScalarVariable([],MUA,T_meas(:)-T_meas_reproj(:)); title('Original - Reprojected');
+    axis equal; axis tight; caxis([-250 250]);
+
     data = T_hat(seq,:);
     predictors = X(seq,:);
 
     %% Now simulate FeedForward NN
     year = startyear + "-" + targetyear;
-    fname1 = sprintf("./FNN/mat_files/SVD-%s_%s_%s_%s_cycle%s_N0k%.4g",datastr,perturbation,year,slidinglaw,string(cycle),10000*pct(ii));
+    fname1 = sprintf("./FNN/mat_files/SVD-%s_%s_%s_%s_cycle%s_floatingice%s_N0k%.4g",datastr,perturbation,year,...
+        slidinglaw,string(cycle),string(1-only_grounded_ice),10000*pct(ii));
     save(fname1, 'T_mean','V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
-    fname2 = sprintf("./FNN/mat_files/FNN_SVD-%s_%s_%s_%s_%s_cycle%s_N0k%.4g",datastr,trainFcn,perturbation,year,slidinglaw,string(cycle),10000*pct(ii));
+    fname2 = sprintf("./FNN/mat_files/FNN_SVD-%s_%s_%s_%s_%s_cycle%s_floatingice%s_N0k%.4g",datastr,trainFcn,perturbation,year,...
+        slidinglaw,string(cycle),string(1-only_grounded_ice),10000*pct(ii));
     addpath("./FNN");
     TrainFNN(predictors',data',FNNtype,trainFcn,UseGPU,fname2,doplots);
 
@@ -170,7 +225,7 @@ for ii=1:numel(pct)
     % end
 
     %% WRITE OUTPUTS for tensorflow
-    if writeoutputsforTF
+    if write_outputs_for_TF
         % split targets and predictors into training, cross-validation and test
         % datasets
         val_idx = floor(num_exp*0.8);
@@ -193,8 +248,10 @@ for ii=1:numel(pct)
         T_val = (T_val-repmat(T_train_C,num_val,1))./repmat(T_train_S,num_val,1);
         T_test = (T_test-repmat(T_train_C,num_test,1))./repmat(T_train_S,num_test,1);
 
-        fname1 = sprintf('./RNN/mat_files/data_SVD-%s_%s_%s_%s_cycle%s_N0k%.4g',datastr,perturbation,year,slidinglaw,string(cycle),pct(ii)*10000);
-        fname2 = sprintf('./RNN/mat_files/SVD-%s_%s_%s_%s_cycle%s_N0k%.4g',datastr,perturbation,year,slidinglaw,string(cycle),pct(ii)*10000);
+        fname1 = sprintf('./RNN/mat_files/data_SVD-%s_%s_%s_%s_cycle%s_floatingice%s_N0k%.4g',datastr,perturbation,year,...
+            slidinglaw,string(cycle),string(1-only_grounded_ice),pct(ii)*10000);
+        fname2 = sprintf('./RNN/mat_files/SVD-%s_%s_%s_%s_cycle%s_floatingice%s_N0k%.4g',datastr,perturbation,year,...
+            slidinglaw,string(cycle),string(1-only_grounded_ice),pct(ii)*10000);
         save(fname1,'X_train','X_val','X_test','T_train','T_val','T_test',...
             'X_train_C','X_train_S','T_train_C','T_train_S');
         save(fname2, 'T_mean','V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
@@ -211,6 +268,8 @@ if doplots
     elseif targetyear == "2014"
         MUA=MUA_2014;
     elseif targetyear == "2018"
+        MUA=MUA_2018;
+    elseif targetyear == "2020"
         MUA=MUA_2018;
     end
 

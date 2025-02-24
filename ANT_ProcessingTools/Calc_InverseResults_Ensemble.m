@@ -15,10 +15,10 @@ UserVar.type = "Inverse";
 %UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([3 6 9])+".csv";
 %UserVar.idrange = [3000,3999; 6000, 6999; 9000, 9999];
 
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
-UserVar.idrange = [14000,14999; 15000, 15999; 16000, 16999; 17000, 17999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_11-02-2025.csv";
+UserVar.idrange = [20000 23999];
 
-inversiondata_filename = "inversiondata_Weertman.mat";
+inversiondata_filename = "inversiondata_AMUND_Weertman.mat";
 
 if exist(inversiondata_filename,"file")
     load(inversiondata_filename);
@@ -27,9 +27,41 @@ else
     inverse_experiments_analyzed = [];
 end
 
+%% ALL
+% basins_to_analyze = {'A-Ap',...  % Queen Maud Land
+%     'Ap-B',... % Enderby Land
+%     'B-C',...  % Amery
+%     'C-Cp',... % 
+%     'Cp-D',... % Totton/Wilkes Land
+%     'D-Dp',... % George V Coast
+%     'Dp-E',... % Victoria Land
+%     'E-Ep',... % Ross west
+%     'Ep-F',... % Ross east
+%     'F-G',...  % Getz
+%     'G-H',...  % PIG, Thwaites
+%     'H-Hp',... % Abbot
+%     'Hp-I',... % English Coast
+%     'I-Ipp',... % Northern Peninsula
+%     'Ipp-J',... % Eastern Peninsula
+%     'J-Jpp',... % Ronne 
+%     'Jpp-K',... % Filchner
+%     'K-A'}; % Caird Coast
+%% AMUND
+basins_to_analyze = {'F-G',...  % Getz
+    'G-H',...  % PIG, Thwaites
+    'H-Hp'}; % Abbott
+
 filename = 'basins_IMBIE_v2.mat'; 
 B = load(filename);
 B = RemoveIceRisesAndIslands(B);
+Ind = contains(B.name,basins_to_analyze);
+Bfields= fields(B);
+for ii=1:numel(Bfields)
+    if ~contains(Bfields{ii},'note')
+        tmp = B.(Bfields{ii});
+        B.(Bfields{ii}) = tmp(Ind);
+    end
+end
 
 for tt=1:numel(UserVar.Table)
 
@@ -56,7 +88,8 @@ for tt=1:numel(UserVar.Table)
     %% Gather data
     for ii=1:numel(Ind)
 
-        folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/ANT_nsmbl_Inverse_"+ExpID(Ind(ii));
+        UserVar.domain = RunTable{Ind(ii),"Domain"};
+        folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/"+UserVar.domain+"_Inverse_"+ExpID(Ind(ii));
         
         % store in data array
         if isempty(data)
@@ -71,7 +104,7 @@ for tt=1:numel(UserVar.Table)
 
         for cc=1:2
 
-            restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(Ind(ii))+"-RestartFile_InverseCycle"+...
+            restartfile = folder+"/"+UserVar.domain+"_"+UserVar.type+"_"+ExpID(Ind(ii))+"-RestartFile_InverseCycle"+...
                 string(cc)+".mat";
 
             if exist(restartfile,"file")
@@ -116,6 +149,7 @@ for tt=1:numel(UserVar.Table)
     
                     else
     
+
                         [B,~] = Calc_UaGLFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
                         B = Calc_UaOBFlux_PerBasin(MUA,F,F.GF,B,CtrlVarInRestartFile);
                         % Sum values of SMB, qGL and qOB for each basin

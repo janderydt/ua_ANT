@@ -17,17 +17,18 @@ addpath("../");
 UserVar.home = pwd;
 
 %% original inversion run table
-RunTable_inverse_files = "../ANT_Inverse/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
+RunTable_inverse_files = "../ANT_Inverse/RunTable_ARCHER2_11-02-2025.csv";
+Modeldomain = "AMUND";
 
 %% year for original and new geometry
 ExpID_oldgeom = 2000;
-ExpID_newgeom = 2009; % 2009, 2014, 2018
+ExpID_newgeom = 2014; % 2009, 2014, 2018
 
 %% which perturbations?
 pert = ["Calv_ISthick_GIthick"]; % Original, Calv, ISthick, GIthick, Calv_ISthick_GIthick
 
 %% construct new run table or append to existing run table
-UserVar.Table = "./RunTable_ARCHER2_Diagnostic.csv";
+UserVar.Table = "./RunTable_ARCHER2_Diagnostic_"+Modeldomain+"_Weertman_"+string(ExpID_newgeom)+".csv";
 if ~exist(UserVar.Table,"file")
     copyfile("EmptyTable.csv",UserVar.Table);
 else
@@ -55,7 +56,7 @@ for tt=1:numel(RunTable_inverse_files)
         end
     end
     
-    BaseMesh='2000_2009_2014_2018_meshmin3000_meshmax100000_refined';
+    BaseMesh=Modeldomain+"_"+string(ExpID_newgeom)+"_meshmin1500_meshmax100000_refined";
     
     for ii=1:size(RunTable_inverse,1)
         
@@ -96,6 +97,7 @@ for tt=1:numel(RunTable_inverse_files)
                 if contains("Original",pert)
                     Newrow_tmp_orig = Newrow_tmp;
                     Newrow_tmp_orig{end} = "Original geometry "+string(RunTable_inverse.startGeometry(ii));
+                    Newrow_tmp_orig{12} = strrep(BaseMesh,"_"+string(ExpID_newgeom)+"_","_"+string(ExpID_oldgeom)+"_");
                     RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_orig];
                 end
 
@@ -110,6 +112,7 @@ for tt=1:numel(RunTable_inverse_files)
                 % ISthick
                 if contains("ISthick",pert)
                     Newrow_tmp_ISthick = Newrow_tmp;
+                    Newrow_tmp_orig{12} = strrep(BaseMesh,"_"+string(ExpID_newgeom)+"_","_"+string(ExpID_oldgeom)+"_");
                     Newrow_tmp_ISthick{18} = ExpID_newgeom;
                     Newrow_tmp_ISthick{end} = "Ice shelf thickness "+string(ExpID_newgeom);
                     RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_ISthick];
@@ -118,6 +121,7 @@ for tt=1:numel(RunTable_inverse_files)
                 % ISthick and GIthick      
                 if contains("GIthick",pert)
                     Newrow_tmp_ISthick_GIthick = Newrow_tmp;
+                    Newrow_tmp_orig{12} = strrep(BaseMesh,"_"+string(ExpID_newgeom)+"_","_"+string(ExpID_oldgeom)+"_");
                     Newrow_tmp_ISthick_GIthick{18} = ExpID_newgeom;
                     Newrow_tmp_ISthick_GIthick{20} = ExpID_newgeom;
                     Newrow_tmp_ISthick_GIthick{end} = "Ice thickness "+string(ExpID_newgeom);

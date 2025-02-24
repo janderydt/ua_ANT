@@ -1,9 +1,9 @@
 function plot_InverseResults_Ensemble
 
-variable_to_plot = 'misfit'; %options: qGL, niter, misfit, qOB, BalancedMelt
+variable_to_plot = 'qGL'; %options: qGL, niter, misfit, qOB, BalancedMelt
 
 slidinglaws = ["Weertman"];
-file_with_inversion_data_to_read = "inversiondata_"+slidinglaws+".mat";
+file_with_inversion_data_to_read = "inversiondata_AMUND_"+slidinglaws+".mat";
 
 %% load data
 for nn=1:numel(file_with_inversion_data_to_read)
@@ -25,11 +25,11 @@ end
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.cycle = 2;
+UserVar.cycle = 1;
 %UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([3 6 9])+".csv";
 %UserVar.idrange = [3000,3999;6000,6999;9000,9999];
 %UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
-UserVar.idrange = [14000,17999];
+UserVar.idrange = [20000,23999];
 
 ExpID = [data(:).InverseExpID];
 Ind = find(~ismember(ExpID,[UserVar.idrange(1):UserVar.idrange(end)]));
@@ -39,7 +39,7 @@ data(Ind)=[];
 for ii=1:numel(data)
     if numel(data(ii).misfit)>=UserVar.cycle
         misfit(ii) = data(ii).misfit(UserVar.cycle);
-        ind_finished(ii) = ismember(data(ii).niter(UserVar.cycle),[2000]);
+        ind_finished(ii) = 1;%ismember(data(ii).niter(UserVar.cycle),[2000]);
     else
         misfit(ii) = nan;
         ind_finished(ii) = 0;
@@ -58,10 +58,10 @@ switch variable_to_plot
         for ii=find(ind_finished==1)
             %dims = numel(data(ii).qGL(:));
             %plotdata(ii,:) = [data(ii).qGL(:)'/1e12 nan*ones(1,2-dims)];
-            plotdata(ii) = sum(data(ii).qGL(:,UserVar.cycle)'/1e12);
+            plotdata(ii) = sum(data(ii).qGL(:,UserVar.cycle)');
         end
-        cmin = 1000;
-        cmax = 3000;
+        cmin = 400;
+        cmax = 500;
         cbLabel = "Grounding line flux [Gt/yr]";
     case 'qOB'
         for ii=find(ind_finished==1)
@@ -316,7 +316,7 @@ print(H,fname,"-dpng","-r400");
 
 %% histogram
 figure; hold on;
-bins = linspace(min(plotdata),max(plotdata/100),20);
+bins = linspace(min(plotdata),max(plotdata),20);
 h1=histogram(plotdata,bins); 
 h2=histogram(plotdata(ind_finished==1),bins);
 xlabel(cbLabel);

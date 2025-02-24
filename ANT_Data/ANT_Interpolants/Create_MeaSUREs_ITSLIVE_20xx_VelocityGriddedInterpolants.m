@@ -40,7 +40,7 @@ try
     xerrm = measures_annual('vxerr',[num2str(year),'_',num2str(year+1)]); xerrm(isnan(xerrm))=0; % change nan to zero for calculation of  total error.
     yerrm = measures_annual('vyerr',[num2str(year),'_',num2str(year+1)]); yerrm(isnan(yerrm))=0; % change nan to zero for calculation of  total error.
     vm = hypot(vxm,vym);
-    errm = hypot(vxm./vm.*xerrm,vym./vm.*yerrm);% propagation of error for velocity v = sqrt(vx^2+vy^2)
+    errm = hypot(xerrm,yerrm);% propagation of error
     wm = 1./errm.^2; % weights
 catch
     [~,x,y] = measures_annual('vx','2000_2001');
@@ -66,7 +66,7 @@ vyi = itslive_annual('vy',num2str(year),X,Y);
 xerri = itslive_annual('vxerr',num2str(year),X,Y); xerri(isnan(xerri)) = 0;
 yerri = itslive_annual('vyerr',num2str(year),X,Y); yerri(isnan(yerri)) = 0;
 vi = hypot(vxi,vyi);
-erri = hypot(vxi./vi.*xerri,vyi./vi.*yerri);% propagation of error for velocity v = sqrt(vx^2+vy^2)
+erri = hypot(xerri,yerri);% propagation of error for velocity v = sqrt(vx^2+vy^2)
 wi = 1./erri.^2; % weights
     
 fprintf("...done.\n")
@@ -138,7 +138,7 @@ xerrm = Fxerr(X,Y); xerrm(isnan(xerrm))=0; % replace nans by 0 for calculation o
 yerrm = Fyerr(X,Y); yerrm(isnan(yerrm))=0; % replace nans by 0 for calculation of total error 
 
 vm = hypot(vxm,vym);
-errm = hypot(vxm./vm.*xerrm,vym./vm.*yerrm);% propagation of error for velocity v = sqrt(vx^2+vy^2)
+errm = hypot(xerrm,yerrm);% propagation of error for velocity v = sqrt(vx^2+vy^2)
 wm = 1./errm.^2;
 
 vxm(errm./vm>relative_error_cutoff) = nan;
@@ -154,7 +154,7 @@ vyi = 0*X + itslive_annual('vy',"0000",X,Y);
 xerri = 0*X + itslive_annual('vxerr',"0000",X,Y); xerri(isnan(xerri)) = 0;
 yerri = 0*X + itslive_annual('vyerr',"0000",X,Y); yerri(isnan(yerri)) = 0;
 vi = hypot(vxi,vyi);
-erri = hypot(vxi./vi.*xerri,vyi./vi.*yerri);% propagation of error for velocity v = sqrt(vx^2+vy^2)
+erri = hypot(xerri,yerri);% propagation of error for velocity v = sqrt(vx^2+vy^2)
 wi = 1./erri.^2; % weights
 
 vxi(erri./vi>relative_error_cutoff) = nan;
@@ -235,7 +235,7 @@ xerrm = Ferr(X,Y); xerrm(isnan(xerrm))=0; % replace nans by 0 for calculation of
 yerrm = xerrm; 
 
 vm = hypot(vxm,vym);
-errm = hypot(vxm./vm.*xerrm,vym./vm.*yerrm);% propagation of error for velocity v = sqrt(vx^2+vy^2)
+errm = hypot(xerrm,yerrm);% propagation of error for velocity v = sqrt(vx^2+vy^2)
 wm = 1./errm.^2;
 
 vxm(errm./vm>relative_error_cutoff) = nan;
@@ -277,7 +277,7 @@ if CreateGeotiff
     geotiffwrite("./GeoTiffFiles/AntarcticVelocity_"+string(year)+"-"+string(year+1)+"_MeaSUREs_ITSLIVE_vy.tif",flipdim(vy',1),R,'CoordRefSysCode','EPSG:3031');
     geotiffwrite("./GeoTiffFiles/AntarcticVelocity_"+string(year)+"-"+string(year+1)+"_MeaSUREs_ITSLIVE_xerr.tif",flipdim(xerr',1),R,'CoordRefSysCode','EPSG:3031');
     geotiffwrite("./GeoTiffFiles/AntarcticVelocity_"+string(year)+"-"+string(year+1)+"_MeaSUREs_ITSLIVE_yerr.tif",flipdim(yerr',1),R,'CoordRefSysCode','EPSG:3031');
-    v = sqrt(vx.^2 + vy.^2); err = sqrt((vx./v.*xerr).^2+(vy./v.*yerr).^2);
+    v = hypot(vx,vy); err = hypot(xerr,yerr);
     geotiffwrite("./GeoTiffFiles/AntarcticVelocity_"+string(year)+"-"+string(year+1)+"_MeaSUREs_ITSLIVE_err.tif",flipdim(err',1),R,'CoordRefSysCode','EPSG:3031');
     geotiffwrite("./GeoTiffFiles/AntarcticVelocity_"+string(year)+"-"+string(year+1)+"_MeaSUREs_ITSLIVE_source.tif",flipdim(v_source',1),R,'CoordRefSysCode','EPSG:3031');
 

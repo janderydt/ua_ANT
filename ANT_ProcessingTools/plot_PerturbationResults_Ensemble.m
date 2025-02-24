@@ -9,13 +9,13 @@ if nargin==0
     cycles_to_plot = [1 2]; %[1 2]
     slidinglaw = "Weertman";
     startyear = "2000";
-    targetyear =  "2018";
+    targetyear =  "2014";
 end
 
 basins_to_analyze = {'F-G',...  % Getz
     'G-H',...  % PIG, Thwaites
     'H-Hp'}; % Abbott
-file_with_perturbation_data_to_read = "perturbationdata_"+slidinglaw+".mat";
+file_with_perturbation_data_to_read = "perturbationdata_AMUND_"+slidinglaw+".mat";
 CtrlVar=Ua2D_DefaultParameters; 
 
 %% load basins
@@ -29,12 +29,9 @@ if diagnostic_to_plot=="Delta_u"
     UserVar.casefolder=pwd;
     UserVar.datafolder=pwd+"/../ANT_Data/";
     UserVar.Experiment="";
-    BaseMesh='2000_2009_2014_2018_meshmin3000_meshmax100000_refined';
-    UserVar = ANT_DefineBaseMesh(UserVar,BaseMesh);
-
-    % start year
-    UserVar.Geometry=double(startyear);
-    UserVar=ANT_ApplyMeshModifications(UserVar);
+    
+    UserVar.InitialMeshFileName = "/mnt/md0/Ua/cases/ANT/ANT_Data/ANT_Ua_BaseMeshGeneration/"+...
+        "AMUND_basemesh_"+startyear+"_meshmin1500_meshmax100000_refined_extrudemesh1_variableboundaryres1.mat";
     tmp = load(UserVar.InitialMeshFileName);
     MUA_yr1 = tmp.MUA; 
     % identify basin id of each MUA node
@@ -56,9 +53,9 @@ if diagnostic_to_plot=="Delta_u"
     end
     
     % target year
-    UserVar.Geometry=double(targetyear);
-    UserVar=ANT_ApplyMeshModifications(UserVar);
-    tmp = load(UserVar.InitialMeshFileName);
+    UserVar.TargetMeshFileName = "/mnt/md0/Ua/cases/ANT/ANT_Data/ANT_Ua_BaseMeshGeneration/"+...
+        "AMUND_basemesh_"+targetyear+"_meshmin1500_meshmax100000_refined_extrudemesh1_variableboundaryres1.mat";
+    tmp = load(UserVar.TargetMeshFileName);
     MUA_yr2 = tmp.MUA;
     [MUA_yr2.basins,~] = Define_Quantity_PerBasin(MUA_yr2.coordinates(:,1),MUA_yr2.coordinates(:,2),B,0);
     MUA_basinnames = erase({MUA_yr2.basins(:).name},'-'); 
@@ -77,9 +74,6 @@ if diagnostic_to_plot=="Delta_u"
         MUA_yr2.Boundary.y = MUA_yr2.Boundary.y(1:Ind_nan(1)-1);
     end
 
-    delete(UserVar.InitialMeshFileName);
-    delete(UserVar.MeshBoundaryCoordinatesFile);
-
     %% corresponding GF masks
     load("perturbation_grids.mat");
     switch startyear
@@ -95,6 +89,9 @@ if diagnostic_to_plot=="Delta_u"
         case "2018"
             %MUA_yr1 = MUA_2018;
             GF_yr1 = GF_2018;
+        case "2020"
+            %MUA_yr1 = MUA_2018;
+            GF_yr1 = GF_2020;
     end
     switch targetyear
         case "2000"
@@ -109,6 +106,9 @@ if diagnostic_to_plot=="Delta_u"
         case "2018"
             %MUA_yr2 = MUA_2018;
             GF_yr2 = GF_2018;
+        case "2020"
+            %MUA_yr2 = MUA_2018;
+            GF_yr2 = GF_2020;
     end
     original_node_numbers = MUA_yr1.k(find(~isnan(MUA_yr1.k)));
     GF_yr1.node=GF_yr1.node(original_node_numbers);
@@ -126,7 +126,7 @@ tmp = load("inversiondata_"+slidinglaw+".mat");
 data_inverse = tmp.data;
 
 % available drainage basins
-available_basins = fieldnames(data(1).Original.qGL);
+available_basins = fieldnames(data(1).Original.("yr"+startyear).qGL);
 % check that data for basins_to_analyze is available
 for bb=1:numel(basins_to_analyze)
     if ~ismember(erase(basins_to_analyze{bb},'-'),available_basins)
@@ -160,29 +160,49 @@ for ii=1:numel(data)
 
             % grounding line flux
             case "Delta_qGL"
-                qGL_orig.(basin)(ii,:) = data(ii).Original.qGL.(basin)(:)';
-                qGL_calv.(basin)(ii,:) = data(ii).Calv.qGL.(basin)(:)';
-                qGL_dhIS.(basin)(ii,:) = data(ii).dhIS.qGL.(basin)(:)';
-                qGL_dh.(basin)(ii,:) = data(ii).dh.qGL.(basin)(:)';
-                qGL_calvdh.(basin)(ii,:) = data(ii).Calv_dh.qGL.(basin)(:)';
-                qGL_orig.total(ii,:) = qGL_orig.total(ii,:)+qGL_orig.(basin)(ii,:);
-                qGL_calv.total(ii,:) = qGL_calv.total(ii,:)+qGL_calv.(basin)(ii,:);
-                qGL_dhIS.total(ii,:) = qGL_dhIS.total(ii,:)+qGL_dhIS.(basin)(ii,:);
-                qGL_dh.total(ii,:) = qGL_dh.total(ii,:)+qGL_dh.(basin)(ii,:);
-                qGL_calvdh.total(ii,:) = qGL_calvdh.total(ii,:)+qGL_calvdh.(basin)(ii,:);
+                qGL_orig.(basin)(ii,:) = data(ii).Original.("yr"+startyear).qGL.(basin)(:)';
+                qGL_calv.(basin)(ii,:) = data(ii).Calv.("yr"+targetyear).qGL.(basin)(:)';
+                qGL_dhIS.(basin)(ii,:) = data(ii).dhIS.("yr"+targetyear).qGL.(basin)(:)';
+                qGL_dh.(basin)(ii,:) = data(ii).dh.("yr"+targetyear).qGL.(basin)(:)';
+                qGL_calvdh.(basin)(ii,:) = data(ii).Calv_dh.("yr"+targetyear).qGL.(basin)(:)';
+                if ~isempty(qGL_orig.(basin))
+                    qGL_orig.total(ii,:) = qGL_orig.total(ii,:)+qGL_orig.(basin)(ii,:);
+                end
+                if ~isempty(qGL_calv.(basin))
+                    qGL_calv.total(ii,:) = qGL_calv.total(ii,:)+qGL_calv.(basin)(ii,:);
+                end
+                if ~isempty(qGL_dhIS.(basin))
+                    qGL_dhIS.total(ii,:) = qGL_dhIS.total(ii,:)+qGL_dhIS.(basin)(ii,:);
+                end
+                if ~isempty(qGL_dh.(basin))
+                    qGL_dh.total(ii,:) = qGL_dh.total(ii,:)+qGL_dh.(basin)(ii,:);
+                end
+                if ~isempty(qGL_calvdh.(basin))
+                    qGL_calvdh.total(ii,:) = qGL_calvdh.total(ii,:)+qGL_calvdh.(basin)(ii,:);
+                end
 
             % open boundary (calving) flux    
             case "Delta_qOB"
-                qOB_orig.(basin)(ii,:) = data(ii).Original.qOB.(basin)(:)';
-                qOB_calv.(basin)(ii,:) = data(ii).Calv.qOB.(basin)(:)';
-                qOB_dhIS.(basin)(ii,:) = data(ii).dhIS.qOB.(basin)(:)';
-                qOB_dh.(basin)(ii,:) = data(ii).dh.qOB.(basin)(:)';
-                qOB_calvdh.(basin)(ii,:) = data(ii).Calv_dh.qOB.(basin)(:)';
-                qOB_orig.total(ii,:) = qOB_orig.total(ii,:)+qOB_orig.(basin)(ii,:);
-                qOB_calv.total(ii,:) = qOB_calv.total(ii,:)+qOB_calv.(basin)(ii,:);
-                qOB_dhIS.total(ii,:) = qOB_dhIS.total(ii,:)+qOB_dhIS.(basin)(ii,:);
-                qOB_dh.total(ii,:) = qOB_dh.total(ii,:)+qOB_dh.(basin)(ii,:);
-                qOB_calvdh.total(ii,:) = qOB_calvdh.total(ii,:)+qOB_calvdh.(basin)(ii,:);
+                qOB_orig.(basin)(ii,:) = data(ii).Original.("yr"+startyear).qOB.(basin)(:)';
+                qOB_calv.(basin)(ii,:) = data(ii).Calv.("yr"+targetyear).qOB.(basin)(:)';
+                qOB_dhIS.(basin)(ii,:) = data(ii).dhIS.("yr"+targetyear).qOB.(basin)(:)';
+                qOB_dh.(basin)(ii,:) = data(ii).dh.("yr"+targetyear).qOB.(basin)(:)';
+                qOB_calvdh.(basin)(ii,:) = data(ii).Calv_dh.("yr"+targetyear).qOB.(basin)(:)';
+                if ~isempty(qOB_orig.(basin))
+                    qOB_orig.total(ii,:) = qOB_orig.total(ii,:)+qOB_orig.(basin)(ii,:);
+                end
+                if ~isempty(qOB_calv.(basin))
+                    qOB_calv.total(ii,:) = qOB_calv.total(ii,:)+qOB_calv.(basin)(ii,:);
+                end
+                if ~isempty(qOB_dhIS(basin))
+                    qOB_dhIS.total(ii,:) = qOB_dhIS.total(ii,:)+qOB_dhIS.(basin)(ii,:);
+                end
+                if ~isempty(qOB_dh.(basin))
+                    qOB_dh.total(ii,:) = qOB_dh.total(ii,:)+qOB_dh.(basin)(ii,:);
+                end
+                if ~isempty(qOB_calvdh.(basin))
+                    qOB_calvdh.total(ii,:) = qOB_calvdh.total(ii,:)+qOB_calvdh.(basin)(ii,:);
+                end
             
             % changes in speed - only keep data for the selected basins
             case "Delta_u"
@@ -216,7 +236,7 @@ for ii=1:numel(data)
                     for cc=1:size(data(ii).(ff).("yr"+targetyear).speed,2)
                             
                         if startyear=="2000"                         
-                            speed_yr1 = data(ii).Original.speed(:,cc);
+                            speed_yr1 = data(ii).Original.("yr"+startyear).speed(:,cc);
                         else
                             Ind_start = find(data(ii).(ff).("yr"+startyear).cycle==cc);
                             if ~isempty(Ind_start)
@@ -254,7 +274,7 @@ for ii=1:numel(data)
                         Delta_u.(ff).(basin)(ii,cc) = sum(Intdu(Ind_notnan))/sum(IntA(Ind_notnan));
                         if bb==numel(basins_to_analyze)
                             if ~isfield(Delta_u.(ff),'map')
-                                Delta_u.(ff).map = zeros(numel(data),MUA_target.Nnodes,size(data(ii).Original.speed,2));
+                                Delta_u.(ff).map = zeros(numel(data),MUA_target.Nnodes,size(data(ii).Original.("yr"+startyear).speed,2));
                                 %Delta_u.(char(ff)).mapcounter = 0;
                                 %Delta_u.(char(ff)).mapnodes(:,cc) = basinnodes_all(:);
                             end
@@ -290,7 +310,7 @@ m = [data(:).m];
 n = [data(:).n];
 
 if diagnostic_to_plot=="Delta_u"
-    save("Delta_u_AS_"+slidinglaw+"_"+startyear+"-"+targetyear+".mat", ...
+    save("Delta_u_AMUND_"+slidinglaw+"_"+startyear+"-"+targetyear+".mat", ...
         "Delta_u","MUA_yr1","MUA_yr2","GF_yr1","GF_yr2",...
         "misfit","gsA","gsC","gaA","gaC","dhdt_err","m","n");
 end
@@ -461,10 +481,10 @@ switch diagnostic_to_plot
         uerrstart = sqrt((uxstart.^2.*uxerrstart.^2+uystart.^2.*uyerrstart.^2)./(uxstart.^2+uystart.^2+eps));
         
         if targetyear=="2000"
-            load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED","Fus","Fvs","Fxerr","Fyerr");
+            load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities","Fus","Fvs","Fxerr","Fyerr");
         else
-            load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_"+targetyear+"-"+...
-                string(double(targetyear)+1)+"_MeaSUREs_ITSLIVE_Velocities_EXTRUDED",...
+            load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_"+string(double(targetyear))+"-"+...
+                string(double(targetyear)+1)+"_MeaSUREs_ITSLIVE_Velocities",...
                 "Fus","Fvs","Fxerr","Fyerr");
         end
         uxtarget = Fus(MUA_target.coordinates(:,1),MUA_target.coordinates(:,2));

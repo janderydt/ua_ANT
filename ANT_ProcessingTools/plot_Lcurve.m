@@ -13,7 +13,7 @@ trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine
 UseGPU = 1;
 
 %% Load data - need to run Calc_InverseResults_Ensemble first
-load("inversiondata_Weertman.mat");
+load("inversiondata_AMUND_Weertman.mat");
 
 ExpID = [data(:).InverseExpID];
 gaA = [data(:).gaA];
@@ -33,18 +33,19 @@ end
 
 %% Prepare data for training 
 % remove outliers for misfit
-if cycle == 1
-    Ind = find(I>400 | I==0);
-else
-    Ind = find(I>400 | I==0 | isnan(dhdt_err));
-end
+% if cycle == 1
+%     Ind = find(I>400 | I==0);
+% else
+%     Ind = find(I>400 | I==0 | isnan(dhdt_err));
+% end
 
 % predictors
+Ind=[];
 m(Ind)=[]; n(Ind)=[];
 gaA(Ind)=[]; gaC(Ind)=[]; gsA(Ind)=[]; gsC(Ind)=[];
 R(Ind)=[]; I(Ind)=[]; dhdt_err(Ind)=[];
 
-X = [m(:) n(:) gaA(:) gaC(:) log10(gsA(:)) log10(gsC(:))];
+X = [m(:) n(:) log10(gaA(:)) log10(gaC(:)) log10(gsA(:)) log10(gsC(:))];
 if cycle==2 % add dhdt_err to predictors
     X = [X log10(dhdt_err(:))];
 end
@@ -104,8 +105,8 @@ end
 %% gaA
 X_new(1,:) = 3*ones(1,15); %m
 X_new(2,:) = 3*ones(1,15); %n
-X_new(3,:) = 10.^linspace(-1,2,15); %gaA
-X_new(4,:) = ones(1,15); %gaC
+X_new(3,:) = log10(10.^linspace(-1,2,15)); %gaA
+X_new(4,:) = log10(ones(1,15)); %gaC
 X_new(5,:) = log10(1e4*ones(1,15)); %gsA
 X_new(6,:) = log10(1e4*ones(1,15)); %gsC
 if cycle>1
@@ -127,8 +128,10 @@ for ii=1:size(Y_new,1)
 end
 
 % undo log of original predictor and target data
-X_orig(5,:)=10.^X_orig(5,:);
-X_orig(6,:)=10.^X_orig(6,:);
+X_orig(3,:)=10.^X_orig(3,:); X_new(3,:)=10.^X_new(3,:);
+X_orig(4,:)=10.^X_orig(4,:); X_new(4,:)=10.^X_new(4,:);
+X_orig(5,:)=10.^X_orig(5,:); X_new(5,:)=10.^X_new(5,:);
+X_orig(6,:)=10.^X_orig(6,:); X_new(6,:)=10.^X_new(6,:);
 if cycle>1
     X_orig(7,:)=10.^X_orig(7,:);
 end
@@ -148,8 +151,8 @@ title(ax(1),"gaA"); grid(ax(1),"on"); box(ax(1),"on");
 %% gaC
 X_new(1,:) = 3*ones(1,15); %m
 X_new(2,:) = 3*ones(1,15); %n
-X_new(3,:) = 10*ones(1,15); %gaA
-X_new(4,:) = 10.^linspace(-1,2,15); %gaC
+X_new(3,:) = log10(10*ones(1,15)); %gaA
+X_new(4,:) = log10(10.^linspace(-1,2,15)); %gaC
 X_new(5,:) = log10(1e4*ones(1,15)); %gsA
 X_new(6,:) = log10(1e4*ones(1,15)); %gsC
 if cycle>1
@@ -171,8 +174,10 @@ for ii=1:size(Y_new,1)
 end
 
 % undo log of original predictor and target data
-X_orig(5,:)=10.^X_orig(5,:);
-X_orig(6,:)=10.^X_orig(6,:);
+X_orig(3,:)=10.^X_orig(3,:); X_new(3,:)=10.^X_new(3,:);
+X_orig(4,:)=10.^X_orig(4,:); X_new(4,:)=10.^X_new(4,:);
+X_orig(5,:)=10.^X_orig(5,:); X_new(5,:)=10.^X_new(5,:);
+X_orig(6,:)=10.^X_orig(6,:); X_new(6,:)=10.^X_new(6,:);
 if cycle>1
     X_orig(7,:)=10.^X_orig(7,:);
 end
@@ -191,8 +196,8 @@ title(ax(2),"gaC"); grid(ax(2),"on"); box(ax(2),"on");
 %% gsA
 X_new(1,:) = 3*ones(1,15); %m
 X_new(2,:) = 3*ones(1,15); %n
-X_new(3,:) = 10*ones(1,15); %gaA
-X_new(4,:) = 10*ones(1,15); %gaC
+X_new(3,:) = log10(10*ones(1,15)); %gaA
+X_new(4,:) = log10(10*ones(1,15)); %gaC
 X_new(5,:) = log10(10.^linspace(3,6,15)); %gsA
 X_new(6,:) = log10(1e4*ones(1,15)); %gsC
 if cycle>1
@@ -214,6 +219,8 @@ for ii=1:size(Y_new,1)
 end
 
 % undo log of original predictor and target data
+X_orig(3,:)=10.^X_orig(3,:); X_new(3,:)=10.^X_new(3,:);
+X_orig(4,:)=10.^X_orig(4,:); X_new(4,:)=10.^X_new(4,:);
 X_orig(5,:)=10.^X_orig(5,:); X_new(5,:)=10.^X_new(5,:);
 X_orig(6,:)=10.^X_orig(6,:); X_new(6,:)=10.^X_new(6,:);
 if cycle>1
@@ -234,8 +241,8 @@ title(ax(3),"gsA"); grid(ax(3),"on"); box(ax(3),"on");
 %% gsC
 X_new(1,:) = 3*ones(1,15); %m
 X_new(2,:) = 3*ones(1,15); %n
-X_new(3,:) = 10*ones(1,15); %gaA
-X_new(4,:) = 10*ones(1,15); %gaC
+X_new(3,:) = log10(10*ones(1,15)); %gaA
+X_new(4,:) = log10(10*ones(1,15)); %gaC
 X_new(5,:) = log10(1e4*ones(1,15)); %gsA
 X_new(6,:) = log10(10.^linspace(3,6,15)); %gsC
 if cycle>1
@@ -257,6 +264,8 @@ for ii=1:size(Y_new,1)
 end
 
 % undo log of original predictor and target data
+X_orig(3,:)=10.^X_orig(3,:); X_new(3,:)=10.^X_new(3,:);
+X_orig(4,:)=10.^X_orig(4,:); X_new(4,:)=10.^X_new(4,:);
 X_orig(5,:)=10.^X_orig(5,:); X_new(5,:)=10.^X_new(5,:);
 X_orig(6,:)=10.^X_orig(6,:); X_new(6,:)=10.^X_new(6,:);
 if cycle>1
@@ -278,8 +287,8 @@ title(ax(4),"gsC"); grid(ax(4),"on"); box(ax(4),"on");
 if cycle>1
     X_new(1,:) = 3*ones(1,15); %m
     X_new(2,:) = 3*ones(1,15); %n
-    X_new(3,:) = 10*ones(1,15); %gaA
-    X_new(4,:) = 10*ones(1,15); %gaC
+    X_new(3,:) = log10(10*ones(1,15)); %gaA
+    X_new(4,:) = log10(10*ones(1,15)); %gaC
     X_new(5,:) = log10(1e4*ones(1,15)); %gsA
     X_new(6,:) = log10(1e4*ones(1,15)); %gsC
     X_new(7,:) = log10(linspace(0.1,0.5,15)); %dhdt_err
@@ -299,6 +308,8 @@ if cycle>1
     end
     
     % undo log of original predictor and target data
+    X_orig(3,:)=10.^X_orig(3,:); X_new(3,:)=10.^X_new(3,:);
+    X_orig(4,:)=10.^X_orig(4,:); X_new(4,:)=10.^X_new(4,:);
     X_orig(5,:)=10.^X_orig(5,:); X_new(5,:)=10.^X_new(5,:);
     X_orig(6,:)=10.^X_orig(6,:); X_new(6,:)=10.^X_new(6,:);
     if cycle>1

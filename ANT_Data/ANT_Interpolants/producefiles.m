@@ -9,37 +9,40 @@ addpath("../ANT_HelperFunctions/");
 % Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-geom-');
 % Klear;
 
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2010,0);
-Klear
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2011,0);
-Klear
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2012,0);
-Klear
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2013,0);
-Klear
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2014,0);
-Klear
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2015,0);
-Klear
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2016,0);
-Klear
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2017,0);
-Klear
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2018,0);
-Klear
-
-
-return
 % 
 % Velinterpolantfile = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities";
 % Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2000";
 % Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-geom-');
 % Klear;
 % 
-Velinterpolantfile = "GriddedInterpolants_2009-2010_MeaSUREs_ITSLIVE_Velocities";
-Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2009";
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2009,1);
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2010,1);
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2011,1);
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2012,1);
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2013,1);
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2014,1);
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2015,1);
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2016,1);
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2017,1);
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2018,1);
+
+return
+Klear;
+Velinterpolantfile = "GriddedInterpolants_2019-2020_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2020";
 Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-');
 Klear;
+
+return
 %
 Velinterpolantfile = "GriddedInterpolants_2014-2015_MeaSUREs_ITSLIVE_Velocities";
 Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2014";
