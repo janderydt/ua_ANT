@@ -56,7 +56,7 @@ else
         " or "+CtrlVar.ReadInitialMeshFileName);
 end
 
-if UserVar.AdaptMesh ==1
+if UserVar.AdaptMesh == 1
 
     CtrlVar.InfoLevelAdaptiveMeshing=1;  
     CtrlVar.MeshSize=100e3;
@@ -72,7 +72,7 @@ if UserVar.AdaptMesh ==1
     CtrlVar.MeshRefinementMethod='explicit:local:newest vertex bisection';
 
     CtrlVar.SaveAdaptMeshFileName='MeshFileAdapt';    %  file name for saving adapt mesh. If left empty, no file is written
-    CtrlVar.AdaptMeshRunStepInterval=200 ; % remesh whenever mod(Itime,CtrlVar.AdaptMeshInterval)==0
+    CtrlVar.AdaptMeshRunStepInterval=50 ; % remesh whenever mod(Itime,CtrlVar.AdaptMeshInterval)==0
     %CtrlVar.doAdaptMeshPlots=1; 
 end
 
@@ -83,6 +83,7 @@ CtrlVar.SlidingLaw = UserVar.SlidingLaw;
 CtrlVar.InfoLevelNonLinIt=1;
 CtrlVar.InfoLevel=1;
 
+CtrlVar.CreateOutputsBeginningOfRun=1;
 CtrlVar.CreateOutputsEndOfRun=1;
 
 CtrlVar.NameOfRestartFiletoWrite=CtrlVar.Experiment+"-RestartFile.mat";

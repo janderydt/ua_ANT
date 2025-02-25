@@ -8,9 +8,9 @@ function UserVar = ANT_GetUserVar_Transient(RunTable,ind,UserVar)
 %% time variables
 UserVar.StartTime = datetime(RunTable{ind,"ExpStartDate"},format="yyyy-MM-dd"); % physical time (in yyyy-MM-dd) when the simulation should start
 UserVar.StartTime_DecimalYears = year(UserVar.StartTime)+years(UserVar.StartTime-dateshift(UserVar.StartTime,'start','year')); % start time in Ua units (decimal years)
-UserVar.EndTime = datetime(RunTable{ind,"ExpEndDate"},format="yyyy-MM-dd"); % physical time (in yyyy-MM-dd) when the simulation should end)
-UserVar.TotalTime = year(UserVar.EndTime)+years(UserVar.EndTime-dateshift(UserVar.EndTime,'start','year')); % Ua will exit the time loop when CtrlVar.TotalTime - CtrlVar.time < CtrlVar.dtmin. To be consistent with Ua units, convert from seconds to years
-DeltaSeconds = seconds(UserVar.EndTime-UserVar.StartTime); % interval between end and start year in seconds
+UserVar.EndTime = datetime(RunTable{ind,"ExpEndDate"},format="yyyy-MM-dd"); % physical time (in yyyy-MM-dd) when the simulation should end
+UserVar.TotalTime = year(UserVar.EndTime)+years(UserVar.EndTime-dateshift(UserVar.EndTime,'start','year')); % Ua will exit the time loop when CtrlVar.TotalTime - CtrlVar.time < CtrlVar.dtmin. To be consistent with Ua units, convert EndTime from seconds to years
+UserVar.YearsCompleted = RunTable{ind,"YearsCompleted"};
 
 %% information about inverse simulation to start from
 UserVar.Inverse = RunTable{ind,"Inverse"};
@@ -20,7 +20,6 @@ UserVar.InverseRestartFile = UserVar.datafolder+"/ANT_InputsForTransientSimulati
     string(UserVar.InverseCycle)+".mat";
 
 %% is this a restart?
-UserVar.YearsCompleted = RunTable{ind,"YearsCompleted"};
 UserVar.Restart = RunTable{ind,"Restart"};
 
 %% mesh variables
@@ -29,7 +28,7 @@ UserVar.MeshBoundaryCoordinatesFile = "MeshBoundaryCoordinates.mat";
 UserVar.AdaptMesh = RunTable{ind,"AdaptMesh"};
 
 %% geometry interpolants: only needed for bedrock geometry
-UserVar.GeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.StartYear)+"_EXTRUDED.mat";
+UserVar.GeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+string(UserVar.StartYear)+"_EXTRUDED.mat";
 
 %% density interpolant: same file as geometry interpolants
 UserVar.DensityInterpolant = UserVar.GeometryInterpolants;  
@@ -45,7 +44,7 @@ if exist(NameOfFiletoRead,"file")
     xC = MUA.coordinates(:,1); yC = MUA.coordinates(:,2);
     m = F.m; muk = F.muk; q = F.q;
     UserVar.NameOfFileForReadingSlipperinessEstimate = "ANT_Inverse_"+string(UserVar.Inverse)+"_C-Estimate.mat";
-    % C is not updated for floating ice, except for some
+    % In an inversion, C is not updated for floating ice, except for some
     % regularization-dependent smoothing. A more representative value for C
     % beneath the ice shelves could be obtained by extruding C from the
     % grounded ice along streamlines. We use streamlines based on the

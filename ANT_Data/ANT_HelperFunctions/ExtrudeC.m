@@ -9,15 +9,15 @@ vx = F.ub;
 vy = F.vb;
 
 % replace C for floating nodes with nan
-C(F.GF.node<0.9)=nan; 
+C(F.GF.node<0.5)=nan; 
 
 % ExtrudeField requires gridded coordinates
 xmin = min(xUa); ymin = min(yUa);
 xmax = max(xUa); ymax = max(yUa);
 if contains(CtrlVar.Experiment,["ASE","AS_PROPHET","AMUND"])
-    dx = 3e3; dy = 3e3;
+    dx = 2e3; dy = 2e3;
 elseif contains(CtrlVar.Experiment,"ANT")
-    dx = 10e3; dy = 10e3;
+    dx = 5e3; dy = 5e3;
 else
     error('Unknown experiment name for extruding C');
 end
@@ -52,8 +52,9 @@ I = find(~isnan(Cext));
 FCext = scatteredInterpolant(X(I),Y(I),Cext(I),'natural');
 
 Cext_Ua = FCext(xUa,yUa);
-Cext_Ua(F.GF.node>=0.9) = F.C(F.GF.node>=0.9);
+Cext_Ua(F.GF.node>=0.5) = F.C(F.GF.node>=0.5);
 Cext_Ua(Cext_Ua<CtrlVar.Cmin)=CtrlVar.Cmin;
+Cext_Ua(Cext_Ua>CtrlVar.Cmax)=CtrlVar.Cmax;
 
 % figure; PlotMeshScalarVariable(CtrlVar,MUA,imag(Cext_Ua));%log10(Cext_Ua));
 % hold on;

@@ -181,7 +181,7 @@ for tt=1:numel(UserVar.Table)
             %initialize structure
             if year==startyear 
                 geomfields = ["Original","Calv","dhIS","dh","Calv_dh"];
-                yearfld=[startyear,repmat("yr"+string(year),1,4)];
+                yearfld="yr"+[startyear,repmat(string(year),1,4)];
             else
                 geomfields = ["Calv","dhIS","dh","Calv_dh"];
                 yearfld=repmat("yr"+string(year),1,4);

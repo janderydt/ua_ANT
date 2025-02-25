@@ -1,2 +1,2 @@
-Domain,pgid,ExpID,Submitted,SubmissionTime,Running,Error,ErrorTime,Finished,FinishedTime,Restart,ExpStartDate,ExpEndDate,YearsCompleted,Inverse,InverseCycle,AdaptMesh,SMB,BasalMelt,PICO_C1,PICO_gam,LQ_gam,OceForcing,Comments
-ANT,0,0,0,2000-01-01 00:00:00,0,0,0,0,2000-01-01 00:00:00,0,2000-01-01,2023-12-31,0,3568,2,0,MAR,PICO,3000000,0.00009,75000,ismip6,
+Domain,pgid,ExpID,Submitted,SubmissionTime,Running,Error,ErrorTime,Finished,FinishedTime,Restart,ExpStartDate,ExpEndDate,YearsCompleted,Inverse,InverseCycle,AdaptMesh,SMB,BasalMelt,PICO_C1,PICO_gam,LQ_gam,PLUME_E0,PLUME_gamTS,OceForcing,Comments
+ANT,0,0,0,2000-01-01 00:00:00,0,0,0,0,2000-01-01 00:00:00,0,2000-01-01,2023-12-31,0,1111,2,0,MAR,PICO,3000000,0.00009,0,0,0,ismip6,
