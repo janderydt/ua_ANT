@@ -9,9 +9,10 @@ addpath(getenv("froot_tools"));
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Diagnostic";
-UserVar.year = "2014";
-UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Weertman_2014.csv";
-UserVar.idrange = [40000 49999];
+UserVar.Table = [UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Weertman_2009.csv",...
+   UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Weertman_2014.csv",...
+   UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Weertman_2020.csv"];
+UserVar.idrange = [30000 39999; 40000 49999; 20000 29999];
 inversiondata_filename = "inversiondata_AMUND_Weertman.mat";
 perturbationdata_filename = "perturbationdata_AMUND_Weertman.mat";
 
@@ -156,6 +157,8 @@ for tt=1:numel(UserVar.Table)
             data(data_ind).Inverse.misfit(InverseCycle) = data_inverse(Ind_inverse).misfit(InverseCycle);
             data(data_ind).startgeometry = data_inverse(Ind_inverse).startgeometry;
 
+            startyear = data(data_ind).startgeometry;
+
             if contains(expinfo,"Original")
                 year = data(data_ind).startgeometry;   
                 fieldname = 'Original';
@@ -176,21 +179,18 @@ for tt=1:numel(UserVar.Table)
             end
 
             %initialize structure
-            if ~isfield(data(data_ind),'Original') || isempty(data(data_ind).Original) || ...
-                    ~isfield(data(data_ind).Original,"yr"+string(year))
+            if year==startyear 
+                geomfields = ["Original","Calv","dhIS","dh","Calv_dh"];
+                yearfld=[startyear,repmat("yr"+string(year),1,4)];
+            else
+                geomfields = ["Calv","dhIS","dh","Calv_dh"];
+                yearfld=repmat("yr"+string(year),1,4);
+            end
 
-                startyear = "yr"+string(data(data_ind).startgeometry);
-
-                if string(year)==startyear 
-                    geomfields = {'Original','Calv','dhIS','dh','Calv_dh'};
-                    yearfld=[startyear,repmat("yr"+UserVar.year,1,4)];
-                else
-                    geomfields = {'Calv','dhIS','dh','Calv_dh'};
-                    yearfld=repmat("yr"+UserVar.year,1,4);
-                end
+            if ~isfield(data(data_ind),geomfields(1)) || ...
+                    ~isfield(data(data_ind).(geomfields(1)),yearfld(ff))
 
                 for ff=1:numel(geomfields)
-                    %data(data_ind).(geomfields{ff}).geometry=[];
                     for bb=1:numel(basins_to_analyze)
                         basin = char(erase(basins_to_analyze(bb),'-'));
                         data(data_ind).(geomfields{ff}).(yearfld(ff)).qGL.(basin)=[];

@@ -7,10 +7,10 @@ function UserVar = ANT_GetUserVar_Transient(RunTable,ind,UserVar)
 
 %% time variables
 UserVar.StartTime = datetime(RunTable{ind,"ExpStartDate"},format="yyyy-MM-dd"); % physical time (in yyyy-MM-dd) when the simulation should start
-UserVar.EndTime = datetime(RunTable{ind,"ExpEndDate"},format="yyyy-MM-dd"); % physical time (in yyyy-MM-dd) when the simulation should end)
-DeltaSeconds = seconds(UserVar.EndTime-UserVar.StartTime); % interval between end and start year in seconds
-UserVar.TotalTime = double(DeltaSeconds/(365.25*24*60*60)); % to be consistent with Ua units, convert from seconds to years
 UserVar.StartTime_DecimalYears = year(UserVar.StartTime)+years(UserVar.StartTime-dateshift(UserVar.StartTime,'start','year')); % start time in Ua units (decimal years)
+UserVar.EndTime = datetime(RunTable{ind,"ExpEndDate"},format="yyyy-MM-dd"); % physical time (in yyyy-MM-dd) when the simulation should end)
+UserVar.TotalTime = year(UserVar.EndTime)+years(UserVar.EndTime-dateshift(UserVar.EndTime,'start','year')); % Ua will exit the time loop when CtrlVar.TotalTime - CtrlVar.time < CtrlVar.dtmin. To be consistent with Ua units, convert from seconds to years
+DeltaSeconds = seconds(UserVar.EndTime-UserVar.StartTime); % interval between end and start year in seconds
 
 %% information about inverse simulation to start from
 UserVar.Inverse = RunTable{ind,"Inverse"};
@@ -26,6 +26,7 @@ UserVar.Restart = RunTable{ind,"Restart"};
 %% mesh variables
 UserVar.InitialMeshFileName = UserVar.InverseRestartFile;
 UserVar.MeshBoundaryCoordinatesFile = "MeshBoundaryCoordinates.mat";
+UserVar.AdaptMesh = RunTable{ind,"AdaptMesh"};
 
 %% geometry interpolants: only needed for bedrock geometry
 UserVar.GeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+num2str(UserVar.StartYear)+"_EXTRUDED.mat";
@@ -72,10 +73,13 @@ UserVar.OceForcing = string(RunTable{ind,"OceForcing"});
 
 switch UserVar.BasalMelt
     case "PICO"
-         UserVar.PICOC1 = RunTable{ind,"PICO_C1"};
-         UserVar.PICOgam = RunTable{ind,"PICO_gam"};   
+         UserVar.PICO_C1 = RunTable{ind,"PICO_C1"};
+         UserVar.PICO_gam = RunTable{ind,"PICO_gam"};   
     case "LQ"
-         UserVar.LQgam= RunTable{ind,"LQ_gam"};
+         UserVar.LQ_gam = RunTable{ind,"LQ_gam"};
+    case "PLUME"
+         UserVar.PLUME_E0 = RunTable{ind,"PLUME_E0"};
+         UserVar.PLUME_gamTS = RunTable{ind,"PLUME_gamTS"};
     otherwise
          error("ExpID "+UserVar.ExpID+": Could not find Basal Melting Parameterization "+UserVar.BaselMelt);
 end

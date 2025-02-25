@@ -36,8 +36,8 @@ switch UserVar.BasalMelt
          PICO_opts.persistentBC = 0;
          PICO_opts.InfoLevel = 1; % 0,1,10,100
          % ----------------use PICO parameters from Runtable-------------------
-         PICO_opts.C1 = UserVar.PICOC1;
-         PICO_opts.gamTstar = UserVar.PICOgam;
+         PICO_opts.C1 = UserVar.PICO_C1;
+         PICO_opts.gamTstar = UserVar.PICO_gam;
          % ----------------oceanic forcing data for PICO-----------------------
          switch UserVar.OceForcing
              case "ismip6"
@@ -54,7 +54,7 @@ switch UserVar.BasalMelt
 
     case "LQ"
          % -------------use Local Quadratic parameter from Runtable----------------
-         gamma0 = UserVar.LQgam;
+         gamma0 = UserVar.LQ_gam;
          % ------------------------------------------------------------------------
          if isempty(FdeltaT_basin)
             ncfile = UserVar.datafolder+"/ANT_InputsForTransientSimulations/Basal_Melt/coeff_gamma0_DeltaT_quadratic_local_median.nc";
@@ -85,6 +85,10 @@ switch UserVar.BasalMelt
          % ------------------------------------------------------------------------
          ab=-gamma0.*(rhosw_SI.*cpw_SI./rhoi_SI./Lf_SI).^2.*(max(thermal_forcing+deltaT_basin,0.0)).^2; % here is mass balance, which needs the negative sign
          
+    case "PLUME"
+
+        error("TO DO: add plume model to DefineMassBalance.");
+
      otherwise
      
          error("Unknown UserVar.BasalMelt: "+UserVar.BasalMelt);

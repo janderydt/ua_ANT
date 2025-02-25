@@ -27,10 +27,10 @@ CtrlVar.TimeDependentRun=1;
 CtrlVar.InverseRun=0;
 CtrlVar.Restart=UserVar.Restart;
 %
-CtrlVar.time=UserVar.StartTime_DecimalYears ; % start time
+CtrlVar.time=UserVar.StartTime_DecimalYears ; % start time (decimal year, e.g. 2000.5)
 CtrlVar.dt=0.001; % time step
 CtrlVar.TotalNumberOfForwardRunSteps=1e10;  
-CtrlVar.TotalTime=UserVar.TotalTime; % in years
+CtrlVar.TotalTime=UserVar.TotalTime; % end time (decimal year, e.g. 2001.5)
 %
 UserVar.stoppedduetowalltime = 0;
 CtrlVar.UseUserDefinedRunStopCriterion=1;
