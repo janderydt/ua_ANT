@@ -9,12 +9,17 @@ addpath(getenv("froot_tools"));
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Diagnostic";
-UserVar.Table = [UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Weertman_2009.csv",...
-   UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Weertman_2014.csv",...
-   UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Weertman_2020.csv"];
-UserVar.idrange = [30000 39999; 40000 49999; 20000 29999];
-inversiondata_filename = "inversiondata_AMUND_Weertman.mat";
-perturbationdata_filename = "perturbationdata_AMUND_Weertman.mat";
+% UserVar.Table = [UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_CalvThick_Weertman_2009.csv",...
+%    UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_CalvThick_Weertman_2014.csv",...
+%    UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Original_CalvThick_Weertman_2020.csv",...
+%    UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Calv_ISthick_Thick_Weertman_2020.csv"];
+% UserVar.idrange = [30000 39999; 40000 49999; 20000 29999; 50000 59999];
+% inversiondata_filename = "inversiondata_AMUND_Weertman.mat";
+% perturbationdata_filename = "perturbationdata_AMUND_Weertman.mat";
+UserVar.Table = [UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Original_CalvThick_Umbi_2020.csv"];
+UserVar.idrange = [60000 69999];
+inversiondata_filename = "inversiondata_AMUND_Umbi.mat";
+perturbationdata_filename = "perturbationdata_AMUND_Umbi.mat";
 
 %% ALL
 % basins_to_analyze = {'A-Ap',...  % Queen Maud Land
@@ -179,18 +184,19 @@ for tt=1:numel(UserVar.Table)
             end
 
             %initialize structure
-            if year==startyear 
-                geomfields = ["Original","Calv","dhIS","dh","Calv_dh"];
-                yearfld="yr"+[startyear,repmat(string(year),1,4)];
+            if year==startyear
+                geomfields = "Original";
+                yearfld = "yr"+string(year);
             else
                 geomfields = ["Calv","dhIS","dh","Calv_dh"];
-                yearfld=repmat("yr"+string(year),1,4);
+                yearfld = repmat("yr"+string(year),1,4);
             end
 
-            if ~isfield(data(data_ind),geomfields(1)) || ...
-                    ~isfield(data(data_ind).(geomfields(1)),yearfld(ff))
+            for ff=1:numel(geomfields)
 
-                for ff=1:numel(geomfields)
+                if ~isfield(data(data_ind),geomfields(ff)) || ...
+                    ~isfield(data(data_ind).(geomfields(ff)),yearfld(ff))
+
                     for bb=1:numel(basins_to_analyze)
                         basin = char(erase(basins_to_analyze(bb),'-'));
                         data(data_ind).(geomfields{ff}).(yearfld(ff)).qGL.(basin)=[];

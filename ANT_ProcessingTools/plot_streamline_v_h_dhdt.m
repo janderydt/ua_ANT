@@ -11,7 +11,7 @@ UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Diagnostic";
 UserVar.years = ["2000","2020"];
 UserVar.cycles = [1 2];
-inversiondata_filename = "inversiondata_AMUND_Weertman.mat";
+inversiondata_filename = "inversiondata_AMUND_Umbi.mat";
 data_inv = load(inversiondata_filename);
 data_inv = data_inv.data;
 
@@ -24,9 +24,9 @@ for cc=UserVar.cycles
 
         year = UserVar.years(tt);
         if year == "2000"
-            UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Weertman_2020.csv";
+            UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Original_CalvThick_Umbi_2020.csv";
         else
-            UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Weertman_"+year+".csv";
+            UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Original_CalvThick_Umbi_"+year+".csv";
         end
     
         % read run table
@@ -153,7 +153,7 @@ for cc=UserVar.cycles
                 indmin = min(m); indmax = max(m);
                 colorind = round(1+(64-1)/(indmax-indmin)*(m(ii)-indmin));
     
-                plot(ax_fig(100*cc+gg,tt),SL(gg).d/1e3,SL(gg).V(ii,2:end),LineStyle=style,LineWidth=width,Color=CM(colorind,:));
+                plot(ax_fig(100*cc+gg,tt),SL(gg).d/1e3,SL(gg).V(ii,2:end),LineStyle=style,LineWidth=width,Color=[1 0.5 0.5]);%Color=CM(colorind,:));
                 plot(ax_fig(100*cc+gg,tt),[SL(gg).SLd_GL(ii),SL(gg).SLd_GL(ii)]/1e3,[0 10000],'-k');
         
                 %plot(ax_fig(2),SL(gg).d/1e3,SL(gg).H(ii,2:end),LineStyle=style,LineWidth=width,Color=CM(ceil(ii/2),:));

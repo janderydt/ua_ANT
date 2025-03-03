@@ -174,6 +174,7 @@ fprintf("done.\n");
 
 %% -v-
 if contains(fields_to_extrude,'-v-')
+    
     fprintf("Processing velocity fields.\n");
 
     fprintf("  > Inpaint nan regions...");
@@ -197,7 +198,7 @@ if contains(fields_to_extrude,'-v-')
     clear L;
     
     % subsample velocities for flow *directions*
-    sc = 1/2;%/2; % scale for resizing velocity
+    sc = 1/4;%/2; % scale for resizing velocity
     [vx_r,x_r,y_r] = demresize(vx_v,x_v,y_v,sc); 
     vy_r = imresize(vy_v,sc);
     H_r = imresize(H_v,sc);

@@ -10,8 +10,8 @@ addpath(getenv("froot_tools"));
 
 perturbation = 'Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
 startyear = "2000";
-targetyear = "2009";
-slidinglaw = "Weertman";
+targetyear = "2020";
+slidinglaw = "Umbi";
 cycle=1; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
 FNNtype = "feedforwardnet"; % feedforwardnet or cascadeforwardnet, a simple feedforwardnet seems to perform just fine
 trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fine, 
@@ -20,7 +20,7 @@ UseGPU = 0; % UseGPU=1 only works with trainFcn="trainscg"
 doplots = 0;
 write_outputs_for_TF = 1;
 add_measurements_to_SVD = 0;
-only_grounded_ice = 0;
+only_grounded_ice = 1;
 if only_grounded_ice
     pct = 0.99; %% chose high enough value so we can adequately represent 
 % the measurements in the truncated basis
@@ -76,7 +76,7 @@ for yy=[startyear targetyear]
     if yy=="2000"
         fname = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
     else
-        fname = "GriddedInterpolants_"+string(double(yy)-1)+"-"+yy+...
+        fname = "GriddedInterpolants_"+string(double(yy)-1)+"-"+string(double(yy))+...
         "_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
     end
     load("../ANT_Data/ANT_Interpolants/"+fname);
@@ -98,7 +98,7 @@ deltau = u_target-u_init; % measured change in speed (m/yr)
 % subtract model ensemble mean
 T_meas = deltau(:) - T_mean(:);
 if any(isnan(T_meas))
-    error("dT_meas contains nans. Consider using extruded field.");
+    error("dT_meas contains nans. Consider using extruded field or inpaint_nans.");
 end
 
 if only_grounded_ice

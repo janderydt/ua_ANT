@@ -22,10 +22,10 @@ Modeldomain = "AMUND";
 
 %% year for original and new geometry
 ExpID_oldgeom = 2000;
-ExpID_newgeom = 2014; % 2009, 2014, 2018
+ExpID_newgeom = 2020; % 2009, 2014, 2018
 
 %% which perturbations?
-pert = ["Calv_ISthick_GIthick"]; % Original, Calv, ISthick, GIthick, Calv_ISthick_GIthick
+pert = ["Calv","ISthick","thick"]; % Original, Calv, ISthick, thick, Calv_thick
 
 %% construct new run table or append to existing run table
 UserVar.Table = "./RunTable_ARCHER2_Diagnostic_"+Modeldomain+"_Weertman_"+string(ExpID_newgeom)+".csv";
@@ -94,7 +94,7 @@ for tt=1:numel(RunTable_inverse_files)
         
                 %% add details about geometry
                 % Original geometry
-                if contains("Original",pert)
+                if ismember("Original",pert)
                     Newrow_tmp_orig = Newrow_tmp;
                     Newrow_tmp_orig{end} = "Original geometry "+string(RunTable_inverse.startGeometry(ii));
                     Newrow_tmp_orig{12} = strrep(BaseMesh,"_"+string(ExpID_newgeom)+"_","_"+string(ExpID_oldgeom)+"_");
@@ -102,7 +102,7 @@ for tt=1:numel(RunTable_inverse_files)
                 end
 
                 % Calv
-                if contains("Calv",pert)
+                if ismember("Calv",pert)
                     Newrow_tmp_Calv = Newrow_tmp;
                     Newrow_tmp_Calv{17} = ExpID_newgeom;
                     Newrow_tmp_Calv{end} = "Ice front geometry "+string(ExpID_newgeom);
@@ -110,32 +110,32 @@ for tt=1:numel(RunTable_inverse_files)
                 end
         
                 % ISthick
-                if contains("ISthick",pert)
+                if ismember("ISthick",pert)
                     Newrow_tmp_ISthick = Newrow_tmp;
-                    Newrow_tmp_orig{12} = strrep(BaseMesh,"_"+string(ExpID_newgeom)+"_","_"+string(ExpID_oldgeom)+"_");
+                    Newrow_tmp_ISthick{12} = strrep(BaseMesh,"_"+string(ExpID_newgeom)+"_","_"+string(ExpID_oldgeom)+"_");
                     Newrow_tmp_ISthick{18} = ExpID_newgeom;
                     Newrow_tmp_ISthick{end} = "Ice shelf thickness "+string(ExpID_newgeom);
                     RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_ISthick];
                 end
         
                 % ISthick and GIthick      
-                if contains("GIthick",pert)
-                    Newrow_tmp_ISthick_GIthick = Newrow_tmp;
-                    Newrow_tmp_orig{12} = strrep(BaseMesh,"_"+string(ExpID_newgeom)+"_","_"+string(ExpID_oldgeom)+"_");
-                    Newrow_tmp_ISthick_GIthick{18} = ExpID_newgeom;
-                    Newrow_tmp_ISthick_GIthick{20} = ExpID_newgeom;
-                    Newrow_tmp_ISthick_GIthick{end} = "Ice thickness "+string(ExpID_newgeom);
-                    RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_ISthick_GIthick];
+                if ismember("thick",pert)
+                    Newrow_tmp_thick = Newrow_tmp;
+                    Newrow_tmp_thick{12} = strrep(BaseMesh,"_"+string(ExpID_newgeom)+"_","_"+string(ExpID_oldgeom)+"_");
+                    Newrow_tmp_thick{18} = ExpID_newgeom;
+                    Newrow_tmp_thick{20} = ExpID_newgeom;
+                    Newrow_tmp_thick{end} = "Ice thickness "+string(ExpID_newgeom);
+                    RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_thick];
                 end
         
                 % Calv, ISthick and GIthick
-                if contains("Calv_ISthick_GIthick",pert)
-                    Newrow_tmp_Calv_ISthick_GIthick = Newrow_tmp;
-                    Newrow_tmp_Calv_ISthick_GIthick{17} = ExpID_newgeom; 
-                    Newrow_tmp_Calv_ISthick_GIthick{18} = ExpID_newgeom; 
-                    Newrow_tmp_Calv_ISthick_GIthick{20} = ExpID_newgeom; 
-                    Newrow_tmp_Calv_ISthick_GIthick{end} = "Ice front and thickness "+string(ExpID_newgeom);
-                    RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_Calv_ISthick_GIthick];
+                if ismember("Calv_thick",pert)
+                    Newrow_tmp_Calv_thick = Newrow_tmp;
+                    Newrow_tmp_Calv_thick{17} = ExpID_newgeom; 
+                    Newrow_tmp_Calv_thick{18} = ExpID_newgeom; 
+                    Newrow_tmp_Calv_thick{20} = ExpID_newgeom; 
+                    Newrow_tmp_Calv_thick{end} = "Ice front and thickness "+string(ExpID_newgeom);
+                    RunTable_diagnostic = [RunTable_diagnostic ; Newrow_tmp_Calv_thick];
                 end
     
             end

@@ -13,11 +13,8 @@ function Create_MeaSUREs_ITSLIVE_1996_2003_VelocityGriddedInterpolants(CreateGeo
 %   ITSLIVE data annual 2000-2001
 
 % step3. fill remaining gaps with MEaSUREs 450m v2 and ITSLIVE 240m mosaic
-% and remove data with errors > error_cutoff m/yr
 
 % step4 fill remaining gaps with MEaSUREs Central Antarctica (dated 1997)
-% and remove data with errors > error_cutoff m/yr
-%
 
 froot_data = getenv("froot_data");
 addpath(getenv("froot_tools"));
@@ -267,8 +264,8 @@ vm = hypot(vxm,vym);
 errm = hypot(xerrm,yerrm);
 wm = 1./errm.^2;
 
-vxm(errm./vm>relative_error_cutoff) = nan;
-vym(errm./vm>relative_error_cutoff) = nan;
+%vxm(errm./vm>relative_error_cutoff) = nan;
+%vym(errm./vm>relative_error_cutoff) = nan;
 
 fprintf("...done.\n");
 
@@ -364,8 +361,8 @@ vm = hypot(vxm,vym);
 errm = hypot(xerrm,yerrm);
 wm = 1./errm.^2;
 
-vxm(errm./vm>relative_error_cutoff) = nan;
-vym(errm./vm>relative_error_cutoff) = nan;
+%vxm(errm./vm>relative_error_cutoff) = nan;
+%vym(errm./vm>relative_error_cutoff) = nan;
 
 fprintf("...done.\n");
 

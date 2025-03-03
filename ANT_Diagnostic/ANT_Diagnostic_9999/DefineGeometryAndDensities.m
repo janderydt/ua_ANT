@@ -245,7 +245,7 @@ if UserVar.AdaptISBaseGeometry && ~UserVar.AdaptGIBaseGeometry
         
             h_IS = s_IS-b_IS; 
             h_IS = h_IS+dh_IS;
-            h(ISnodes) = h;
+            h(ISnodes) = h_IS;
             [b,s,~,~]=Calc_bs_From_hBS(CtrlVar,MUA,h,S,B,rho,rhow);
     
             fprintf('done.\n');

@@ -2,12 +2,45 @@ function producefiles
 
 addpath("../ANT_HelperFunctions/");
 
-% Create_Geometry_from_reference_and_ds(datetime(2019,06,01),1);
-% Klear;
-% Velinterpolantfile = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities";
-% Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2019";
-% Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-geom-');
-% Klear;
+Klear;
+Velinterpolantfile = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2000";
+Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-');
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2009,1);
+Klear
+Velinterpolantfile = "GriddedInterpolants_2009-2010_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2009";
+Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-');
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2014,1);
+Klear
+Velinterpolantfile = "GriddedInterpolants_2014-2015_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2014";
+Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-');
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2019,1);
+Klear
+Velinterpolantfile = "GriddedInterpolants_2019-2020_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2019";
+Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-');
+Klear;
+Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2020,1);
+Klear
+Velinterpolantfile = "GriddedInterpolants_2020-2021_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2020";
+Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-');
+Klear;
+
+return
+Create_Geometry_from_reference_and_ds(datetime(2019,06,01),1);
+Klear;
+Velinterpolantfile = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2019";
+Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-geom-');
+Klear;
+
+
 
 % 
 % Velinterpolantfile = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities";
@@ -15,32 +48,19 @@ addpath("../ANT_HelperFunctions/");
 % Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-geom-');
 % Klear;
 % 
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2009,1);
-Klear;
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2010,1);
-Klear;
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2011,1);
-Klear;
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2012,1);
-Klear;
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2013,1);
-Klear;
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2014,1);
-Klear;
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2015,1);
-Klear;
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2016,1);
-Klear;
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2017,1);
-Klear;
-Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2018,1);
+%Create_MeaSUREs_ITSLIVE_20xx_VelocityGriddedInterpolants(2009,1);
+%Klear;
 
-return
 Klear;
-Velinterpolantfile = "GriddedInterpolants_2019-2020_MeaSUREs_ITSLIVE_Velocities";
-Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2020";
+Velinterpolantfile = "GriddedInterpolants_2009-2010_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2009";
 Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-');
 Klear;
+Velinterpolantfile = "GriddedInterpolants_2014-2015_MeaSUREs_ITSLIVE_Velocities";
+Geominterpolantfile = "GriddedInterpolants_Geometry_01-Jun-2014";
+Create_ExtrudedFields_GriddedInterpolants(Velinterpolantfile,Geominterpolantfile,[],1,'-v-');
+Klear;
+
 
 return
 %

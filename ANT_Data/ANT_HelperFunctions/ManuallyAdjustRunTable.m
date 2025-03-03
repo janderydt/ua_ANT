@@ -14,7 +14,7 @@ UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
 UserVar.domain = "AMUND";
 
-RunTables_to_adjust = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_17-02-2025_"+string([27])+".csv";
+RunTables_to_adjust = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_17-02-2025_"+string([25])+".csv";
 
 for tt=1:numel(RunTables_to_adjust)
 

@@ -7,9 +7,9 @@ if nargin==0
     diagnostic_to_plot = 'Delta_u'; % Delta_qGL, Delta_qOB, Delta_u
     parameter_to_plot = 'm'; % m, n, gaA, gaC, gsA, gsC
     cycles_to_plot = [1 2]; %[1 2]
-    slidinglaw = "Weertman";
+    slidinglaw = "Umbi";
     startyear = "2000";
-    targetyear =  "2014";
+    targetyear =  "2020";
 end
 
 basins_to_analyze = {'F-G',...  % Getz
@@ -29,11 +29,48 @@ if diagnostic_to_plot=="Delta_u"
     UserVar.casefolder=pwd;
     UserVar.datafolder=pwd+"/../ANT_Data/";
     UserVar.Experiment="";
+
+    %% corresponding GF masks
+    load("perturbation_grids.mat");
+    switch startyear
+        case "2000"
+            MUA_yr1 = MUA_2000;
+            GF_yr1 = GF_2000;
+        case "2009"
+            MUA_yr1 = MUA_2009;
+            GF_yr1 = GF_2009;
+        case "2014"
+            MUA_yr1 = MUA_2014;
+            GF_yr1 = GF_2014;
+        case "2018"
+            MUA_yr1 = MUA_2018;
+            GF_yr1 = GF_2018;
+        case "2020"
+            MUA_yr1 = MUA_2020;
+            GF_yr1 = GF_2020;
+    end
+    switch targetyear
+        case "2000"
+            MUA_yr2 = MUA_2000;
+            GF_yr2 = GF_2000;
+        case "2009"
+            MUA_yr2 = MUA_2009;
+            GF_yr2 = GF_2009;
+        case "2014"
+            MUA_yr2 = MUA_2014;
+            GF_yr2 = GF_2014;
+        case "2018"
+            MUA_yr2 = MUA_2018;
+            GF_yr2 = GF_2018;
+        case "2020"
+            MUA_yr2 = MUA_2020;
+            GF_yr2 = GF_2020;
+    end
     
-    UserVar.InitialMeshFileName = "/mnt/md0/Ua/cases/ANT/ANT_Data/ANT_Ua_BaseMeshGeneration/"+...
-        "AMUND_basemesh_"+startyear+"_meshmin1500_meshmax100000_refined_extrudemesh1_variableboundaryres1.mat";
-    tmp = load(UserVar.InitialMeshFileName);
-    MUA_yr1 = tmp.MUA; 
+    %UserVar.InitialMeshFileName = "/mnt/md0/Ua/cases/ANT/ANT_Data/ANT_Ua_BaseMeshGeneration/"+...
+    %    "AMUND_basemesh_"+startyear+"_meshmin1500_meshmax100000_refined_extrudemesh1_variableboundaryres1.mat";
+    %tmp = load(UserVar.InitialMeshFileName);
+    %MUA_yr1 = tmp.MUA;
     % identify basin id of each MUA node
     [MUA_yr1.basins,~] = Define_Quantity_PerBasin(MUA_yr1.coordinates(:,1),MUA_yr1.coordinates(:,2),B,0);
     MUA_basinnames = erase({MUA_yr1.basins(:).name},'-');
@@ -53,10 +90,10 @@ if diagnostic_to_plot=="Delta_u"
     end
     
     % target year
-    UserVar.TargetMeshFileName = "/mnt/md0/Ua/cases/ANT/ANT_Data/ANT_Ua_BaseMeshGeneration/"+...
-        "AMUND_basemesh_"+targetyear+"_meshmin1500_meshmax100000_refined_extrudemesh1_variableboundaryres1.mat";
-    tmp = load(UserVar.TargetMeshFileName);
-    MUA_yr2 = tmp.MUA;
+    %UserVar.TargetMeshFileName = "/mnt/md0/Ua/cases/ANT/ANT_Data/ANT_Ua_BaseMeshGeneration/"+...
+    %    "AMUND_basemesh_"+targetyear+"_meshmin1500_meshmax100000_refined_extrudemesh1_variableboundaryres1.mat";
+    %tmp = load(UserVar.TargetMeshFileName);
+    %MUA_yr2 = tmp.MUA;
     [MUA_yr2.basins,~] = Define_Quantity_PerBasin(MUA_yr2.coordinates(:,1),MUA_yr2.coordinates(:,2),B,0);
     MUA_basinnames = erase({MUA_yr2.basins(:).name},'-'); 
     basinnodes_all=[];
@@ -74,42 +111,6 @@ if diagnostic_to_plot=="Delta_u"
         MUA_yr2.Boundary.y = MUA_yr2.Boundary.y(1:Ind_nan(1)-1);
     end
 
-    %% corresponding GF masks
-    load("perturbation_grids.mat");
-    switch startyear
-        case "2000"
-            %MUA_yr1 = MUA_2000;
-            GF_yr1 = GF_2000;
-        case "2009"
-            %MUA_yr1 = MUA_2009;
-            GF_yr1 = GF_2009;
-        case "2014"
-            %MUA_yr1 = MUA_2014;
-            GF_yr1 = GF_2014;
-        case "2018"
-            %MUA_yr1 = MUA_2018;
-            GF_yr1 = GF_2018;
-        case "2020"
-            %MUA_yr1 = MUA_2018;
-            GF_yr1 = GF_2020;
-    end
-    switch targetyear
-        case "2000"
-            %MUA_yr2 = MUA_2000;
-            GF_yr2 = GF_2000;
-        case "2009"
-            %MUA_yr2 = MUA_2009;
-            GF_yr2 = GF_2009;
-        case "2014"
-            %MUA_yr2 = MUA_2014;
-            GF_yr2 = GF_2014;
-        case "2018"
-            %MUA_yr2 = MUA_2018;
-            GF_yr2 = GF_2018;
-        case "2020"
-            %MUA_yr2 = MUA_2018;
-            GF_yr2 = GF_2020;
-    end
     original_node_numbers = MUA_yr1.k(find(~isnan(MUA_yr1.k)));
     GF_yr1.node=GF_yr1.node(original_node_numbers);
     original_node_numbers = MUA_yr2.k(find(~isnan(MUA_yr2.k)));
@@ -122,7 +123,7 @@ if exist(file_with_perturbation_data_to_read,"file")
 else
     error(file_with_perturbation_data_to_read+" does not exist");
 end
-tmp = load("inversiondata_"+slidinglaw+".mat");
+tmp = load("inversiondata_AMUND_"+slidinglaw+".mat");
 data_inverse = tmp.data;
 
 % available drainage basins

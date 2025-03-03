@@ -6,11 +6,11 @@ plotFNN=0;
 perturbation='Calv_dh';
 trainingdataformat="u"; % u or LOGu
 startyear="2000";
-targetyear="2020"; % this can be an empty string to plot results for the u emulator, rather than the du emulator
+targetyear="2014"; % this can be an empty string to plot results for the u emulator, rather than the du emulator
 slidinglaw="Weertman";
-cycle=2;
+cycle=1;
 only_grounded_ice=1;
-pct = string([9843]); % cut-off for SVD (% * 100)
+pct = string(9879); % cut-off for SVD (% * 100)
 n_test=[];%[1:20]; % indices of test data to plot (integers between 1 and size of test dataset)
 
 if targetyear ~= ""

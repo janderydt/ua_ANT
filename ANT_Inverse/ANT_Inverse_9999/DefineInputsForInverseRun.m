@@ -83,37 +83,37 @@ clearvars Fus Fvs Fxerr Fyerr
 xerrMeas(xerrMeas==0) = 0.1;
 yerrMeas(yerrMeas==0) = 0.1;
 
-%if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint','IgnoreCase',true) %|| CtrlVar.SlidingLaw ~= "Weertman"
-%     %% for fixpoint inversion
-%     % Siple Coast
+if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint','IgnoreCase',true) %|| CtrlVar.SlidingLaw ~= "Weertman"
+%% for fixpoint inversion
+    % Siple Coast
     I = find(x>-600942 & x<8245 & y<-286360 & y>-800000 & ~isnan(uMeas));
     xerrMeas(I) = 0.1;
     yerrMeas(I) = 0.1;
     I = find(x>-800000 & x<-450000 & y<-700000 & y>-950000 & ~isnan(uMeas));
     xerrMeas(I) = 0.1;
     yerrMeas(I) = 0.1;
-%     % Shackleton Range
-    I = find(x>-6e5 & x<-1.5e5 & y>7.5e5 & y<10.5e5);
+    % Shackleton Range
+    I = find(x>-6e5 & x<-1.5e5 & y>7.5e5 & y<10.5e5 & ~isnan(uMeas));
     xerrMeas(I) = 0.1;
     yerrMeas(I) = 0.1;
     % Pensacola Mountains
-    I = find(x>-10e5 & x<-8e5 & y>1.5e5 & y<3.5e5);
+    I = find(x>-10e5 & x<-8e5 & y>1.5e5 & y<3.5e5 & ~isnan(uMeas));
     xerrMeas(I) = 0.1;
     yerrMeas(I) = 0.1;
     % Elsworth Mountains and Rutford
-    I = find(x>-14.5e5 & x<-12e5 & y>0.5e5 & y<2.5e5);
+    I = find(x>-14.5e5 & x<-12e5 & y>0.5e5 & y<2.5e5 & ~isnan(uMeas));
     xerrMeas(I) = 0.1;
     yerrMeas(I) = 0.1;
-%     % Pine Island
-%     I = find(x>-1.7e6 & x<-1.5e6 & y>-2.3e5 & y<0);
-%     xerrMeas(I) = 0.1;
-%     yerrMeas(I) = 0.1;
-%     % Foundation Ice Stream
-    I = find(x>-7e5 & x<-5e5 & y>2e5 & y<4e5);
+    % Pine Island
+    I = find(x>-1.7e6 & x<-1.5e6 & y>-2.3e5 & y<0 & ~isnan(uMeas));
     xerrMeas(I) = 0.1;
     yerrMeas(I) = 0.1;
     % Foundation Ice Stream
-    I = find(x>-1.6e6 & x<-1.4e6 & y>2.5e5 & y<4.5e5);
+    I = find(x>-7e5 & x<-5e5 & y>2e5 & y<4e5 & ~isnan(uMeas));
+    xerrMeas(I) = 0.1;
+    yerrMeas(I) = 0.1;
+    % Foundation Ice Stream
+    I = find(x>-1.6e6 & x<-1.4e6 & y>2.5e5 & y<4.5e5 & ~isnan(uMeas));
     xerrMeas(I) = 0.1;
     yerrMeas(I) = 0.1;
 % else
@@ -123,7 +123,7 @@ yerrMeas(yerrMeas==0) = 0.1;
 %         xerrMeas(I) = xerrMeas(I)+1;
 %         yerrMeas(I) = yerrMeas(I)+1;
 %     end
-%end
+end
 
 if contains(UserVar.Domain,'AS_PROPHET')
     xerrMeas = 0*x+1;

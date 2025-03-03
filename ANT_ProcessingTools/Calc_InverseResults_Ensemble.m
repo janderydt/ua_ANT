@@ -15,10 +15,10 @@ UserVar.type = "Inverse";
 %UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_"+string([3 6 9])+".csv";
 %UserVar.idrange = [3000,3999; 6000, 6999; 9000, 9999];
 
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_11-02-2025.csv";
-UserVar.idrange = [20000 23999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_17-02-2025_"+string([24 25 26 27])+".csv";
+UserVar.idrange = [24000 24999; 25000 25999; 26000 26999; 27000 27999];
 
-inversiondata_filename = "inversiondata_AMUND_Weertman.mat";
+inversiondata_filename = "inversiondata_AMUND_Umbi.mat";
 
 if exist(inversiondata_filename,"file")
     load(inversiondata_filename);
