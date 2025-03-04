@@ -3,12 +3,14 @@ function Calc_BayesianInference
 Klear;
 
 %% user defined parameters
-dataformat = ["du" "du" "du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
-cycle = [1 1 1]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
-pct = [9897 9879 9900]; % trunction of SVD in emulator
-only_grounded_ice = [1 1 1];
-years = ["2000-2009","2000-2014","2000-2020"]; % a vector with years for which velocity data is used
-NN = ["RNN" "RNN" "RNN"]; % which emulator? FNN or RNN
+domain = "AMUND";
+slidinglaw = ["Weertman" "Weertman" "Umbi" "Umbi"];
+cycle = [1 2 1 2]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
+dataformat = ["du" "du" "du" "du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
+pct = ["99k04" "99k04" "99k04" "99k04"]; % trunction of SVD in emulator
+only_grounded_ice = [1 1 1 1];
+years = ["2000-2020" "2000-2020" "2000-2020" "2000-2020"]; % a vector with years for which velocity data is used
+NN = ["RNN" "RNN" "RNN" "RNN"]; % which emulator? FNN or RNN
 
 % dataformat = ["du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
 % cycle = [1]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
@@ -73,7 +75,6 @@ ind = ind+1;
 PriorOpts.Marginals(ind).Name = 'n';
 PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [2 5];
-
 
 if cycle > 1
     ind = ind+1;

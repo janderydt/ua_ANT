@@ -116,6 +116,10 @@ if contains(CtrlVar.Inverse.DataMisfit.GradientCalculation,'FixPoint','IgnoreCas
     I = find(x>-1.6e6 & x<-1.4e6 & y>2.5e5 & y<4.5e5 & ~isnan(uMeas));
     xerrMeas(I) = 0.1;
     yerrMeas(I) = 0.1;
+    % Amery
+    I = find(x>1.62e6 & x<1.72e6 & y>6.3e5 & y<7.5e5 & ~isnan(uMeas));
+    xerrMeas(I) = 0.1;
+    yerrMeas(I) = 0.1;
 % else
 %     if UserVar.Geometry == 2000
 %         % Thwaites

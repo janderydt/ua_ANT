@@ -46,7 +46,7 @@ if isempty(FC) & exist(CFile,"file")
     tmp = load(velfile,"UserVarInRestartFile");
     if isfield(tmp.UserVarInRestartFile.Inverse,"GradientCalculation")
         if tmp.UserVarInRestartFile.Inverse.GradientCalculation == "FixPoint"
-            L=5e3 ;  % Smoothing length scale 
+            L=10e3 ;  % Smoothing length scale 
             [~,log10C_smooth]=HelmholtzEquation([],CtrlVar,MUA,1,L^2,log10(C),0); 
             C = 10.^log10C_smooth;
             C(C < CtrlVar.Cmin) = CtrlVar.Cmin; 
