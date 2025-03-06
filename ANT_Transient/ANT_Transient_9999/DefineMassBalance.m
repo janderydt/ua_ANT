@@ -12,7 +12,7 @@ switch UserVar.BasalMelt
     case "PICO"
     
          if UserVar.hostname ~= "ARCHER2"
-             addpath(genpath('/home/qingqin/Documents/PICO_Ua-master/'))
+             addpath(genpath('/mnt/md0/Ua/UaPICO_master/'));
          end
 
          load(UserVar.datafolder+"/ANT_InputsForTransientSimulations/Basal_Melt/BasinsInterpolant.mat");
@@ -23,14 +23,15 @@ switch UserVar.BasalMelt
          else
             disp('File loaded successfully.');
          end
-         %MUA=UpdateMUA(CtrlVar,MUA);
+         MUA=UpdateMUA(CtrlVar,MUA); % make sure MUA.TR is non-empty
          PICO_opts = struct;
          PICO_opts.algorithm = 'watershed';%'polygon','oneshelf';
          PICO_opts.nmax = 10;% max number of boxes 5/10
-         PICO_opts.minArea = 2e9;
+         PICO_opts.ContinentArea = 5e10;
+         PICO_opts.minArea = 1e9;
          PICO_opts.minNumShelf = 20;
          PICO_opts.SmallShelfMelt = 0;
-         PICO_opts.PICOres = 10000; % resolution in km (for watershed algorithm only)
+         %PICO_opts.PICOres = 10000; % resolution in km (for watershed algorithm only)
          PICO_opts.BasinsInterpolant = Fbasins;
          PICO_opts.FloatingCriteria = 'GLthreshold'; %'GLthreshold' or 'StrictDownstream'
          PICO_opts.persistentBC = 0;
@@ -99,7 +100,6 @@ NodesDownstreamOfGroundingLines="Relaxed"; % strict
 ab(LakeNodes) = 0;
 ab(~OceanNodes) = 0;
 
-
 switch UserVar.SMB
 
     case "MAR"
@@ -107,24 +107,37 @@ switch UserVar.SMB
         if isempty(Fsmb_MAR)
 	        ncfile = UserVar.datafolder+"/ANT_InputsForTransientSimulations/SMB/year-MAR_NorESM-1980-2100_zen.nc2";
 	        fprintf(" Reading MAR SMB data from file %s \n",ncfile);
-    
-	        x = double(ncread(ncfile,'X')); % units kms, projection: 
-	        y = double(ncread(ncfile,'Y'));
-	        % t = ncread(ncfile,'TIME'); % days since 1901-01-15 00:00:00
+            % grid
+	        x = double(ncread(ncfile,'X'))*1000; % convert units kms to m, projection: 
+	        y = double(ncread(ncfile,'Y'))*1000;
+            % time
+	        t = ncread(ncfile,'TIME'); % days since 1901-01-15 00:00:00
+            epochnum = datenum('1901-01-15 00:00:00');
+	        t_years = year(double(epochnum+t));
+            % remove years between start and end time of Ua simulation,
+            % with buffer of 1 year on either side
+            Ind_toremove = find(t_years<(UserVar.StartTime_DecimalYears-1) | t_years>(UserVar.EndTime_DecimalYears+1));
+            t_years(Ind_toremove)=[];
+            % smb
 	        smb = ncread(ncfile,'SMB'); %annual averages, units kg m-2 yr-1, missing value -1.e+34
-    
-	        % epochnum = datenum('1901-01-15 00:00:00');
-	        % t = double(epochnum+t);
-	        smb = double(smb)./1000; % units from kg m^-2 year^-1 to m/year
-	        [X,Y] = ndgrid(x,y);
-	        year_anom=floor(time+1);
-	        yr=20+year_anom;
-	        smb_yrly = smb(:,:,1,yr);
-	        I = find(~isnan(smb_yrly(:)));
-	        Fsmb_MAR = scatteredInterpolant(X(I).*1000,Y(I).*1000,smb_yrly(I),'linear');
+	        smb = squeeze(smb);
+            smb(:,:,Ind_toremove)=[];
+            % interpolant
+            %% CLIMATOLOGY
+            [X,Y] = ndgrid(x,y);
+            smb_clim = mean(smb,3);
+            Inan = find(~isnan(smb_clim));
+            Fsmb_MAR = scatteredInterpolant(X(Inan),Y(Inan),smb_clim(Inan),'linear');
+            %% ANNUALLY VARYING SMB
+            %[X,Y,T] = ndgrid(x,y,t_years);
+            %Inan = find(~isnan(smb));
+            %Fsmb_MAR = scatteredInterpolant(X(Inan),Y(Inan),T(Inan),smb(Inan),'linear');
         end
 
-	    as = Fsmb_MAR(MUA.coordinates(:,1),MUA.coordinates(:,2));
+	    as = Fsmb_MAR(MUA.coordinates(:,1),MUA.coordinates(:,2)); % in kg m-2 yr-1
+        as = as./rho; % in m yr-1 ice equivalent
+        % remove nans
+        as = inpaint_nans(as,4);
 
 	    fprintf("Done. \n");
 	  
