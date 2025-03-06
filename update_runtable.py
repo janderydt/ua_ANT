@@ -103,6 +103,14 @@ if write_table == 'global':
                     data_global.at[i,'Running']=0
                     data_global.at[i,'Submitted']=0
                     shutil.rmtree('./cases/ANT_nsmbl_Diagnostic_'+str(ExpID[i]))
+                elif 'Transient' in expfolder:
+                    print('ExpID '+str(data_global['ExpID'].values[i])+' Non-zero pgid found. Setting Error=1 in RunTable')
+                    data_global.at[i,'pgid']=0
+                    data_global.at[i,'Error']=1
+                    data_global.at[i,'Restart']=0
+                    data_global.at[i,'Running']=0
+                    data_global.at[i,'Submitted']=0
+                    data_global.at[i,'Comments']=data_global['Comments'].values[i]+' - Check experiment log file for error.'
 
     # save modified version of the global runtable
     save_runinfo(data_global, runtable_global)

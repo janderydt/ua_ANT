@@ -228,7 +228,7 @@ if ~isempty(Iexisting)
                 % launch Ua job
                 UserVar = ANT_UaJob(RunTable,ind,UserVar,pgid);
 
-                %adjust Runtable
+                % adjust Runtable
                 RunTable=ANT_ReadWritetable(UserVar,UserVar.runtable_exp,[],'read');
                 ind = find(RunTable{:,'ExpID'}(:) == UserVar.ExpID);
                 RunTable{ind,"YearsCompleted"} = UserVar.YearsCompleted;  

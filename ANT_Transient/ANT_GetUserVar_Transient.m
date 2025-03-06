@@ -9,7 +9,7 @@ function UserVar = ANT_GetUserVar_Transient(RunTable,ind,UserVar)
 UserVar.StartTime = datetime(RunTable{ind,"ExpStartDate"},format="yyyy-MM-dd"); % physical time (in yyyy-MM-dd) when the simulation should start
 UserVar.StartTime_DecimalYears = year(UserVar.StartTime)+years(UserVar.StartTime-dateshift(UserVar.StartTime,'start','year')); % start time in Ua units (decimal years)
 UserVar.EndTime = datetime(RunTable{ind,"ExpEndDate"},format="yyyy-MM-dd"); % physical time (in yyyy-MM-dd) when the simulation should end
-UserVar.TotalTime = year(UserVar.EndTime)+years(UserVar.EndTime-dateshift(UserVar.EndTime,'start','year')); % Ua will exit the time loop when CtrlVar.TotalTime - CtrlVar.time < CtrlVar.dtmin. To be consistent with Ua units, convert EndTime from seconds to years
+UserVar.EndTime_DecimalYears = year(UserVar.EndTime)+years(UserVar.EndTime-dateshift(UserVar.EndTime,'start','year')); % Ua will exit the time loop when CtrlVar.TotalTime - CtrlVar.time < CtrlVar.dtmin. To be consistent with Ua units, convert EndTime from seconds to years
 UserVar.YearsCompleted = RunTable{ind,"YearsCompleted"};
 
 %% information about inverse simulation to start from
@@ -28,7 +28,7 @@ UserVar.MeshBoundaryCoordinatesFile = "MeshBoundaryCoordinates.mat";
 UserVar.AdaptMesh = RunTable{ind,"AdaptMesh"};
 
 %% geometry interpolants: only needed for bedrock geometry
-UserVar.GeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+string(UserVar.StartYear)+"_EXTRUDED.mat";
+UserVar.GeometryInterpolants = UserVar.datafolder+"/ANT_Interpolants/GriddedInterpolants_Geometry_01-Jun-"+string(year(UserVar.StartTime))+"_EXTRUDED.mat";
 
 %% density interpolant: same file as geometry interpolants
 UserVar.DensityInterpolant = UserVar.GeometryInterpolants;  
