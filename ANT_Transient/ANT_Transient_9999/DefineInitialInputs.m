@@ -104,8 +104,6 @@ CtrlVar.ThicknessConstraints=0;
 CtrlVar.ResetThicknessToMinThickness=1;  % change this later on
 CtrlVar.ThickMin=1;
 
-end
-
 %% Debugging options
 if UserVar.debug == 1
     %CtrlVar.ExplicitEstimationMethod="-dhdt-" ;

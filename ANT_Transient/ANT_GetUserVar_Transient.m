@@ -41,7 +41,6 @@ if exist(NameOfFiletoRead,"file")
     load(NameOfFiletoRead,"F","MUA","CtrlVarInRestartFile");
     
     % copy C field
-    xC = MUA.coordinates(:,1); yC = MUA.coordinates(:,2);
     m = F.m; muk = F.muk; q = F.q;
     UserVar.NameOfFileForReadingSlipperinessEstimate = "ANT_Inverse_"+string(UserVar.Inverse)+"_C-Estimate.mat";
     % In an inversion, C is not updated for floating ice, except for some
@@ -51,14 +50,13 @@ if exist(NameOfFiletoRead,"file")
     % velocity fields obtained through the inversion. Note that is very ad-hoc
     % and users might want to change this part of the code.
     C = ExtrudeC(CtrlVarInRestartFile,MUA,F);
-    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimate,"xC","yC","C","m","muk","q");
+    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingSlipperinessEstimate,"MUA","C","m","muk","q");
     UserVar.SlidingLaw = CtrlVarInRestartFile.SlidingLaw;
     
     % copy AGlen field
-    xA = MUA.coordinates(:,1); yA = MUA.coordinates(:,2);
     AGlen = F.AGlen; n = F.n;
     UserVar.NameOfFileForReadingAGlenEstimate = "ANT_Inverse_"+string(UserVar.Inverse)+"_AGlen-Estimate.mat";
-    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,"xA","yA","AGlen","n");
+    save(UserVar.casefolder+"/"+UserVar.Experiment+"/"+UserVar.NameOfFileForReadingAGlenEstimate,"MUA","AGlen","n");
     
 else
     error("ExpID "+RunTable{ind,"ExpID"}+": Could not find file to copy C and AGlen fields: "+NameOfFiletoRead);

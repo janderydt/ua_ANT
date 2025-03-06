@@ -15,10 +15,10 @@ if tmp.MUA.Nnodes ~= MUA.Nnodes % something is different between the meshes
     "Nnodes old mesh = %s, Nnodes new mesh = %s\n",string(tmp.MUA.Nnodes),string(MUA.Nnodes));
     CtrlVar.MapOldToNew.method = "ShapeAndScattered"; 
     tau = 80; %kPa
-    ub = 100; %m/yr
+    ub = 10; %m/yr
     C_outside = ub/tau^m;
 
-    [~,AGlen] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,C_outside,tmp.C);
+    [~,C] = MapNodalVariablesFromMesh1ToMesh2(CtrlVar,[],tmp.MUA,MUA,C_outside,tmp.C);
 
 else
     % meshes have the same number of nodes. 
