@@ -4,13 +4,12 @@ Klear;
 
 %% user defined parameters
 domain = "AMUND";
-slidinglaw = ["Weertman" "Weertman" "Umbi" "Umbi"];
-cycle = [1 2 1 2]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
-dataformat = ["du" "du" "du" "du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
-pct = ["99k04" "99k04" "99k04" "99k04"]; % trunction of SVD in emulator
-only_grounded_ice = [1 1 1 1];
-years = ["2000-2020" "2000-2020" "2000-2020" "2000-2020"]; % a vector with years for which velocity data is used
-NN = ["RNN" "RNN" "RNN" "RNN"]; % which emulator? FNN or RNN
+slidinglaw = ["Weertman" "Umbi"];
+cycle = [1 1]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
+dataformat = ["du" "du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
+only_grounded_ice = [1 1];
+years = ["2000-2020" "2000-2020"]; % a vector with years for which velocity data is used
+NN = ["RNN" "RNN"]; % which emulator? FNN or RNN
 
 % dataformat = ["du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
 % cycle = [1]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
@@ -76,12 +75,29 @@ PriorOpts.Marginals(ind).Name = 'n';
 PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [2 5];
 
-if cycle > 1
+% add dhdt if any cycle>1
+if max(cycle) > 1
     ind = ind+1;
     PriorOpts.Marginals(ind).Name = 'log(dhdt_err)';
     PriorOpts.Marginals(ind).Type = 'Uniform';
     PriorOpts.Marginals(ind).Parameters = [log10(0.05) log10(0.5)];
     %PriorOpts.Marginals(ind).Bounds = [log10(0.05) log10(0.5)];
+end
+
+% add discrete variables
+nslidinglaw = numel(unique(slidinglaw));
+ncycle = numel(unique(cycle));
+if ncycle>1
+    ind = ind+1;
+    PriorOpts.Marginals(ind).Name = 'Cycle';
+    PriorOpts.Marginals(ind).Type = 'Uniform';
+    PriorOpts.Marginals(ind).Parameters = [0 1];
+end
+if nslidinglaw>1
+    ind = ind+1;
+    PriorOpts.Marginals(ind).Name = 'SlidingLaw';
+    PriorOpts.Marginals(ind).Type = 'Uniform';
+    PriorOpts.Marginals(ind).Parameters = [0 1];
 end
 
 myPriorDist = uq_createInput(PriorOpts);
@@ -96,13 +112,14 @@ myData.Name = 'velocity observations and errors';
 % log10(gsC), m, n, log10(dhdt_err)) and data (y), and returns the log-likelihood
 % function at these points. The forward model and covariance matrix are 
 % defined within the function.
-myLogLikelihood = @(params,y) customLogLikelihood(params, y, [dataformat,years,cycle,pct,only_grounded_ice,NN]);
+
+myLogLikelihood = @(params,y) customLogLikelihood(params, y, [domain,slidinglaw,cycle,dataformat,only_grounded_ice,years,NN]);
 
 %% define solver options
 mySolver.Type = 'MCMC';
 mySolver.MCMC.Sampler = 'AIES'; % AM, HMS or AIES (default)
 mySolver.MCMC.Steps = 5000; % T=300 default
-mySolver.MCMC.NChains = 20; % C=100 default
+mySolver.MCMC.NChains = 250; % C=100 default
 mySolver.MCMC.Visualize.Parameters = 1:numel(PriorOpts.Marginals);
 mySolver.MCMC.Visualize.Interval = 20;
 
@@ -129,8 +146,8 @@ uq_postProcessInversionMCMC(myBayesianAnalysis,'pointEstimate','MAP','gelmanRubi
 
 fname = "./BayesianAnalysis/BayesianAnalysis_Steps"+string(mySolver.MCMC.Steps)+"_NChains"+...
     string(mySolver.MCMC.NChains)+"_"+dataformat(1)+"_Calv_dh_"+...
-            strjoin(string(years),"_")+"_Weertman_cycle"+string(cycle(1))+...
-            "_floatingice"+string(1-only_grounded_ice(1))+"_"+NN+"_N0k"+string(pct(1));
+            strjoin(string(years),"_")+"_"+strjoin(string(slidinglaw),"_")+"_cycle"+string(cycle(1))+...
+            "_floatingice"+string(1-only_grounded_ice(1));
 save(fname(1),"myBayesianAnalysis");
 
 %% print some results
@@ -175,7 +192,7 @@ for ii=1:numel(Post)
             % histogram            
             [n,~,~] = histcounts(Post(ii).Sample,edges{1}); 
             bar(ax_fig(Ind),xmid,n/sum(n));
-            plot(ax_fig(Ind),[MAP(ii) MAP(ii)],[0 1],'-','Color',[0 0 0]./250);
+            plot(ax_fig(Ind),[MAP(ii) MAP(ii)],[0 1],'-','Color',[0.85 0.325 0.098]);
         else
             % scatter of data
             %scatter(ax_fig(Ind),Post(jj).Sample,Post(ii).Sample,15,...
@@ -186,7 +203,7 @@ for ii=1:numel(Post)
             [Xedge,Yedge] = ndgrid(edges{1},edges{2});
             pcolor(ax_fig(Ind),Xedge,Yedge,values); shading(ax_fig(Ind),'flat'); colormap(ax_fig(Ind),flipud(cmocean('-deep')));
             caxis(ax_fig(Ind),[0 0.0075]);
-            plot(ax_fig(Ind),MAP(jj),MAP(ii),'o','Color',[0 0 0]./250,'MarkerFaceColor',[0 0 0]./250,'MarkerSize',5);
+            plot(ax_fig(Ind),MAP(jj),MAP(ii),'o','Color',[0.85 0.325 0.098],'MarkerFaceColor',[0.85 0.325 0.098],'MarkerSize',5);
         end
         if jj==1
             ylabel(ax_fig(Ind),Post(ii).Name);
@@ -208,6 +225,7 @@ for ii=1:numel(Post)
     end
 end
 
+return
 
 for ii=1:numel(years)
     years_tmp = split(years(ii),"-");
@@ -478,15 +496,16 @@ persistent M N
 
 % Initialization
 nReal = size(params,1); % number of queried realizations
-% mymodel has format [dataformat,years,cycle,pct,NN], each of which is an
-% 1xn vector. 
-N = numel(mymodel)/6;
-dataformat = mymodel(1:N);
-years = mymodel(N+1:2*N);
-cycle = mymodel(2*N+1:3*N);
-pct = mymodel(3*N+1:4*N);
-only_grounded_ice = double(mymodel(4*N+1:5*N));
-NN = mymodel(5*N+1:6*N);
+% mymodel has format [domain,slidinglaw,cycle,dataformat,only_grounded_ice,years,NN],
+% each of which is an 1xn vector apart from domain. 
+domain = mymodel(1);
+N = (numel(mymodel)-1)/6;
+slidinglaw = mymodel(2:1+N);
+cycle = double(mymodel(2+N:1+2*N));
+dataformat = mymodel(2+2*N:1+3*N);
+only_grounded_ice = double(mymodel(2+3*N:1+4*N));
+years = mymodel(2+4*N:1+5*N);
+NN = mymodel(2+5*N:1+6*N);
 
 % Load forward model(s)
 if isempty(M)
@@ -501,19 +520,29 @@ if isempty(M)
         % what parameters the emulator is trained for, and in what order
         % The default is X = [log10(gaA) log10(gaC) log10(gsA) log10(gsC) m n log10(dhdt_err)];
         if NN(ii)=="RNN"
-            net_tmp=importNetworkFromTensorFlow("./RNN/TF_files/tuned_model_SVD-nodata_Calv_dh_"+...
-            yearstr+"_Weertman_cycle"+string(cycle(ii))+...
-            "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii)));
+
+            TF_dir = dir("./RNN/TF_files/tuned_model_"+domain+"_Calv_dh_"+years(ii)+...
+                "_"+slidinglaw(ii)+"_cycle"+string(cycle(ii))+"_floatingice"+string(1-only_grounded_ice(ii))+...
+                "_includemeasurements0*");
+            net_tmp=importNetworkFromTensorFlow(TF_dir.folder+"/"+TF_dir.name);
             M(ii).net=initialize(net_tmp);
-            load("./RNN/mat_files/data_SVD-nodata_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+...
-                "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii))+".mat",...
-                "X_train_C","X_train_S","T_train_C","T_train_S");
-            load("./RNN/mat_files/SVD-nodata_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+...
-                "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii))+".mat",...
-                "T_reproj","T_mean");
-            load("./RNN/mat_files/MSE_RNN_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+...
-                "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii))+".mat");
+
+            data_file = dir("./RNN/mat_files/data_"+domain+"_Calv_dh_"+years(ii)+...
+                "_"+slidinglaw(ii)+"_cycle"+string(cycle(ii))+"_floatingice"+string(1-only_grounded_ice(ii))+...
+                "_includemeasurements0*.mat");
+            load(data_file.folder+"/"+data_file.name,"X_train_C","X_train_S","T_train_C","T_train_S");
+        
+            SVD_file = dir("./RNN/mat_files/SVD_"+domain+"_Calv_dh_"+years(ii)+...
+                "_"+slidinglaw(ii)+"_cycle"+string(cycle(ii))+"_floatingice"+string(1-only_grounded_ice(ii))+...
+                "_includemeasurements0*.mat");
+            load(SVD_file.folder+"/"+SVD_file.name,"T_reproj","T_mean");
+
+            MSE_file = dir("./RNN/mat_files/MSE_RNN_"+domain+"_Calv_dh_"+years(ii)+...
+                "_"+slidinglaw(ii)+"_cycle"+string(cycle(ii))+"_floatingice"+string(1-only_grounded_ice(ii))+...
+                "_includemeasurements0*.mat");
+            load(MSE_file.folder+"/"+MSE_file.name);
             MSE = mse_RNN;
+
         elseif NN(ii)=="FNN"
             load("./FNN/mat_files/FNN_trainscg_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+...
                 "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii))+".mat",...
@@ -578,22 +607,22 @@ if isempty(M)
         S_meas = T_reproj*diag(std_tmp.^2)*T_reproj';
 
         % 2. Ua errors: obtained from  FIXME
-        s_u = 200; %m/yr
-        % if dataformat == "LOGu"
-        %     s_u = log10(s_u);
-        % end
-        l = 200e3; % range in the semivariogram
-        load("Delta_u_AMUND_Weertman_"+yearstr+".mat","MUA_yr2");
-        MUA = MUA_yr2;
-        D_tmp = pdist2(MUA.coordinates,MUA.coordinates,"squaredeuclidean");
-        D_tmp = s_u^2*exp(-D_tmp/(2*l^2));
-        D_tmp = D_tmp*T_reproj';
-        S_ua = 0*T_reproj*D_tmp;
-        clear D_tmp
+        % s_u = 200; %m/yr
+        % % if dataformat == "LOGu"
+        % %     s_u = log10(s_u);
+        % % end
+        % l = 200e3; % range in the semivariogram
+        % load("Delta_u_AMUND_Weertman_"+yearstr+".mat","MUA_yr2");
+        % MUA = MUA_yr2;
+        % D_tmp = pdist2(MUA.coordinates,MUA.coordinates,"squaredeuclidean");
+        % D_tmp = s_u^2*exp(-D_tmp/(2*l^2));
+        % D_tmp = D_tmp*T_reproj';
+        % S_ua = 0*T_reproj*D_tmp;
+        % clear D_tmp
 
         % 3. Emulator errors: obtained from plot_Emulator_MSE
         S_emulator = diag(MSE);
-        M(ii).S = S_meas + S_emulator + S_ua;
+        M(ii).S = S_meas + S_emulator;% + S_ua;
         M(ii).detS = det(M(ii).S);
         M(ii).Sinv = inv(M(ii).S);
     end    
@@ -602,11 +631,45 @@ end
 % Loop through years and realizations
 logL = zeros(nReal,1);
 
-CM = jet(4);
+% Deal with discrete variables and which emulator to use
+ncycles = numel(unique(cycle));
+nslidinglaws = numel(unique(slidinglaw));
+params_tmp = params;
+C = zeros(nReal,1); ind=1;
 
-for ii=1:N
+if ncycles > 1    
+    if max(cycle)>1
+        C(:,ind)=round(params(:,8));
+        params_tmp(:,8)=[];
+    else
+        C(:,ind)=round(params(:,7));
+        params_tmp(:,7)=[];
+    end
+    ind=ind+1;
+end
+
+if nslidinglaws > 1
+    C(:,ind)=round(params(:,end));
+    params_tmp(:,end)=[];
+end
+
+EmulatorIndex = 1;
+for ii=1:size(C,2)
+    EmulatorIndex = EmulatorIndex+2^(size(C,2)-1)*C(:,ii);
+end
+params=params_tmp;
+
+for ii=unique(EmulatorIndex(:)')
+
+    Itmp = find(EmulatorIndex==ii);
+    nItmp = numel(Itmp);
+
     % Apply normalization to parameters before feeding into emulator
-    predictors = (params-repmat(M(ii).X_train_C,nReal,1))./repmat(M(ii).X_train_S,nReal,1);
+    if cycle(ii)==1
+        predictors = (params(Itmp,1:6)-repmat(M(ii).X_train_C,nItmp,1))./repmat(M(ii).X_train_S,nItmp,1);
+    else
+        predictors = (params(Itmp,:)-repmat(M(ii).X_train_C,nItmp,1))./repmat(M(ii).X_train_S,nItmp,1);
+    end
 
     % Evaluate forward model. 
     if NN(ii)=="RNN"
@@ -617,18 +680,18 @@ for ii=1:N
 
     % Undo normalization of the output but keep in the projected basis to 
     % make it compatible with data
-    modelRun = modelRun.*repmat(M(ii).T_train_S,nReal,1)+repmat(M(ii).T_train_C,nReal,1);
+    modelRun = modelRun.*repmat(M(ii).T_train_S,nItmp,1)+repmat(M(ii).T_train_C,nItmp,1);
     Nout = size(modelRun,2);
 
     % Assemble log likelihood
-    for jj = 1:nReal
+    for jj = 1:nItmp
       % Evaluate log-likelihood
       prefac = -0.5*log((2*pi)^Nout*M(ii).detS);
       Ndistrib = - 0.5*(M(ii).data...
         -modelRun(jj,:))*M(ii).Sinv*(M(ii).data-modelRun(jj,:))';
       logLikeli = prefac + Ndistrib;
       % Assign to logL vector
-      logL(jj) = logL(jj)+logLikeli;
+      logL(Itmp(jj)) = logL(Itmp(jj))+logLikeli;
     end
 
     %figure(115); hold on; plot(params(1,5),prefac(1),'.',Color=CM(ii,:)); title('m');

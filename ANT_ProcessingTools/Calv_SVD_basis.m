@@ -6,8 +6,8 @@ if nargin==0
     perturbation = "Calv_dh"; % valid choices are "Calv", "dhIS", "dh" or "Calv_dh"
     startyear = "2000";
     targetyear = "2020";
-    slidinglaw = ["Weertman" "Weertman" "Umbi" "Umbi"]; % valid choices are "Weertman" or "Umbi"
-    cycle = [1 2 1 2]; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
+    slidinglaw = ["Weertman" "Umbi"]; % valid choices are "Weertman" or "Umbi"
+    cycle = [2 2]; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
     only_grounded_ice = 1;
     
     %% -- SVD settings

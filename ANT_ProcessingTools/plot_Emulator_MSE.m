@@ -3,36 +3,34 @@ function plot_Emulator_MSE
 plotRNN=1;
 plotFNN=0;
 
-perturbation='Calv_dh';
+domain="AMUND";
+perturbation="Calv_dh";
 trainingdataformat="u"; % u or LOGu
 startyear="2000";
-targetyear="2014"; % this can be an empty string to plot results for the u emulator, rather than the du emulator
-slidinglaw="Weertman";
-cycle=1;
+targetyear="2020"; % this can be an empty string to plot results for the u emulator, rather than the du emulator
+slidinglaw="Umbi";
+cycle=2;
 only_grounded_ice=1;
-pct = string(9879); % cut-off for SVD (% * 100)
+include_measurements = 0;
 n_test=[];%[1:20]; % indices of test data to plot (integers between 1 and size of test dataset)
 
 if targetyear ~= ""
     years=startyear+"-"+targetyear;
-    datafile = "Delta_u_AMUND_"+slidinglaw+"_"+years+".mat";
+    datafile = "Delta_u_"+domain+"_"+slidinglaw+"_"+years+".mat";
     load(datafile);    
     MUA = MUA_yr2; GF = GF_yr2;
     T = Delta_u.(perturbation).map(:,:,cycle);
-    
 else
     years = trainingdataformat+startyear;
-    datafile = "u_AMUND_"+perturbation+"_cycle"+string(cycle)+"_"+slidinglaw+"_"+startyear+".mat";
+    datafile = "u_"+domain+"_"+perturbation+"_cycle"+string(cycle)+"_"+slidinglaw+"_"+startyear+".mat";
     load(datafile);
     T = speed.("yr"+string(startyear));
     MUA = MUA.("yr"+string(startyear)); GF = GF.("yr"+string(startyear));
     if trainingdataformat=="LOGu"
         T = log10(T);
-    end
-    
+    end 
 end
 
-Ind_toremove=find(gaC>50);
 % check for nans and inf
 if any(isnan(T))
     warning("Removing nan from T");
@@ -40,14 +38,13 @@ if any(isnan(T))
     rows = unique(rows);
     T(rows,:)=[];
 end
-T(Ind_toremove,:)=[];
 T_mean = mean(T,1);
 T = T-repmat(T_mean(:)',size(T,1),1);
 
 % remove floating ice?
 if only_grounded_ice
     % remove floating nodes
-    load("Delta_u_AMUND_Weertman_"+startyear+"-"+targetyear+".mat","MUA_yr2","GF_yr2");
+    load("Delta_u_"+domain+"_"+slidinglaw+"_"+startyear+"-"+targetyear+".mat","MUA_yr2","GF_yr2");
     MUA = MUA_yr2; GF = GF_yr2;
     Nodes_floating = find(GF.node<0.5);
     T(:,Nodes_floating) = 0;
@@ -56,84 +53,89 @@ end
 
 %% RNN Tensorflow
 if plotRNN
-
-    for ii=1:numel(pct)
-    
-        net=importNetworkFromTensorFlow("./RNN/TF_files/tuned_model_SVD-nodata_"+perturbation+"_"+years+...
-            "_"+slidinglaw+"_cycle"+string(cycle)+"_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii));
-        netUpdated=initialize(net);
-        load("./RNN/mat_files/data_SVD-nodata_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+string(cycle)+...
-            "_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii)+".mat");
-        load("./RNN/mat_files/SVD-nodata_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+string(cycle)+...
-            "_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii)+".mat");
-        num_train = size(X_train,1);
-        num_val = size(X_val,1);
-        num_test = size(X_test,1);
         
-        % emulate predictors
-        Y_train=double(predict(netUpdated,X_train));
-        Y_val=double(predict(netUpdated,X_val));
-        Y_test=double(predict(netUpdated,X_test));
+    TF_dir = dir("./RNN/TF_files/tuned_model_"+domain+"_"+perturbation+"_"+years+...
+        "_"+slidinglaw+"_cycle"+string(cycle)+"_floatingice"+string(1-only_grounded_ice)+...
+        "_includemeasurements"+string(include_measurements)+"*");
+    net=importNetworkFromTensorFlow(TF_dir.folder+"/"+TF_dir.name);
+    netUpdated=initialize(net);
+
+    data_file = dir("./RNN/mat_files/data_"+domain+"_"+perturbation+"_"+years+...
+        "_"+slidinglaw+"_cycle"+string(cycle)+"_floatingice"+string(1-only_grounded_ice)+...
+        "_includemeasurements"+string(include_measurements)+"*.mat");
+    load(data_file.folder+"/"+data_file.name);
+
+    SVD_file = dir("./RNN/mat_files/SVD_"+domain+"_"+perturbation+"_"+years+...
+        "_"+slidinglaw+"_cycle"+string(cycle)+"_floatingice"+string(1-only_grounded_ice)+...
+        "_includemeasurements"+string(include_measurements)+"*.mat");
+    load(SVD_file.folder+"/"+SVD_file.name);
+
+    num_train = size(X_train,1);
+    num_val = size(X_val,1);
+    num_test = size(X_test,1);
     
-        figure;
-        ntiles = size(T_train,2); 
-        tlo = tiledlayout(ceil(sqrt(ntiles)),ceil(sqrt(ntiles)),"TileSpacing","tight");
-        for m=1:size(T_train,2)
-            tile(m)=nexttile; hold on;
-            plot(tile(m),T_train(:,m),Y_train(:,m),'ok');
-            plot(tile(m),T_val(:,m),Y_val(:,m),'xg');
-            plot(tile(m),T_test(:,m),Y_test(:,m),'dm');
-            %plot(T_test(10,m),Y_test(10,m),'dr');
-            %plotregression(T_full,Y(:,m));
-            title(tile(m),"mode "+num2str(m));
-            xvec = xlim(tile(m));           
-            plot(tile(m),[-10 10],[-10 10],'-r');
-            xlim(tile(m),xvec); ylim(tile(m),xvec);
-        end
+    % emulate predictors
+    Y_train=double(predict(netUpdated,X_train));
+    Y_val=double(predict(netUpdated,X_val));
+    Y_test=double(predict(netUpdated,X_test));
+
+    figure;
+    ntiles = size(T_train,2); 
+    tlo = tiledlayout(ceil(sqrt(ntiles)),ceil(sqrt(ntiles)),"TileSpacing","tight");
+    for m=1:size(T_train,2)
+        tile(m)=nexttile; hold on;
+        plot(tile(m),T_train(:,m),Y_train(:,m),'ok');
+        plot(tile(m),T_val(:,m),Y_val(:,m),'xg');
+        plot(tile(m),T_test(:,m),Y_test(:,m),'dm');
+        %plot(T_test(10,m),Y_test(10,m),'dr');
+        %plotregression(T_full,Y(:,m));
+        title(tile(m),"mode "+num2str(m));
+        xvec = xlim(tile(m));           
+        plot(tile(m),[-10 10],[-10 10],'-r');
+        xlim(tile(m),xvec); ylim(tile(m),xvec);
+    end
+
+    % reconstruct spatial maps of emulated targets
+    Y_test = Y_test.*repmat(T_train_S,num_test,1)+...
+        repmat(T_train_C,num_test,1); % undo normalization
+    Y_reproj = Y_test*B_trunc;% reproject onto nodal basis
     
-        % reconstruct spatial maps of emulated targets
-        Y_test = Y_test.*repmat(T_train_S,num_test,1)+...
-            repmat(T_train_C,num_test,1); % undo normalization
-        Y_reproj = Y_test*B_trunc;% reproject onto nodal basis
-        
-        % ua outputs
-        Ind_test_orig = seq(num_train+num_val+1:end);
-        Ua_orig = T(Ind_test_orig,:);
-        Ua_proj = Ua_orig*T_reproj';
+    % ua outputs
+    Ind_test_orig = seq(num_train+num_val+1:end);
+    Ua_orig = T(Ind_test_orig,:);
+    Ua_proj = Ua_orig*T_reproj';
+
+    % reconstruct original target data
+    T_test = T_test.*repmat(T_train_S,num_test,1)+...
+        repmat(T_train_C,num_test,1); % undo normalization
+    T_test = T_test*B_trunc;% reproject onto nodal basis
     
-        % reconstruct original target data
-        T_test = T_test.*repmat(T_train_S,num_test,1)+...
-            repmat(T_train_C,num_test,1); % undo normalization
-        T_test = T_test*B_trunc;% reproject onto nodal basis
-        
-        % calc mse of test data
-        % in nodal basis
-        mse_tmp = 1/(num_test-1)*sum((Y_reproj-Ua_orig).^2,1);
-        %mse_tmp(mse_tmp>1e6) = 1e6;
-        mse(ii,:) = mse_tmp(:);
+    % calc mse of test data
+    % in nodal basis
+    mse = 1/(num_test-1)*sum((Y_reproj-Ua_orig).^2,1);
+    %mse_tmp(mse_tmp>1e6) = 1e6;
+    %nNodes = size(Ua_orig,2);
+    %mse_tmp=spdiags(mse_tmp(:),0,nNodes,nNodes);
 
-        nNodes = size(Ua_orig,2);
-        mse_tmp=spdiags(mse_tmp(:),0,nNodes,nNodes);
+    % in truncated svd basis
+    %mse_RNN = T_reproj*mse_tmp*T_reproj';   
+    mse_RNN=1/(num_test-1)*sum((Y_test-Ua_proj).^2,1);
 
-        % in truncated svd basis
-        %mse_RNN = T_reproj*mse_tmp*T_reproj';   
-        mse_RNN=1/(num_test-1)*sum((Y_test-Ua_proj).^2,1);
+    MSE_file.name = strrep(SVD_file.name,"SVD","MSE_RNN");
+    MSE_file.folder = SVD_file.folder;
+    save(MSE_file.folder+"/"+MSE_file.name,"mse_RNN");
 
-        save("./RNN/mat_files/MSE_RNN_"+perturbation+"_"+years+"_"+slidinglaw+"_cycle"+cycle+...
-            "_floatingice"+string(1-only_grounded_ice)+"_N0k"+pct(ii),"mse_RNN");
-
-        % plot some maps for particular test case
-        for nn=n_test
-            predictorvalues = X_test(nn,:).*X_train_S + X_train_C;
-            Ua_orig_tmp = Ua_orig(nn,:);
-            Y_reproj_tmp = Y_reproj(nn,:);
-            T_test_tmp = T_test(nn,:);
-            plot_comparison_emulator_ua(T_mean,Ua_orig_tmp,T_test_tmp,Y_reproj_tmp,MUA,GF,pct(ii),predictorvalues,trainingdataformat);
-        end
+    % plot some maps for particular test case
+    for nn=n_test
+        predictorvalues = X_test(nn,:).*X_train_S + X_train_C;
+        Ua_orig_tmp = Ua_orig(nn,:);
+        Y_reproj_tmp = Y_reproj(nn,:);
+        T_test_tmp = T_test(nn,:);
+        plot_comparison_emulator_ua(T_mean,Ua_orig_tmp,T_test_tmp,Y_reproj_tmp,MUA,GF,"",predictorvalues,trainingdataformat);
     end
 
     % plot mse for different svd trunctions
-    plot_mse(mse,pct,MUA,GF);
+    plot_mse(mse,"",MUA,GF);
 
 end
 

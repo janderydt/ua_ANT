@@ -9,24 +9,32 @@ glaciers = ["PIG","Thwaites","Pope","SmithEast","SmithWest","Kohler"];
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Diagnostic";
-UserVar.years = ["2000","2020"];
-UserVar.cycles = [1 2];
-inversiondata_filename = "inversiondata_AMUND_Umbi.mat";
-data_inv = load(inversiondata_filename);
-data_inv = data_inv.data;
+
+domain = "AMUND";
+years = ["2000-2020","2000-2020"]; % can be individual years, e.g. "2000", or multiple years
+    % seperated by a "-", e.g. "2000-2020"
+cycle = [2 2];  % specify a cycle for each string of years above
+slidinglaw = ["Weertman" "Umbi"]; % specify a sliding law for each string of years above
 
 xmin = zeros(numel(glaciers),1)+200;
 xmax = zeros(numel(glaciers),1);
 
-for cc=UserVar.cycles
+for cc=1:numel(years)
 
-    for tt=1:numel(UserVar.years)
+    load("inversiondata_"+domain+"_"+slidinglaw(cc)+".mat");
+    data_inv = data;
+    
+    individual_years = strsplit(years(cc),"-");
 
-        year = UserVar.years(tt);
-        if year == "2000"
-            UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Original_CalvThick_Umbi_2020.csv";
+    for tt=1:numel(individual_years)
+
+        year_tmp = individual_years(tt);
+        if year_tmp == "2000"
+            UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_"+domain+"_Original_CalvThick_"+...
+                slidinglaw(cc)+"_2020.csv";
         else
-            UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Original_CalvThick_Umbi_"+year+".csv";
+            UserVar.Table = UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_"+domain+"_Original_CalvThick_"+...
+                slidinglaw(cc)+"_"+year_tmp+".csv";
         end
     
         % read run table
@@ -42,12 +50,12 @@ for cc=UserVar.cycles
         Comments = RunTable{Ind,"Comments"};
         Cycle = RunTable{Ind,"InverseCycleA"};
         
-        if year == "2000"
+        if year_tmp == "2000"
             Ind_Orig = contains(Comments,"Original geometry 2000");
-            Ind = Ind(Ind_finished==1 & Ind_Orig==1 & Cycle == UserVar.cycles(cc));
+            Ind = Ind(Ind_finished==1 & Ind_Orig==1 & Cycle == cycle(cc));
         else
-            Ind_CalvThick = contains(Comments,"Ice front and thickness "+year);
-            Ind = Ind(Ind_finished==1 & Ind_CalvThick==1 & Cycle == UserVar.cycles(cc));
+            Ind_CalvThick = contains(Comments,"Ice front and thickness "+year_tmp);
+            Ind = Ind(Ind_finished==1 & Ind_CalvThick==1 & Cycle == cycle(cc));
         end
     
         kk=1;
@@ -64,7 +72,7 @@ for cc=UserVar.cycles
             gaC(kk) = data_inv(Ind_inv).gaC;
             gsC(kk) = data_inv(Ind_inv).gsC;
     
-            folder = UserVar.home+"/ANT_Diagnostic/cases/AMUND_nsmbl_Diagnostic_"+ExpID(Ind(ii));
+            folder = UserVar.home+"/ANT_Diagnostic/cases/"+domain+"_nsmbl_Diagnostic_"+ExpID(Ind(ii));
             outputfiles = dir(folder+"/ResultsFiles/*.mat");
     
             if ~isempty(outputfiles)
@@ -112,10 +120,10 @@ for cc=UserVar.cycles
         %% load observations
         addpath(getenv("froot_data")+"Measures/Measures_annual");
         
-        if year=="2000"
+        if year_tmp=="2000"
             fname = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat";
         else
-            fname = "GriddedInterpolants_"+string(double(year)-1)+"-"+string(double(year))+...
+            fname = "GriddedInterpolants_"+string(double(year_tmp)-1)+"-"+string(double(year_tmp))+...
                 "_MeaSUREs_ITSLIVE_Velocities.mat";
         end
         load("../ANT_Data/ANT_Interpolants/"+fname);
@@ -129,17 +137,18 @@ for cc=UserVar.cycles
         end
         
         %% set up figures
+        nrows = numel(years);
+        ncolumns = numel(individual_years);
+
         for gg=1:numel(glaciers)
             
-            if tt==1
-                Hfig(100*cc+gg)=fig('units','inches','width',120*12/72.27,'height',65*12/72.27,'fontsize',14,'font','Helvetica');
+            if cc==1 && tt==1
+                Hfig(100+gg)=fig('units','inches','width',120*12/72.27,'height',65*12/72.27,'fontsize',14,'font','Helvetica');
            
-                tlo_fig(100*cc+gg) = tiledlayout(Hfig(100*cc+gg),1,numel(UserVar.years),"TileSpacing","compact");
-                for i = 1:numel(UserVar.years)
-                    ax_fig(100*cc+gg,i) = nexttile(tlo_fig(100*cc+gg),i); hold on;
+                tlo_fig(100+gg) = tiledlayout(Hfig(100+gg),nrows,ncolumns,"TileSpacing","compact");
+                for i = 1:nrows*ncolumns
+                    ax_fig(100+gg,i) = nexttile(tlo_fig(100+gg),i); hold on;
                 end
-            else
-    
             end
     
             ylabels=["Speed [m/yr]","Ice Thickness [m]"];
@@ -153,46 +162,47 @@ for cc=UserVar.cycles
                 indmin = min(m); indmax = max(m);
                 colorind = round(1+(64-1)/(indmax-indmin)*(m(ii)-indmin));
     
-                plot(ax_fig(100*cc+gg,tt),SL(gg).d/1e3,SL(gg).V(ii,2:end),LineStyle=style,LineWidth=width,Color=[1 0.5 0.5]);%Color=CM(colorind,:));
-                plot(ax_fig(100*cc+gg,tt),[SL(gg).SLd_GL(ii),SL(gg).SLd_GL(ii)]/1e3,[0 10000],'-k');
+                plot(ax_fig(100+gg,ncolumns*(cc-1)+tt),SL(gg).d/1e3,SL(gg).V(ii,2:end),LineStyle=style,LineWidth=width,Color=[1 0.5 0.5]);%Color=CM(colorind,:));
+                plot(ax_fig(100+gg,ncolumns*(cc-1)+tt),[SL(gg).SLd_GL(ii),SL(gg).SLd_GL(ii)]/1e3,[0 10000],'-k');
         
                 %plot(ax_fig(2),SL(gg).d/1e3,SL(gg).H(ii,2:end),LineStyle=style,LineWidth=width,Color=CM(ceil(ii/2),:));
                 %plot(ax_fig(2),[SL(gg).SLd_GL(ii),SL(gg).SLd_GL(ii)]/1e3,[0 2000],'-k');
             end
         
-            plot(ax_fig(100*cc+gg,tt),SL(gg).d/1e3,SL(gg).vMeas(2:end),LineStyle="-",LineWidth=2,Color="k");
-            plot(ax_fig(100*cc+gg,tt),SL(gg).d/1e3,SL(gg).vMeas(2:end)-SL(gg).stdMeas(2:end),LineStyle="--",LineWidth=2,Color="k");
-            plot(ax_fig(100*cc+gg,tt),SL(gg).d/1e3,SL(gg).vMeas(2:end)+SL(gg).stdMeas(2:end),LineStyle="--",LineWidth=2,Color="k");
+            plot(ax_fig(100+gg,ncolumns*(cc-1)+tt),SL(gg).d/1e3,SL(gg).vMeas(2:end),LineStyle="-",LineWidth=2,Color="k");
+            plot(ax_fig(100+gg,ncolumns*(cc-1)+tt),SL(gg).d/1e3,SL(gg).vMeas(2:end)-SL(gg).stdMeas(2:end),LineStyle="--",LineWidth=2,Color="k");
+            plot(ax_fig(100+gg,ncolumns*(cc-1)+tt),SL(gg).d/1e3,SL(gg).vMeas(2:end)+SL(gg).stdMeas(2:end),LineStyle="--",LineWidth=2,Color="k");
         
-            xlim(ax_fig(100*cc+gg,tt),[0 150]);
+            xlim(ax_fig(100+gg,ncolumns*(cc-1)+tt),[0 150]);
             if tt==1
-                ylim(ax_fig(100*cc+gg,tt),[0 max(SL(gg).V(:))]);
-                ylabel(ax_fig(100*cc+gg,tt),"Flowline speed [m/yr]");
+                ylim(ax_fig(100+gg,ncolumns*(cc-1)+tt),[0 max(SL(gg).V(:))]);
+                ylabel(ax_fig(100+gg,ncolumns*(cc-1)+tt),"Flowline speed [m/yr]");
             else
-                ylims = ylim(ax_fig(100*cc+gg,1));
-                ylim(ax_fig(100*cc+gg,tt),ylims);
+                ylims = ylim(ax_fig(100+gg,1));
+                ylim(ax_fig(100+gg,ncolumns*(cc-1)+tt),ylims);
             end
-            grid(ax_fig(100*cc+gg,tt),"on");
-            box(ax_fig(100*cc+gg,tt),"on");
-            title(ax_fig(100*cc+gg,tt),year+" (cycle "+string(UserVar.cycles(cc))+")");
+            grid(ax_fig(100+gg,ncolumns*(cc-1)+tt),"on");
+            box(ax_fig(100+gg,ncolumns*(cc-1)+tt),"on");
+            title(ax_fig(100+gg,ncolumns*(cc-1)+tt),year_tmp+" (cycle "+string(cycle(cc))+", "+...
+                slidinglaw(cc)+")");
     
-            xlabel(tlo_fig(100*cc+gg),'Distance [km]');
-            title(tlo_fig(100*cc+gg),glaciers(gg));
+            xlabel(tlo_fig(100+gg),'Distance [km]');
+            title(tlo_fig(100+gg),glaciers(gg));
     
         end
     
         %if UserVar.cycle>1
-            for gg=1:numel(glaciers)
-                figure(999); 
-                subplot(1,numel(glaciers),gg); hold on;
-                histogram(SL(gg).SLd_GL(:)/1e3,[0:200],'Normalization','percentage');
-                xmin(gg) = min(xmin(gg),min(SL(gg).SLd_GL(:)/1e3)-15);
-                xmax(gg) = max(xmax(gg),max(SL(gg).SLd_GL(:)/1e3)+15);
-                xlim([xmin(gg) xmax(gg)]);
-                title(glaciers(gg)+" (cycle "+string(UserVar.cycles(cc))+")");
-                grid on; box on;
-    
-            end
+            % for gg=1:numel(glaciers)
+            %     figure(999); 
+            %     subplot(1,numel(glaciers),gg); hold on;
+            %     histogram(SL(gg).SLd_GL(:)/1e3,[0:200],'Normalization','percentage');
+            %     xmin(gg) = min(xmin(gg),min(SL(gg).SLd_GL(:)/1e3)-15);
+            %     xmax(gg) = max(xmax(gg),max(SL(gg).SLd_GL(:)/1e3)+15);
+            %     xlim([xmin(gg) xmax(gg)]);
+            %     title(glaciers(gg)+" (cycle "+string(UserVar.cycles(cc))+")");
+            %     grid on; box on;
+            % 
+            % end
         %end
     
         SL=[];

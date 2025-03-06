@@ -20,7 +20,9 @@ only_grounded_ice = 1;
 %% -- SVD settings
 add_measurements_to_SVD = 0;
 use_existing_SVD_basis = 1;
-SVD_filetoread = "SVD_AMUND_Calv_dh_2000-2020_Wc1_Wc2_Uc1_Uc2_floatingice0_includemeasurements0.mat";
+SVD_basistoread = "Wc2_Uc2";
+SVD_filetoread = "SVD_"+domain+"_"+perturbation+"_"+startyear+"-"+targetyear+...
+    "_"+SVD_basistoread+"_floatingice"+string(1-only_grounded_ice)+"_includemeasurements0.mat";
 max_SVD_components = 25; % for a large number of SVD components the ML 
 % algorithms might struggle to learn the variability in the highest 
 % compoments. From basic test 25 seems like a reasonable number.
@@ -124,19 +126,6 @@ T_pct = T_pct1(1:T_nComp);
 B_trunc = S_trunc*V_trunc';
 T_reproj = (B_trunc*B_trunc')\B_trunc; % equivalent to inv(B*B')*B
 
-%% Plot eigen basis
-if do_plots
-    
-    load("Delta_u_"+domain+"_"+slidinglaw+"_"+startyear+"-"+targetyear+".mat","MUA_yr2","GF_yr2");
-    MUA = MUA_yr2; GF = GF_yr2;
-
-    for jj=1:T_nComp
-       figure; PlotMeshScalarVariable([],MUA,V_trunc(:,jj));...
-       axis equal; axis tight; axis off; 
-       title(string(SVD_targetpercentage)+" SVD eigenfunction "+string(jj)+" ("+string(T_pct(jj)*100)+"%)");
-    end
-end
-
 %% TARGETS (training/input data). In this case, input data consists of 
 %% simulated instantaneous changes in surface speed in response to changes
 %% in ice-sheet geometry (ice thickness, calving front location). The input
@@ -157,7 +146,11 @@ num_exp = size(SVD_new.T,1); num_nodes = size(SVD_new.T,2);
 X = SVD_new.X;
 
 if do_plots
-    
+
+    % load Ua mesh
+    load("Delta_u_"+domain+"_"+slidinglaw+"_"+startyear+"-"+targetyear+".mat","MUA_yr2","GF_yr2");
+    MUA = MUA_yr2; GF = GF_yr2;
+
     %% Can measurements be represented adequately in truncated basis?
     T_meas = SVD_new.T_meas(:)'-T_mean(:)';
     T_meas_trunc = T_meas*T_reproj';
@@ -182,14 +175,14 @@ if do_plots
     %% Are model data adequately represented in truncated basis?
     if use_existing_SVD_basis
     
-        T_reproj = T_hat*B_trunc;
+        T_reproj_tmp = T_hat*B_trunc;
     
         figure; tlo=tiledlayout(1,2,"TileSpacing","compact");
     
-        nexttile; hold on; PlotMeshScalarVariable([],MUA,mean(T-repmat(T_mean(:)',size(T,1),1)-T_reproj,1)'); title('mean(Original - Reprojected)');
+        nexttile; hold on; PlotMeshScalarVariable([],MUA,mean(T-repmat(T_mean(:)',size(T,1),1)-T_reproj_tmp,1)'); title('mean(Original - Reprojected)');
         axis equal; axis tight;  caxis([-25 25]); colormap(cmocean('balance'));
     
-        nexttile; hold on; PlotMeshScalarVariable([],MUA,std(T-repmat(T_mean(:)',size(T,1),1)-T_reproj,1)'); title('std(Original - Reprojected)');
+        nexttile; hold on; PlotMeshScalarVariable([],MUA,std(T-repmat(T_mean(:)',size(T,1),1)-T_reproj_tmp,1)'); title('std(Original - Reprojected)');
         axis equal; axis tight; caxis([-150 150]); colormap(cmocean('balance'));
     
         title(tlo,[strrep(domain+", "+perturbation+", "+startyear+"-"+targetyear+", "+slidinglaw+", cycle: "+string(cycle)+...
@@ -257,14 +250,16 @@ if write_outputs_for_TF
     T_val = (T_val-repmat(T_train_C,num_val,1))./repmat(T_train_S,num_val,1);
     T_test = (T_test-repmat(T_train_C,num_test,1))./repmat(T_train_S,num_test,1);
 
-    fname1 = sprintf('./RNN/mat_files/data_%s_%s_%s-%s_%s_cycle%s_floatingice%s_includemeasurements%s_Comp%s_Var%s',...
+    fname1 = sprintf('./RNN/mat_files/data_%s_%s_%s-%s_%s_cycle%s_floatingice%s_includemeasurements%s_Basis_%s-Comp%s-Var%s',...
         domain,perturbation,startyear,targetyear,...
-        slidinglaw,string(cycle),string(1-only_grounded_ice),string(add_measurements_to_SVD),string(T_nComp),...
-        strrep(string(round(SVD_targetpercentage*1e4)/1e2),".","k"));
-    fname2 = sprintf('./RNN/mat_files/SVD_%s_%s_%s-%s_%s_cycle%s_floatingice%s_includemeasurements%s_Comp%s_Var%s',...
+        slidinglaw,string(cycle),string(1-only_grounded_ice),string(add_measurements_to_SVD),...
+        strrep(SVD_basistoread,"_","-"),...
+        string(T_nComp),strrep(string(round(SVD_targetpercentage*1e4)/1e2),".","k"));
+    fname2 = sprintf('./RNN/mat_files/SVD_%s_%s_%s-%s_%s_cycle%s_floatingice%s_includemeasurements%s_Basis_%s-Comp%s-Var%s',...
         domain,perturbation,startyear,targetyear,...
-        slidinglaw,string(cycle),string(1-only_grounded_ice),string(add_measurements_to_SVD),string(T_nComp),...
-        strrep(string(round(SVD_targetpercentage*1e4)/1e2),".","k"));
+        slidinglaw,string(cycle),string(1-only_grounded_ice),string(add_measurements_to_SVD), ...
+        strrep(SVD_basistoread,"_","-"),...
+        string(T_nComp),strrep(string(round(SVD_targetpercentage*1e4)/1e2),".","k"));
     save(fname1,'X_train','X_val','X_test','T_train','T_val','T_test',...
         'X_train_C','X_train_S','T_train_C','T_train_S');
     save(fname2, 'T_mean','V_trunc', 'S_trunc', 'B_trunc', 'T_reproj', 'T_pct','seq');
@@ -273,17 +268,6 @@ end
 %% PLOTTING
 
 if do_plots
-
-    load("perturbation_grids.mat");
-    if targetyear == "2009"
-        MUA=MUA_2009;
-    elseif targetyear == "2014"
-        MUA=MUA_2014;
-    elseif targetyear == "2018"
-        MUA=MUA_2018;
-    elseif targetyear == "2020"
-        MUA=MUA_2020;
-    end
 
     CtrlVar=Ua2D_DefaultParameters;
     CtrlVar.PlotXYscale = 1e3;
@@ -308,7 +292,7 @@ if do_plots
     figure; tlo4=tiledlayout(2,5,'TileSpacing','tight');
     for ii=1:10
         nexttile;
-        PlotNodalBasedQuantities_JDR(gca,MUA.connectivity,MUA.coordinates,U_trunc(:,ii),CtrlVar);
+        PlotNodalBasedQuantities_JDR(gca,MUA.connectivity,MUA.coordinates,V_trunc(:,ii),CtrlVar);
         colormap(othercolor('RdYlBu8'));
         variance =100*[cumulative_variance(1); cumulative_variance(2:end)-cumulative_variance(1:end-1)];
         title(['mode',num2str(ii),' (',num2str(variance(ii),'%2.2f'),'%  /  ',num2str(100*cumulative_variance(ii),'%2.2f'),'%)']); caxis([-0.03 0.03]);
@@ -316,10 +300,10 @@ if do_plots
     
         %cb=colormap; cb.visible='off';
     end
-    cb4=colorbar(gca);
+    cb=colorbar(gca);
     plotind = 2;
     for r = [10 50 100]
-        Xapprox = U(:,1:r)*S(1:r,1:r)*V(:,1:r)';
+        %Xapprox = U(:,1:r)*S(1:r,1:r)*V(:,1:r)';
         %Xapprox(Xapprox<0)=0; 
         %Xapprox(Xapprox>1)=1;
         %figure(111); nexttile, imagesc(Xapprox), axis off, colormap(slanCM('YlGnBu'));
@@ -329,11 +313,8 @@ if do_plots
         %title(['r=',num2str(r,'%d'),', ',num2str(100*energy(r),'%2.2f'),'% cumulative energy']);
         %plotind = plotind + 1;
     end
-    
-    cb1.Layout.Tile = 'east';
-    cb2.Layout.Tile = 'east';
-    cb3.Layout.Tile = 'east';
-    cb4.Layout.Tile = 'east';
+
+    cb.Layout.Tile = 'east';
     
     %% singular values
     figure, subplot(1,2,1)
