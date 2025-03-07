@@ -88,7 +88,7 @@ if CtrlVar.Restart
     % capture outputs at CtrlVar.StartTime, but otherwise do not write
     % outputs at the start of a run
 end
-CtrlVar.CreateOutputsEndOfRun=0; % don't write outputs at the end of a run
+CtrlVar.CreateOutputsEndOfRun=1; % always call DefineOutputs at the end of a run
 
 CtrlVar.DefineOutputsDt=1/12; % write monthly output files
 
