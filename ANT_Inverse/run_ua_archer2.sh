@@ -17,7 +17,7 @@
 # n02-xxxxx is the budget code
 # 
 # for runs with a higher memory requirement:
-# use SBATCH --partition=highmem, SBATCH --qos=standard and set --mem-per-cpu=3000M in the srun command below
+# use SBATCH --partition=highmem, SBATCH --qos=highmem and set --mem-per-cpu=3000M in the srun command below
 #
 # for testing:
 # use SBATCH --partition=standard, SBATCH --qos=short

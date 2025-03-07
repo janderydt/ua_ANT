@@ -1,7 +1,7 @@
 #!/bin/bash
 # Slurm job options (job-name, compute nodes, job time)
 #SBATCH --job-name=ANT_Diag
-#SBATCH --time=02:30:00
+#SBATCH --time=01:00:00
 #SBATCH --ntasks-per-node=30
 #SBATCH --cpus-per-task=4
 #SBATCH --hint=nomultithread
@@ -17,13 +17,11 @@
 # n02-xxxxx is the budget code
 # 
 # for runs with a higher memory requirement:
-# use SBATCH --partition=highmem, SBATCH --qos=standard and set --mem-per-cpu=3000M in the srun command below
+# use SBATCH --partition=highmem, SBATCH --qos=highmem and set --mem-per-cpu=3000M in the srun command below
 #
 # for testing:
 # use SBATCH --partition=standard, SBATCH --qos=short
 ##############################################################################################################
-
-module remove darshan
 
 # Add top directory to python path (this makes the utils.py file visible to this script)
 CASEDIR=$WORK/ua/cases/ANT
