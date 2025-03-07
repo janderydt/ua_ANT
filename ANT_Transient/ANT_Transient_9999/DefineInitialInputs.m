@@ -83,8 +83,14 @@ CtrlVar.SlidingLaw = UserVar.SlidingLaw;
 CtrlVar.InfoLevelNonLinIt=1;
 CtrlVar.InfoLevel=1;
 
-CtrlVar.CreateOutputsBeginningOfRun=1;
-CtrlVar.CreateOutputsEndOfRun=1;
+if CtrlVar.Restart
+    CtrlVar.CreateOutputsBeginningOfRun=0; 
+    % capture outputs at CtrlVar.StartTime, but otherwise do not write
+    % outputs at the start of a run
+end
+CtrlVar.CreateOutputsEndOfRun=0; % don't write outputs at the end of a run
+
+CtrlVar.DefineOutputsDt=1/12; % write monthly output files
 
 CtrlVar.NameOfRestartFiletoWrite=CtrlVar.Experiment+"-RestartFile.mat";
 

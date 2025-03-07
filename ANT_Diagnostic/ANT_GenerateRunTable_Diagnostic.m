@@ -17,18 +17,18 @@ addpath("../");
 UserVar.home = pwd;
 
 %% original inversion run table
-RunTable_inverse_files = "../ANT_Inverse/RunTable_ARCHER2_11-02-2025.csv";
+RunTable_inverse_files = "../ANT_Inverse/RunTable_ARCHER2_17-02-2025_"+string([24 25 26 27])+".csv";
 Modeldomain = "AMUND";
 
 %% year for original and new geometry
 ExpID_oldgeom = 2000;
-ExpID_newgeom = 2020; % 2009, 2014, 2018
+ExpID_newgeom = 2014; % 2009, 2014, 2018
 
 %% which perturbations?
-pert = ["Calv","ISthick","thick"]; % Original, Calv, ISthick, thick, Calv_thick
+pert = ["Calv_thick"]; % Original, Calv, ISthick, thick, Calv_thick
 
 %% construct new run table or append to existing run table
-UserVar.Table = "./RunTable_ARCHER2_Diagnostic_"+Modeldomain+"_Weertman_"+string(ExpID_newgeom)+".csv";
+UserVar.Table = "./RunTable_ARCHER2_Diagnostic_"+Modeldomain+"_Umbi_"+string(ExpID_newgeom)+".csv";
 if ~exist(UserVar.Table,"file")
     copyfile("EmptyTable.csv",UserVar.Table);
 else

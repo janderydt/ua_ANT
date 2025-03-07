@@ -35,7 +35,7 @@ switch UserVar.BasalMelt
          PICO_opts.BasinsInterpolant = Fbasins;
          PICO_opts.FloatingCriteria = 'GLthreshold'; %'GLthreshold' or 'StrictDownstream'
          PICO_opts.persistentBC = 0;
-         PICO_opts.InfoLevel = 1; % 0,1,10,100
+         PICO_opts.InfoLevel = 0; % 0,1,10,100
          % ----------------use PICO parameters from Runtable-------------------
          PICO_opts.C1 = UserVar.PICO_C1;
          PICO_opts.gamTstar = UserVar.PICO_gam;

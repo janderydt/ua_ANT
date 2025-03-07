@@ -22,7 +22,7 @@ if contains(plots,'-save-')
         mkdir(UserVar.UaOutputDirectory) ;
     end
        
-    FileName=sprintf("%s/ResultsFile-%s-0101%s-%s.mat",...
+    FileName=sprintf("%s/ResultsFile-%s-0101%s-%sd.mat",...
             UserVar.UaOutputDirectory,UserVar.Experiment,...
             string(CtrlVar.StartTime),num2str(round(UserVar.YearsCompleted*365.25),'%06.f'));
     fprintf(' Saving data in %s \n',FileName)
@@ -41,7 +41,7 @@ if strcmp(CtrlVar.DefineOutputsInfostring,'Last call') % the string "last call" 
         UserVar.Restart = 1;   
         UserVar.Finished = 0;     
     else
-        if isapprox(CtrlVar.time,CtrlVar.TotalTime)
+        if isapprox(CtrlVar.time,CtrlVar.EndTime)
             fprintf(CtrlVar.fidlog,'Simulation reached expected end time %s.\n',num2str(CtrlVar.EndTime));            
             UserVar.Restart = 0;
             UserVar.Finished = 1;     
