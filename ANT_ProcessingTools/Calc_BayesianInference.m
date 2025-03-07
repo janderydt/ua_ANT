@@ -5,7 +5,7 @@ Klear;
 %% user defined parameters
 domain = "AMUND";
 slidinglaw = ["Weertman" "Umbi"];
-cycle = [1 1]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
+cycle = [2 2]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
 dataformat = ["du" "du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
 only_grounded_ice = [1 1];
 years = ["2000-2020" "2000-2020"]; % a vector with years for which velocity data is used
@@ -394,22 +394,23 @@ if isempty(M)
         S_meas = T_reproj*diag(std_tmp.^2)*T_reproj';
 
         % 2. Ua errors: obtained from  FIXME
-        % s_u = 200; %m/yr
-        % % if dataformat == "LOGu"
-        % %     s_u = log10(s_u);
-        % % end
-        % l = 200e3; % range in the semivariogram
-        % load("Delta_u_AMUND_Weertman_"+yearstr+".mat","MUA_yr2");
-        % MUA = MUA_yr2;
-        % D_tmp = pdist2(MUA.coordinates,MUA.coordinates,"squaredeuclidean");
-        % D_tmp = s_u^2*exp(-D_tmp/(2*l^2));
-        % D_tmp = D_tmp*T_reproj';
-        % S_ua = 0*T_reproj*D_tmp;
-        % clear D_tmp
+        s_u = 200; %m/yr
+        % if dataformat == "LOGu"
+        %     s_u = log10(s_u);
+        % end
+        l = 200e3; % range in the semivariogram
+        load("Delta_u_AMUND_Weertman_"+yearstr+".mat","MUA_yr2");
+        MUA = MUA_yr2;
+        D_tmp = pdist2(MUA.coordinates,MUA.coordinates,"squaredeuclidean");
+        D_tmp = s_u^2*exp(-D_tmp/(2*l^2));
+        D_tmp = D_tmp*T_reproj';
+        S_ua = 0*T_reproj*D_tmp;
+        clear D_tmp
 
         % 3. Emulator errors: obtained from plot_Emulator_MSE
         S_emulator = diag(MSE);
-        M(ii).S = S_meas + S_emulator;% + S_ua;
+
+        M(ii).S = S_meas + S_emulator + S_ua;
         M(ii).detS = det(M(ii).S);
         M(ii).Sinv = inv(M(ii).S);
     end    

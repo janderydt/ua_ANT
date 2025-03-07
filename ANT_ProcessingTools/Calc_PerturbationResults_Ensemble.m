@@ -16,8 +16,8 @@ UserVar.type = "Diagnostic";
 % UserVar.idrange = [30000 39999; 40000 49999; 20000 29999; 50000 59999];
 % inversiondata_filename = "inversiondata_AMUND_Weertman.mat";
 % perturbationdata_filename = "perturbationdata_AMUND_Weertman.mat";
-UserVar.Table = [UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_Original_CalvThick_Umbi_2020.csv"];
-UserVar.idrange = [60000 69999];
+UserVar.Table = [UserVar.home+"ANT_Diagnostic/RunTable_ARCHER2_Diagnostic_AMUND_CalvThick_Umbi_2014.csv"];
+UserVar.idrange = [80000 89999];
 inversiondata_filename = "inversiondata_AMUND_Umbi.mat";
 perturbationdata_filename = "perturbationdata_AMUND_Umbi.mat";
 

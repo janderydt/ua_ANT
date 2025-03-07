@@ -12,7 +12,7 @@ addpath(getenv("froot_tools"));
 domain = "AMUND";
 perturbation = 'Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
 startyear = "2000";
-targetyear = "2020";
+targetyear = "2009";
 slidinglaw = "Umbi"; % can be "Weertman" or "Umbi"
 cycle = 2; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
 only_grounded_ice = 1;
@@ -37,7 +37,7 @@ FNN_trainFcn = "trainscg"; % trainlm is fast on CPU and seems to perform just fi
 FNN_UseGPU = 0; % UseGPU=1 only works with trainFcn="trainscg"
 
 %% -- outputs
-do_plots = 0;
+do_plots = 1;
 write_outputs_for_TF = 1;
 
 %% ----------------------------------------- %%

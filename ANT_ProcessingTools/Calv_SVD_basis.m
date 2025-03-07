@@ -5,10 +5,10 @@ if nargin==0
     domain = "AMUND";
     perturbation = "Calv_dh"; % valid choices are "Calv", "dhIS", "dh" or "Calv_dh"
     startyear = "2000";
-    targetyear = "2020";
+    targetyear = "2009";
     slidinglaw = ["Weertman" "Umbi"]; % valid choices are "Weertman" or "Umbi"
     cycle = [2 2]; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
-    only_grounded_ice = 1;
+    only_grounded_ice = 0;
     
     %% -- SVD settings
     add_measurements_to_SVD = 0;
@@ -95,7 +95,7 @@ for yy=[startyear targetyear]
     if yy=="2000"
         fname = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
     else
-        fname = "GriddedInterpolants_"+string(double(yy)-1)+"-"+string(double(yy))+...
+        fname = "GriddedInterpolants_"+string(double(yy))+"-"+string(double(yy)+1)+...
         "_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
     end
     load("../ANT_Data/ANT_Interpolants/"+fname);

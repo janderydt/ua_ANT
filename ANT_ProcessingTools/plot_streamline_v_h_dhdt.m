@@ -138,6 +138,9 @@ for cc=1:numel(years)
         
         %% set up figures
         nrows = numel(years);
+        if any(cycle>1)
+            nrows = nrows+1;
+        end
         ncolumns = numel(individual_years);
 
         for gg=1:numel(glaciers)
@@ -146,23 +149,17 @@ for cc=1:numel(years)
                 Hfig(100+gg)=fig('units','inches','width',120*12/72.27,'height',65*12/72.27,'fontsize',14,'font','Helvetica');
            
                 tlo_fig(100+gg) = tiledlayout(Hfig(100+gg),nrows,ncolumns,"TileSpacing","compact");
-                for i = 1:nrows*ncolumns
+                for i = 1:(nrows)*ncolumns
                     ax_fig(100+gg,i) = nexttile(tlo_fig(100+gg),i); hold on;
                 end
             end
-    
-            ylabels=["Speed [m/yr]","Ice Thickness [m]"];
-            %CM = jet(ceil(size(SL(gg).V,1)/2));
-            CM = jet(64);
-            style = "-";
-            width = 1;
             
             for ii=1:size(SL(gg).V,1)
     
                 indmin = min(m); indmax = max(m);
                 colorind = round(1+(64-1)/(indmax-indmin)*(m(ii)-indmin));
     
-                plot(ax_fig(100+gg,ncolumns*(cc-1)+tt),SL(gg).d/1e3,SL(gg).V(ii,2:end),LineStyle=style,LineWidth=width,Color=[1 0.5 0.5]);%Color=CM(colorind,:));
+                plot(ax_fig(100+gg,ncolumns*(cc-1)+tt),SL(gg).d/1e3,SL(gg).V(ii,2:end),LineStyle='-',LineWidth=1,Color=[1 0.5 0.5]);%Color=CM(colorind,:));
                 plot(ax_fig(100+gg,ncolumns*(cc-1)+tt),[SL(gg).SLd_GL(ii),SL(gg).SLd_GL(ii)]/1e3,[0 10000],'-k');
         
                 %plot(ax_fig(2),SL(gg).d/1e3,SL(gg).H(ii,2:end),LineStyle=style,LineWidth=width,Color=CM(ceil(ii/2),:));
@@ -185,26 +182,25 @@ for cc=1:numel(years)
             box(ax_fig(100+gg,ncolumns*(cc-1)+tt),"on");
             title(ax_fig(100+gg,ncolumns*(cc-1)+tt),year_tmp+" (cycle "+string(cycle(cc))+", "+...
                 slidinglaw(cc)+")");
+
+            if any(cycle>1)
+                edges = linspace(min(SL(gg).d/1e3),max(SL(gg).d/1e3),40);
+                xmid = 0.5*(edges(1:end-1)+edges(2:end));
+                wbar = xmid(2)-xmid(1);
+                [n,~,~] = histcounts(SL(gg).SLd_GL(:)/1e3,edges,'Normalization','percentage'); 
+                bar(ax_fig(100+gg,(nrows-1)*ncolumns+tt),xmid+(-1)^cc*wbar/4,n,0.4,'FaceAlpha',0.5);
+                xlim(ax_fig(100+gg,(nrows-1)*ncolumns+tt),[0 150]);
+                ylim(ax_fig(100+gg,(nrows-1)*ncolumns+tt),[0 100]);
+                grid(ax_fig(100+gg,(nrows-1)*ncolumns+tt),"on");
+                box(ax_fig(100+gg,(nrows-1)*ncolumns+tt),"on");
+                ylabel(ax_fig(100+gg,(nrows-1)*ncolumns+tt),"GL location percentage");
+            end
     
             xlabel(tlo_fig(100+gg),'Distance [km]');
             title(tlo_fig(100+gg),glaciers(gg));
-    
+
         end
-    
-        %if UserVar.cycle>1
-            % for gg=1:numel(glaciers)
-            %     figure(999); 
-            %     subplot(1,numel(glaciers),gg); hold on;
-            %     histogram(SL(gg).SLd_GL(:)/1e3,[0:200],'Normalization','percentage');
-            %     xmin(gg) = min(xmin(gg),min(SL(gg).SLd_GL(:)/1e3)-15);
-            %     xmax(gg) = max(xmax(gg),max(SL(gg).SLd_GL(:)/1e3)+15);
-            %     xlim([xmin(gg) xmax(gg)]);
-            %     title(glaciers(gg)+" (cycle "+string(UserVar.cycles(cc))+")");
-            %     grid on; box on;
-            % 
-            % end
-        %end
-    
+
         SL=[];
     
     end

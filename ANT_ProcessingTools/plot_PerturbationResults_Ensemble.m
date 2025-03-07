@@ -9,7 +9,7 @@ if nargin==0
     cycles_to_plot = [1 2]; %[1 2]
     slidinglaw = "Umbi";
     startyear = "2000";
-    targetyear =  "2020";
+    targetyear =  "2009";
 end
 
 basins_to_analyze = {'F-G',...  % Getz
