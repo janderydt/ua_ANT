@@ -12,7 +12,7 @@ addpath(getenv("froot_tools"));
 domain = "AMUND";
 perturbation = 'Calv_dh'; % can be 'Calv', 'dhIS', 'dh' or 'Calv_dh'
 startyear = "2000";
-targetyear = "2009";
+targetyear = "2014";
 slidinglaw = "Umbi"; % can be "Weertman" or "Umbi"
 cycle = 2; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
 only_grounded_ice = 1;

@@ -3,15 +3,15 @@ function Calc_BayesianInference
 Klear;
 
 %% user defined parameters
-domain = "AMUND";
-slidinglaw = ["Weertman" "Umbi"];
-cycle = [2 2]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
-dataformat = ["du" "du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
-only_grounded_ice = [1 1];
-years = ["2000-2020" "2000-2020"]; % a vector with years for which velocity data is used
-NN = ["RNN" "RNN"]; % which emulator? FNN or RNN
+UserVar.domain = "AMUND";
+UserVar.slidinglaw = ["Weertman" "Weertman" "Weertman" "Umbi" "Umbi" "Umbi"];
+UserVar.cycle = [2 2 2 2 2 2]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
+UserVar.dataformat = ["du" "du" "du" "du" "du" "du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
+UserVar.only_grounded_ice = [1 1 1 1 1 1];
+UserVar.years = ["2000-2009" "2000-2014" "2000-2020" "2000-2009" "2000-2014" "2000-2020"]; % a vector with years for which velocity data is used
+UserVar.NN = ["RNN" "RNN" "RNN" "RNN" "RNN" "RNN"]; % which emulator? FNN or RNN
 
-do_plots = 1;
+UserVar.do_plots = 1;
 
 % dataformat = ["du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
 % cycle = [1]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
@@ -56,14 +56,14 @@ PriorOpts.Marginals(ind).Bounds = [-1 log10(50)];
 ind = ind+1;
 PriorOpts.Marginals(ind).Name = 'log10(gsA)';
 PriorOpts.Marginals(ind).Type = 'Gaussian';
-PriorOpts.Marginals(ind).Parameters = [4 1];
+PriorOpts.Marginals(ind).Parameters = [4 0.5];
 %PriorOpts.Marginals(ind).Type = 'Uniform';
 %PriorOpts.Marginals(ind).Parameters = [3 6];
 PriorOpts.Marginals(ind).Bounds = [3 6];
 ind = ind+1;
 PriorOpts.Marginals(ind).Name = 'log10(gsC)';
 PriorOpts.Marginals(ind).Type = 'Gaussian';
-PriorOpts.Marginals(ind).Parameters = [4 1];
+PriorOpts.Marginals(ind).Parameters = [4 0.5];
 %PriorOpts.Marginals(ind).Type = 'Uniform';
 %PriorOpts.Marginals(ind).Parameters = [3 6];
 PriorOpts.Marginals(ind).Bounds = [3 6];
@@ -78,7 +78,7 @@ PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [2 5];
 
 % add dhdt if any cycle>1
-if max(cycle) > 1
+if max(UserVar.cycle) > 1
     ind = ind+1;
     PriorOpts.Marginals(ind).Name = 'log(dhdt_err)';
     PriorOpts.Marginals(ind).Type = 'Uniform';
@@ -87,8 +87,8 @@ if max(cycle) > 1
 end
 
 % add discrete variables
-nslidinglaw = numel(unique(slidinglaw));
-ncycle = numel(unique(cycle));
+nslidinglaw = numel(unique(UserVar.slidinglaw));
+ncycle = numel(unique(UserVar.cycle));
 if ncycle>1
     ind = ind+1;
     PriorOpts.Marginals(ind).Name = 'Cycle';
@@ -105,7 +105,7 @@ end
 myPriorDist = uq_createInput(PriorOpts);
 
 %% define data
-myData.y = loadvelocitydata(dataformat,years,only_grounded_ice); % myData.y.(year).u and myData.y.(year).stdu 
+myData.y = loadvelocitydata(UserVar.dataformat,UserVar.years,UserVar.only_grounded_ice); % myData.y.(year).u and myData.y.(year).stdu 
     % are N-by-1 matrices with N the number of nodes in the Ua mesh for that year
 myData.Name = 'velocity observations and errors';
 
@@ -115,18 +115,18 @@ myData.Name = 'velocity observations and errors';
 % function at these points. The forward model and covariance matrix are 
 % defined within the function.
 
-myLogLikelihood = @(params,y) customLogLikelihood(params, y, [domain,slidinglaw,cycle,dataformat,only_grounded_ice,years,NN]);
+myLogLikelihood = @(params,y) customLogLikelihood(params, y, UserVar);
 
 %% define solver options
 mySolver.Type = 'MCMC';
 mySolver.MCMC.Sampler = 'AIES'; % AM, HMS or AIES (default)
-mySolver.MCMC.Steps = 5000; % T=300 default
-mySolver.MCMC.NChains = 250; % C=100 default
+mySolver.MCMC.Steps = 10000; % T=300 default
+mySolver.MCMC.NChains = 100; % C=100 default
 mySolver.MCMC.Visualize.Parameters = 1:numel(PriorOpts.Marginals);
 mySolver.MCMC.Visualize.Interval = 20;
 
 if mySolver.MCMC.Sampler == "AIES"
-    mySolver.MCMC.a = 2; % default a=2
+    mySolver.MCMC.a = 2; % default a=2, Rosier et al.: a=1.5
 else
     error("Define parameters for sampler.")
 end
@@ -147,124 +147,23 @@ myBayesianAnalysis = uq_createAnalysis(BayesOpts);
 uq_postProcessInversionMCMC(myBayesianAnalysis,'pointEstimate','MAP','gelmanRubin','true');
 
 fname = "./BayesianAnalysis/BayesianAnalysis_Steps"+string(mySolver.MCMC.Steps)+"_NChains"+...
-    string(mySolver.MCMC.NChains)+"_"+dataformat(1)+"_Calv_dh_"+...
-            strjoin(string(years),"_")+"_"+strjoin(string(slidinglaw),"_")+"_cycle"+string(cycle(1))+...
-            "_floatingice"+string(1-only_grounded_ice(1));
-save(fname(1),"myBayesianAnalysis");
+    string(mySolver.MCMC.NChains)+"_"+UserVar.dataformat(1)+"_Calv_dh_"+...
+            strjoin(string(UserVar.years),"_")+"_"+strjoin(string(UserVar.slidinglaw),"_")+"_cycle"+string(UserVar.cycle(1))+...
+            "_floatingice"+string(1-UserVar.only_grounded_ice(1));
+save(fname(1),"myBayesianAnalysis","UserVar");
 
 %% print some results
 uq_print(myBayesianAnalysis);
 %uq_display(myBayesianAnalysis);
 
-if do_plots
-    plot_myBayesianAnalysis(myBayesianAnalysis);
+if UserVar.do_plots
+    plot_myBayesianAnalysis(myBayesianAnalysis,UserVar);
 end
 
 end
 
-function out = loadvelocitydata(dataformat,years,only_grounded_ice)
 
-% load measured velocity data
-%tmp=load("../ANT_Data/ANT_Interpolants/GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities.mat","Fus","Fvs","Fxerr","Fyerr");
-%Fus_2000=tmp.Fus; Fvs_2000=tmp.Fvs; Fxerr_2000=tmp.Fxerr; Fyerr_2000=tmp.Fyerr;
-addpath(getenv("froot_data")+"Measures/Measures_annual");
-
-% assemble velocity fields
-years_tmp = strjoin(years,"-");
-years_unique = unique(split(years_tmp,"-"));
-
-for ii=1:numel(years_unique)
-
-    % years_measures = string(years(ii))+"_"+string(years(ii)+1);
-    % [vx,x_meas,y_meas]=measures_annual("vx",years_measures); 
-    % vy=measures_annual("vy",years_measures);
-    % stdx=measures_annual("vxstd",years_measures);
-    % stdy=measures_annual("vystd",years_measures);
-    % y_meas = flip(y_meas,1); [Xm,Ym]=ndgrid(x_meas,y_meas);
-    % v(ii).F = griddedInterpolant(Xm,Ym,flip(hypot(vx,vy),2));
-    % std(ii).F = griddedInterpolant(Xm,Ym,flip(hypot(stdx,stdy),2));
-    if years_unique(ii)=="2000"
-        fname = "GriddedInterpolants_1996-2003_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
-    elseif years_unique(ii)=="2020"
-        fname = "GriddedInterpolants_"+string(double(years_unique(ii))-1)+"-"+string(double(years_unique(ii)))+...
-            "_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
-    else
-        fname = "GriddedInterpolants_"+string(double(years_unique(ii)))+"-"+string(double(years_unique(ii))+1)+...
-            "_MeaSUREs_ITSLIVE_Velocities_EXTRUDED.mat";
-    end
-    load("../ANT_Data/ANT_Interpolants/"+fname);
-    v_tmp = hypot(Fus.Values,Fvs.Values);
-    Fu = Fus; Fu.Values = v_tmp;
-    std_tmp = hypot(Fxerr.Values,Fyerr.Values);
-    Fstd = Fus; Fstd.Values = std_tmp;
-    v.("yr"+years_unique(ii)).F = Fu;
-    std.("yr"+years_unique(ii)).F = Fstd;
-
-end
-
-for dd=1:numel(dataformat)
-
-    if dataformat(dd) == "du"
-        
-        years_tmp = split(years(dd),"-");
-        yr1 = years_tmp(1);
-        yr2 = years_tmp(2);
-
-        load("Delta_u_AMUND_Weertman_"+yr1+"-"+yr2+".mat","MUA_yr2","GF_yr2");
-        MUA = MUA_yr2; GF = GF_yr2;
-    
-        % interpolate initial and final speed onto Ua mesh
-        u_init = v.("yr"+yr1).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-        std_init = std.("yr"+yr1).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-        u_target = v.("yr"+yr2).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-        std_target = std.("yr"+yr2).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-    
-        deltau = u_target-u_init; % measured change in speed (m/yr)
-        deltau_err = hypot(std_init,std_target); % error estimate (m/yr)
-        
-        % remove nans
-        Ind = find(isnan(deltau) | isnan(deltau_err));
-        deltau(Ind) = eps(0);
-        deltau_err(Ind) = 1e3;        
-    
-        %% what if we remove the floating ice?
-        if only_grounded_ice
-            deltau(GF.node<0.5) = eps(0);
-            deltau_err(GF.node<0.5) = 1e-3;
-        end
-    
-        out.("yr"+yr1+"_yr"+yr2).du = deltau(:);
-        out.("yr"+yr1+"_yr"+yr2).stddu = deltau_err(:);
-
-    elseif ismember(dataformat(dd),["u","LOGu"])
-    
-        load("u_AS_Calv_dh_cycle2_Weertman_"+years(dd)+".mat","MUA","GF");
-        MUA = MUA.("yr"+years(dd)); GF = GF.("yr"+years(dd));
-
-        % interpolate initial and final speed onto Ua mesh
-        u_tmp = v.("yr"+years(dd)).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-        std_tmp = std.("yr"+years(dd)).F(MUA.coordinates(:,1),MUA.coordinates(:,2));
-        
-        % remove nans
-        %Ind = find(isnan(u_tmp) | isnan(std_tmp));
-        %std_tmp(Ind) = 5e3;
-        %u_tmp(Ind) = eps(0);
-
-        % apply log if needed
-        if dataformat(dd)=="LOGu"
-            std_tmp = min(std_tmp./(u_tmp*log(10)),10);
-            u_tmp = log10(u_tmp);    
-        end
-
-        out.("yr"+years(dd)).u = u_tmp(:);
-        out.("yr"+years(dd)).stdu = std_tmp(:);
-    
-    end
-end
-
-end
-
-function logL = customLogLikelihood(params, measurements, mymodel)
+function logL = customLogLikelihood(params, measurements, UserVar)
 
 persistent M N
 
@@ -285,14 +184,14 @@ persistent M N
 nReal = size(params,1); % number of queried realizations
 % mymodel has format [domain,slidinglaw,cycle,dataformat,only_grounded_ice,years,NN],
 % each of which is an 1xn vector apart from domain. 
-domain = mymodel(1);
-N = (numel(mymodel)-1)/6;
-slidinglaw = mymodel(2:1+N);
-cycle = double(mymodel(2+N:1+2*N));
-dataformat = mymodel(2+2*N:1+3*N);
-only_grounded_ice = double(mymodel(2+3*N:1+4*N));
-years = mymodel(2+4*N:1+5*N);
-NN = mymodel(2+5*N:1+6*N);
+domain = UserVar.domain;
+slidinglaw = UserVar.slidinglaw;
+cycle = UserVar.cycle;
+dataformat = UserVar.dataformat;
+only_grounded_ice = double(UserVar.only_grounded_ice);
+years = UserVar.years;
+NN = UserVar.NN;
+N = numel(slidinglaw);
 
 % Load forward model(s)
 if isempty(M)
@@ -394,17 +293,16 @@ if isempty(M)
         S_meas = T_reproj*diag(std_tmp.^2)*T_reproj';
 
         % 2. Ua errors: obtained from  FIXME
-        s_u = 200; %m/yr
+        s_u = 3*mean(std_tmp); %m/yr
         % if dataformat == "LOGu"
         %     s_u = log10(s_u);
         % end
-        l = 200e3; % range in the semivariogram
-        load("Delta_u_AMUND_Weertman_"+yearstr+".mat","MUA_yr2");
+        l = 50e3; % range in the semivariogram
+        load("Delta_u_"+domain+"_"+slidinglaw(1)+"_"+yearstr+".mat","MUA_yr2");
         MUA = MUA_yr2;
         D_tmp = pdist2(MUA.coordinates,MUA.coordinates,"squaredeuclidean");
         D_tmp = s_u^2*exp(-D_tmp/(2*l^2));
-        D_tmp = D_tmp*T_reproj';
-        S_ua = 0*T_reproj*D_tmp;
+        S_ua = T_reproj*D_tmp*T_reproj';
         clear D_tmp
 
         % 3. Emulator errors: obtained from plot_Emulator_MSE
@@ -422,68 +320,90 @@ logL = zeros(nReal,1);
 % Deal with discrete variables and which emulator to use
 ncycles = numel(unique(cycle));
 nslidinglaws = numel(unique(slidinglaw));
+% make a copy of the MCMC parameters
 params_tmp = params;
-C = zeros(nReal,1); ind=1;
-
-if ncycles > 1    
+% set up some dummy variables
+ind=1;
+% which emulator to use for the cycles?
+if ncycles > 1    % cycles is a discrete variable that takes multiple values
     if max(cycle)>1
-        C(:,ind)=round(params(:,8));
+        param_discr(:,ind)=round(params(:,8))+1; 
         params_tmp(:,8)=[];
     else
-        C(:,ind)=round(params(:,7));
+        param_discr(:,ind)=round(params(:,7))+1;
         params_tmp(:,7)=[];
     end
     ind=ind+1;
 end
-
-if nslidinglaws > 1
-    C(:,ind)=round(params(:,end));
+% which emulator to use for the sliding law?
+if nslidinglaws > 1  % sliding law is a discrete variable that takes multiple values
+    param_discr(:,ind)=round(params(:,end));
+    param_discr = string(param_discr);
     params_tmp(:,end)=[];
+    param_discr=strrep(param_discr,"0","Weertman");
+    param_discr=strrep(param_discr,"1","Umbi");
 end
+params=params_tmp; % with discrete parameters removed
 
-EmulatorIndex = 1;
-for ii=1:size(C,2)
-    EmulatorIndex = EmulatorIndex+2^(size(C,2)-1)*C(:,ii);
-end
-params=params_tmp;
-
-for ii=unique(EmulatorIndex(:)')
-
-    Itmp = find(EmulatorIndex==ii);
-    nItmp = numel(Itmp);
-
-    % Apply normalization to parameters before feeding into emulator
-    if cycle(ii)==1
-        predictors = (params(Itmp,1:6)-repmat(M(ii).X_train_C,nItmp,1))./repmat(M(ii).X_train_S,nItmp,1);
+% deal with multiple years
+EmulatorIndex = zeros(nReal,N);
+for ii=1:N
+    if ncycles > 1
+        Itmp = find(param_discr == UserVar.cycle(ii));
+    elseif nslidinglaws > 1
+        Itmp = find(param_discr == UserVar.slidinglaw(ii));
     else
-        predictors = (params(Itmp,:)-repmat(M(ii).X_train_C,nItmp,1))./repmat(M(ii).X_train_S,nItmp,1);
+        Itmp = 1:nReal;
     end
+    EmulatorIndex(Itmp,ii) = ii;
+end
 
-    % Evaluate forward model. 
-    if NN(ii)=="RNN"
-        modelRun = double(predict(M(ii).net,predictors)); 
-    elseif NN(ii)=="FNN"
-        modelRun = double(M(ii).net(predictors')');
+% unique combinations of emulators
+Emulators_Unique = unique(EmulatorIndex,'rows');
+
+% now assemble likelihood
+for ii=1:size(Emulators_Unique,1)
+
+    Itmp = find(ismember(EmulatorIndex,Emulators_Unique(ii,:),'rows'));
+    nItmp = numel(Itmp);
+    Ind_Emulators = find(Emulators_Unique(ii,:)~=0);
+
+    for ee=Ind_Emulators
+
+        % Apply normalization to parameters before feeding into emulator
+        if cycle(ii)==1
+            predictors = (params(Itmp,1:6)-repmat(M(ee).X_train_C,nItmp,1))./repmat(M(ee).X_train_S,nItmp,1);
+        else
+            predictors = (params(Itmp,:)-repmat(M(ee).X_train_C,nItmp,1))./repmat(M(ee).X_train_S,nItmp,1);
+        end
+
+        % Evaluate forward model. 
+        if NN(ee)=="RNN"
+            modelRun = double(predict(M(ee).net,predictors)); 
+        elseif NN(ee)=="FNN"
+            modelRun = double(M(ee).net(predictors')');
+        end
+
+        % Undo normalization of the output but keep in the projected basis to 
+        % make it compatible with data
+        modelRun = modelRun.*repmat(M(ee).T_train_S,nItmp,1)+repmat(M(ee).T_train_C,nItmp,1);
+        Nout = size(modelRun,2);
+
+        % Assemble log likelihood
+        for jj = 1:nItmp
+          % Evaluate log-likelihood
+          prefac = -0.5*log((2*pi)^Nout*M(ee).detS);
+          Ndistrib = - 0.5*(M(ee).data...
+            -modelRun(jj,:))*M(ee).Sinv*(M(ee).data-modelRun(jj,:))';
+          logLikeli = prefac + Ndistrib;
+          % Assign to logL vector
+          logL(Itmp(jj)) = logL(Itmp(jj))+logLikeli;
+        end
+
+        %figure(115); hold on; plot(params(1,5),prefac(1),'.',Color=CM(ii,:)); title('m');
+        %plot(params(1,5),Ndistrib(1),'.',Color=CM(ii+2,:)); title('m');
+
     end
-
-    % Undo normalization of the output but keep in the projected basis to 
-    % make it compatible with data
-    modelRun = modelRun.*repmat(M(ii).T_train_S,nItmp,1)+repmat(M(ii).T_train_C,nItmp,1);
-    Nout = size(modelRun,2);
-
-    % Assemble log likelihood
-    for jj = 1:nItmp
-      % Evaluate log-likelihood
-      prefac = -0.5*log((2*pi)^Nout*M(ii).detS);
-      Ndistrib = - 0.5*(M(ii).data...
-        -modelRun(jj,:))*M(ii).Sinv*(M(ii).data-modelRun(jj,:))';
-      logLikeli = prefac + Ndistrib;
-      % Assign to logL vector
-      logL(Itmp(jj)) = logL(Itmp(jj))+logLikeli;
-    end
-
-    %figure(115); hold on; plot(params(1,5),prefac(1),'.',Color=CM(ii,:)); title('m');
-    %plot(params(1,5),Ndistrib(1),'.',Color=CM(ii+2,:)); title('m');
 
 end
 

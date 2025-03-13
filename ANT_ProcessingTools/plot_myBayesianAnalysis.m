@@ -1,4 +1,10 @@
-function plot_myBayesianAnalysis(myBayesianAnalysis)
+function plot_myBayesianAnalysis(myBayesianAnalysis,UserVar)
+
+%% initialize UQLAB
+addpath(genpath(getenv("froot_matlabfunctions")+"/../UQLab_Rel2.0.0"));
+
+rng(1,'twister'); % set the random number generator for reproducible results
+uqlab; % initialize uqlab
 
 if nargin==0
     [file,location] = uigetfile("/mnt/md0/Ua/cases/ANT/ANT_ProcessingTools/BayesianAnalysis/*.mat");
@@ -9,11 +15,19 @@ mySolver = myBayesianAnalysis.Options.Solver;
 myPriorDist = myBayesianAnalysis.PriorDist;
 myResults = myBayesianAnalysis.Results;
 
+uq_print(myBayesianAnalysis);
+
 %% gather some data
 MAP=myBayesianAnalysis.Results.PostProc.PointEstimate.X{:};
 
 nDiscrete = 0;
 for ii=1:numel(myPriorDist.Marginals)
+
+    Prior(ii).Sample = [];
+    for jj = 1:mySolver.MCMC.NChains
+        Prior(ii).Sample = [Prior(ii).Sample; ...
+            myResults.Sample(1,ii,jj)];
+    end
 
     % Sample equilibrium distribution from Markov Chains; we use the final 
     % 20% of the Markov Chains, i.e. discard the first 80% as burn-in
@@ -41,17 +55,21 @@ for ii=1:numel(myPriorDist.Marginals)
         D2 = "3yr spinup";
         Post(ii).isDiscrete = 1;
         nDiscrete = nDiscrete+1;
+        Post(ii).min = 0;
+        Post(ii).max = 1;
     elseif Post(ii).Name=="SlidingLaw"
         D1 = "Weertman";
         D2 = "Weertman+Coulomb";
         Post(ii).isDiscrete = 1;
         nDiscrete = nDiscrete+1;
+        Post(ii).min = 0;
+        Post(ii).max = 1;
     else
         Post(ii).isDiscrete = 0;
     end
 end
 
-%% plot results
+%% DISTRIBUTIONS
 if nDiscrete <= 1
     CMtmp = cmocean('curl',64);
     CM(1).map = CMtmp(5:30,:);
@@ -75,12 +93,13 @@ for iy=1:numel(Post)
         edges=[]; xmid=[]; ymid=[];
 
         if ix==iy
-            % histograms
+            % histograms Posterior Distributions
             if Post(ix).isDiscrete
                 edges = linspace(0,1,3);
                 xmid = 0.5*(edges(1:end-1)+edges(2:end));
-                [n,~,~] = histcounts(Post(ix).Sample,edges); 
-                b=bar(ax_fig(Ind),xmid,n/sum(n));
+                dx = edges(2)-edges(1);
+                [n,~,~] = histcounts(Post(ix).Sample,edges,"Normalization","probability"); 
+                b=bar(ax_fig(Ind),xmid,n/dx);
                 b.FaceColor='flat';
                 b.CData(1,:) = CM(1).map(16,:);
                 b.CData(2,:) = CM(2).map(16,:);
@@ -88,24 +107,44 @@ for iy=1:numel(Post)
             else
                 edges = linspace(Post(ix).min,Post(ix).max,30);
                 xmid = 0.5*(edges(1:end-1)+edges(2:end));
-                if nDiscrete == 1
+                dx = edges(2)-edges(1);
+                if nDiscrete == 0
+                    [n,~,~] = histcounts(Post(ix).Sample,edges,"Normalization","probability"); 
+                    b = bar(ax_fig(Ind),xmid,n/dx);     
+                elseif nDiscrete == 1
                     % split data into two parts
                     Ind1 = find(Post(end).Sample<=0.5);
                     Ind2 = find(Post(end).Sample>0.5);
                     [n1,~,~] = histcounts(Post(ix).Sample(Ind1),edges); 
                     [n2,~,~] = histcounts(Post(ix).Sample(Ind2),edges); 
-                    b = bar(ax_fig(Ind),xmid,[n1(:)'; n2(:)']/sum([n1,n2]),'stacked');
+                    b = bar(ax_fig(Ind),xmid,[n1(:)'; n2(:)']/(dx*sum([n1,n2])),'stacked');
                     b(1).FaceColor = CM(1).map(16,:);
                     b(2).FaceColor = CM(2).map(16,:);                   
-                elseif nDiscrete > 1
-                    error("plotting so far only implemented for 1 discrete variable.");
                 else
-                    bar(ax_fig(Ind),xmid,n/sum(n),'FaceColor',CM(1).map(end,:));     
+                    error("plotting so far only implemented for 1 discrete variable.");
                 end
-                MAPx = MAP(ix);
-            end           
-            plot(ax_fig(Ind),[MAPx MAPx],[0 1],'-','Color',[0.929 0.694 0.125],'linewidth',1.5);
-        else
+                MAPx = MAP(ix);            
+            end  
+            Ymax = 0;
+            for bb=1:numel(b)
+                Ymax = max([Ymax max(b(bb).YData)]);
+            end
+            % Prior Distributions
+            Parameters = myPriorDist.Options.Marginals(ix).Parameters;
+            Bounds = myPriorDist.Options.Marginals(ix).Bounds;
+            switch myPriorDist.Options.Marginals(ix).Type
+                case "Gaussian"
+                    xPrior = linspace(Bounds(1),Bounds(2),100);
+                    Value = 1/(Parameters(2)*sqrt(2*pi))*exp(-0.5*((xPrior-Parameters(1))/Parameters(2)).^2);
+                case "Uniform"
+                    Bounds = Parameters;
+                    xPrior = linspace(Bounds(1),Bounds(2),100);
+                    Value = 0*xPrior+1/(Parameters(2)-Parameters(1));                           
+            end
+            plot(ax_fig(Ind),xPrior,Value,'-k','linewidth',1.5);      
+            % MAP
+            plot(ax_fig(Ind),[MAPx MAPx],[0 1.5*Ymax],'-','Color',[0.929 0.694 0.125],'linewidth',1.5);
+        elseif  iy>ix
             % scatter of data
             if Post(ix).isDiscrete
                 edges{2} = linspace(0,1,3);
@@ -138,16 +177,22 @@ for iy=1:numel(Post)
                 pcolor(ax_fig(Ind),Xedge,Yedge,values2'); 
                 shading(ax_fig(Ind),'flat'); 
                 colormap(ax_fig(Ind),[CM(1).map; CM(2).map]);
+                caxis(ax_fig(Ind),[-0.0075 0.0075]);
             else
                 %scatter(ax_fig(Ind),Post(jj).Sample,Post(ii).Sample,15,...
                     %'MarkerFaceColor',[1 0.5 0.5],'MarkerFaceAlpha',.4,'MarkerEdgeColor','none');
+                values = hist3([Post(iy).Sample Post(ix).Sample],'Edges',edges);    
                 values = values./sum(values,"all");
                 values(values==0)=nan;      
-                pcolor(ax_fig(Ind),Xedge,Yedge,values'); shading(ax_fig(Ind),'flat'); 
-                colormap(ax_fig(Ind),CM(1).map);
-            end
-            caxis(ax_fig(Ind),[-0.01 0.01]);
+                pcolor(ax_fig(Ind),Xedge,Yedge,values'); 
+                shading(ax_fig(Ind),'flat'); 
+                colormap(ax_fig(Ind),flipud(CM(1).map));
+                caxis(ax_fig(Ind),[0 0.0075]);
+            end      
             plot(ax_fig(Ind),MAPx,MAPy,'x','Color',[0.929 0.694 0.125],'MarkerFaceColor',[0.929 0.694 0.125],'MarkerSize',10,'linewidth',3);
+        else
+            axis(ax_fig(Ind),'off')
+
         end
         if ix==1
             if Post(iy).isDiscrete
@@ -175,160 +220,192 @@ for iy=1:numel(Post)
         if ix~=iy
             ylim(ax_fig(Ind),[Post(iy).min Post(iy).max]);
         else
-            if Post(ix).isDiscrete
-                ylim(ax_fig(Ind),[0 1]);
-            else
-                ylim(ax_fig(Ind),[0 0.3]);
-            end
+            ylim(ax_fig(Ind),[0 Ymax+0.15*Ymax]);
         end
         grid(ax_fig(Ind),'on'); box(ax_fig(Ind),'on');
     end
 end
 
-return
-
-for ii=1:numel(years)
-    years_tmp = split(years(ii),"-");
-    yr1 = years_tmp(1);
-    yr2 = years_tmp(2);
-    load("Delta_u_AMUND_Weertman_"+yr1+"-"+yr2+".mat");
-    MUA = MUA_yr2; GF = GF_yr2;
-
-    % nearest predictor and target
-    X = [log10(gaA(:)) log10(gaC(:)) log10(gsA(:)) log10(gsC(:)) m(:) n(:)];
-    if cycle==2 % add dhdt_err to predictors
-        X = [X log10(dhdt_err(:))];
-    end
-    X = double(X);
-    Ind_MAP=knnsearch(X,MAP);
-    deltau_ua = Delta_u.Calv_dh.map(Ind_MAP,:,1);
-
-    % emulated values at MAP
-    % -- load emulator
-    if dataformat == "LOGu"
-        yearstr = "LOGu"+years(ii); 
+%% MAP
+cycle = UserVar.cycle(1);
+slidinglaw = UserVar.slidinglaw(1);
+if Post(end).Name=="Cycle"
+    if round(MAP(end))==0
+        Itmp=1;
     else
-        yearstr = years(ii);
+        Itmp=2;
     end
-    switch NN(ii)
-        case "RNN"
-            net_tmp=importNetworkFromTensorFlow("./RNN/TF_files/tuned_model_SVD-nodata_Calv_dh_"+...
-                yearstr+"_Weertman_cycle"+string(cycle(ii))+...
-                "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii)));
-            Net = initialize(net_tmp);
-            load("./RNN/mat_files/data_SVD-nodata_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+...
-                "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii))+".mat",...
-                "X_train_C","X_train_S","T_train_C","T_train_S");
-            load("./RNN/mat_files/SVD-nodata_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+...
-                "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii))+".mat",...
-                "B_trunc","T_mean","T_reproj");        
-        case "FNN"
-            load("./FNN/mat_files/FNN_trainscg_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+...
-                "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii))+".mat",...
-                "Net_opt");
-            load("./FNN/mat_files/SVD_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+...
-                "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii))+".mat",...
-                "B_trunc","T_mean","T_reproj");
-            Net = Net_opt.trained;
-            X_train_C = Net_opt.X_train_C(:)';
-            X_train_S = Net_opt.X_train_S(:)';
-            T_train_C = Net_opt.T_train_C(:)';
-            T_train_S = Net_opt.T_train_S(:)';
+    cycle = UserVar.cycle(Itmp);
+    MAP = MAP(1:end-1);
+elseif Post(end).Name=="SlidingLaw"
+    if round(MAP(end))==0
+        Itmp=1;
+    else
+        Itmp=2;
     end
-    % -- apply normalization to parameters before feeding into emulator
-    predictors = (MAP-X_train_C)./X_train_S;
-    % -- evaluate emulator 
-    switch NN(ii)
-        case "RNN"
-            modelRun = double(predict(Net,predictors)); 
-        case "FNN"
-            modelRun = double(Net(predictors')');
-    end
-    % -- Undo normalization of the output and project to nodal basis
-    modelRun = modelRun.*T_train_S+T_train_C;
-    deltau_emul = modelRun*B_trunc+T_mean;
-    
-    % measurements
-    out = loadvelocitydata(dataformat(ii),years(ii),0);
-    deltau_meas = out.("yr"+yr1+"_yr"+yr2).du;
-    
-    % measurements in SVD basis
-    deltau_meas_SVD = deltau_meas(:)'*T_reproj'*B_trunc;
-    
-    if only_grounded_ice(ii)
-        deltau_ua(GF.node<0.5) = 0;
-        deltau_emul(GF.node<0.5) = 0;
-        deltau_meas(GF.node<0.5) = 0;
-        deltau_meas_SVD(GF.node<0.5) = 0;
-    end
-    
-    figure; tlo = tiledlayout(1,4,"TileSpacing","tight");
-    
-    nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_ua(:)); hold on;
-    PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
-    caxis([0 750]); colorbar("off");
-    axis tight; xlim([-19 -9]*1e5); axis off;
-    title("Ua closest to MAP");
-    
-    nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_emul(:)); hold on;
-    PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
-    caxis([0 750]); colorbar("off")
-    axis tight;   xlim([-19 -9]*1e5); axis off;
-    title("Emulator at MAP");
-    
-    nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_meas(:)); hold on;
-    PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
-    caxis([0 750]); colorbar("off")
-    axis tight;  xlim([-19 -9]*1e5); axis off;
-    title("Measurements");
-    
-    nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_meas_SVD(:)); hold on;
-    PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
-    caxis([0 750]); colorbar("off"); colormap(cmocean('deep'));
-    axis tight;  xlim([-19 -9]*1e5); axis off;
-    title(["Measurements ";"in SVD basis"]);
-    
-    cb = colorbar;
-    cb.Layout.Tile = "east";
-    cb.Label.String = "\Deltau [m/yr]";
-
-    title(tlo,["Comparison of MAP with measurements "+yearstr;...
-        "MAP: "+...
-        sprintf('log_{10}(gaA)=%.1f, log_{10}(gaC)=%.1f, log_{10}(gsA)=%.1f, log_{10}(gsC)=%.1f, m=%.1f, n=%.1f',MAP(1:6))]);
-    
-    figure; tlo = tiledlayout(1,4,"TileSpacing","tight");
-    
-    nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_ua(:)-deltau_meas(:)); hold on;
-    PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
-    caxis([-250 250]); colorbar("off")
-    axis tight;   xlim([-19 -9]*1e5); axis off;
-    title("Ua - Meas");
-    
-    nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_ua(:)-deltau_meas_SVD(:)); hold on;
-    PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
-    caxis([-250 250]); colorbar("off")
-    axis tight;   xlim([-19 -9]*1e5); axis off;
-    title("Ua - Meas SVD");
-    
-    nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_emul(:)-deltau_meas(:)); hold on;
-    PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
-    caxis([-250 250]); colorbar("off")
-    axis tight;   xlim([-19 -9]*1e5); axis off;
-    title("Emul - Meas");
-    
-    nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_emul(:)-deltau_meas_SVD(:)); hold on;
-    PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
-    caxis([-250 250]); colorbar("off"); colormap(cmocean('balance'));
-    axis tight;   xlim([-19 -9]*1e5); axis off;
-    title("Emul - Meas SVD");
-    
-    cb = colorbar;
-    cb.Layout.Tile = "east";
-    cb.Label.String = "\Deltau [m/yr]";
-    %subplot(1,2,1); hold on; PlotMeshScalarVariable([],MUA_yr2,deltau_ua(:)-deltau_meas(:)); title("Ua nearest to MAP - Measured");
-    %subplot(1,2,2); hold on; PlotMeshScalarVariable([],MUA_yr2,deltau_emul(:)-deltau_meas(:)); title("Emulator at MAP - Measured");
-
-    title(tlo,["Comparison of MAP with measurements "+yearstr;...
-        "MAP: "+...
-        sprintf('log_{10}(gaA)=%.1f, log_{10}(gaC)=%.1f, log_{10}(gsA)=%.1f, log_{10}(gsC)=%.1f, m=%.1f, n=%.1f',MAP(1:6))]);
+    slidinglaw = UserVar.slidinglaw(Itmp);
+    MAP = MAP(1:end-1);
+else
+    Itmp=1;
 end
+
+years_tmp = split(UserVar.years(end),"-");
+yr1 = years_tmp(1);
+yr2 = years_tmp(2);
+load("Delta_u_"+UserVar.domain+"_"+slidinglaw+"_"+yr1+"-"+yr2+".mat");
+MUA = MUA_yr2; GF = GF_yr2;
+
+% nearest predictor and target
+X = [log10(gaA(:)) log10(gaC(:)) log10(gsA(:)) log10(gsC(:)) m(:) n(:)];
+if cycle==2 % add dhdt_err to predictors
+    X = [X log10(dhdt_err(:))];
+end
+X = double(X);
+Ind_MAP=knnsearch(X,MAP);
+deltau_ua = Delta_u.Calv_dh.map(Ind_MAP,:,1);
+
+% Ua simulation number
+load("perturbationdata_"+UserVar.domain+"_"+slidinglaw+".mat", "data");
+ExpID = data(Ind_MAP).Inverse.ExpID;
+InvRestartFileToRead = dir("../ANT_Inverse/cases/"+UserVar.domain+"_nsmbl_Inverse_"+string(ExpID)+"/"+UserVar.domain+"_nsmbl_Inverse_"+...
+    string(ExpID)+"-RestartFile_InverseCycle"+string(cycle)+".mat");
+tmp=load(InvRestartFileToRead.folder+"/"+InvRestartFileToRead.name,"F","MUA");
+figure; PlotMeshScalarVariable([],tmp.MUA,log10(tmp.F.AGlen)); %colormap(flipud(cmocean('deep')));
+tmp.CtrlVarInRestartFile.PlotGLs=1;
+hold on; PlotGroundingLines(tmp.CtrlVarInRestartFile,tmp.MUA,tmp.F.GF,[],[],[],'-k','linewidth',1);
+figure; PlotMeshScalarVariable([],tmp.MUA,log10(tmp.F.C)); %colormap(flipud(cmocean('deep')));
+hold on; PlotGroundingLines(tmp.CtrlVarInRestartFile,tmp.MUA,tmp.F.GF,[],[],[],'-k','linewidth',1);
+
+% emulated values at MAP
+% -- load emulator
+if UserVar.dataformat(Itmp) == "LOGu"
+    yearstr = "LOGu"+UserVar.years(Itmp); 
+else
+    yearstr = UserVar.years(end);
+end
+switch UserVar.NN(Itmp)
+    case "RNN"
+        TF_dir = dir("./RNN/TF_files/tuned_model_"+UserVar.domain+"_Calv_dh_"+yearstr+...
+            "_"+slidinglaw+"_cycle"+string(cycle)+"_floatingice"+string(1-UserVar.only_grounded_ice(Itmp))+...
+            "_includemeasurements0*");
+        net_tmp=importNetworkFromTensorFlow(TF_dir.folder+"/"+TF_dir.name);
+        Net=initialize(net_tmp);
+
+        data_file = dir("./RNN/mat_files/data_"+UserVar.domain+"_Calv_dh_"+yearstr+...
+            "_"+slidinglaw+"_cycle"+string(cycle)+"_floatingice"+string(1-UserVar.only_grounded_ice(Itmp))+...
+            "_includemeasurements0*.mat");
+        load(data_file.folder+"/"+data_file.name,"X_train_C","X_train_S","T_train_C","T_train_S");
+    
+        SVD_file = dir("./RNN/mat_files/SVD_"+UserVar.domain+"_Calv_dh_"+yearstr+...
+            "_"+slidinglaw+"_cycle"+string(cycle)+"_floatingice"+string(1-UserVar.only_grounded_ice(Itmp))+...
+            "_includemeasurements0*.mat");
+        load(SVD_file.folder+"/"+SVD_file.name,"T_reproj","T_mean","B_trunc");
+    case "FNN"
+        load("./FNN/mat_files/FNN_trainscg_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+...
+            "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii))+".mat",...
+            "Net_opt");
+        load("./FNN/mat_files/SVD_Calv_dh_"+yearstr+"_Weertman_cycle"+string(cycle(ii))+...
+            "_floatingice"+string(1-only_grounded_ice(ii))+"_N0k"+string(pct(ii))+".mat",...
+            "B_trunc","T_mean","T_reproj");
+        Net = Net_opt.trained;
+        X_train_C = Net_opt.X_train_C(:)';
+        X_train_S = Net_opt.X_train_S(:)';
+        T_train_C = Net_opt.T_train_C(:)';
+        T_train_S = Net_opt.T_train_S(:)';
+end
+% -- apply normalization to parameters before feeding into emulator
+predictors = (MAP-X_train_C)./X_train_S;
+% -- evaluate emulator 
+switch UserVar.NN(Itmp)
+    case "RNN"
+        modelRun = double(predict(Net,predictors)); 
+    case "FNN"
+        modelRun = double(Net(predictors')');
+end
+% -- Undo normalization of the output and project to nodal basis
+modelRun = modelRun.*T_train_S+T_train_C;
+deltau_emul = modelRun*B_trunc+T_mean;
+
+% measurements
+out = loadvelocitydata(UserVar.dataformat(Itmp),yearstr,0);
+deltau_meas = out.("yr"+yr1+"_yr"+yr2).du;
+
+% measurements in SVD basis
+deltau_meas_SVD = deltau_meas(:)'*T_reproj'*B_trunc;
+
+if UserVar.only_grounded_ice(Itmp)
+    deltau_ua(GF.node<0.5) = 0;
+    deltau_emul(GF.node<0.5) = 0;
+    deltau_meas(GF.node<0.5) = 0;
+    deltau_meas_SVD(GF.node<0.5) = 0;
+end
+
+figure; tlo = tiledlayout(1,4,"TileSpacing","tight");
+
+nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_ua(:)); hold on;
+PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
+caxis([0 750]); colorbar("off");
+axis tight; xlim([-19 -9]*1e5); axis off;
+title("Ua closest to MAP");
+
+nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_emul(:)); hold on;
+PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
+caxis([0 750]); colorbar("off")
+axis tight;   xlim([-19 -9]*1e5); axis off;
+title("Emulator at MAP");
+
+nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_meas(:)); hold on;
+PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
+caxis([0 750]); colorbar("off")
+axis tight;  xlim([-19 -9]*1e5); axis off;
+title("Measurements");
+
+nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_meas_SVD(:)); hold on;
+PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
+caxis([0 750]); colorbar("off"); colormap(cmocean('deep'));
+axis tight;  xlim([-19 -9]*1e5); axis off;
+title(["Measurements ";"in SVD basis"]);
+
+cb = colorbar;
+cb.Layout.Tile = "east";
+cb.Label.String = "\Deltau [m/yr]";
+
+title(tlo,["Comparison of MAP with measurements "+yearstr;...
+    "MAP: "+...
+    sprintf('log_{10}(gaA)=%.1f, log_{10}(gaC)=%.1f, log_{10}(gsA)=%.1f, log_{10}(gsC)=%.1f, m=%.1f, n=%.1f',MAP(1:6))]);
+
+figure; tlo = tiledlayout(1,4,"TileSpacing","tight");
+
+nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_ua(:)-deltau_meas(:)); hold on;
+PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
+caxis([-250 250]); colorbar("off")
+axis tight;   xlim([-19 -9]*1e5); axis off;
+title("Ua - Meas");
+
+nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_ua(:)-deltau_meas_SVD(:)); hold on;
+PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
+caxis([-250 250]); colorbar("off")
+axis tight;   xlim([-19 -9]*1e5); axis off;
+title("Ua - Meas SVD");
+
+nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_emul(:)-deltau_meas(:)); hold on;
+PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
+caxis([-250 250]); colorbar("off")
+axis tight;   xlim([-19 -9]*1e5); axis off;
+title("Emul - Meas");
+
+nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_emul(:)-deltau_meas_SVD(:)); hold on;
+PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
+caxis([-250 250]); colorbar("off"); colormap(cmocean('balance'));
+axis tight;   xlim([-19 -9]*1e5); axis off;
+title("Emul - Meas SVD");
+
+cb = colorbar;
+cb.Layout.Tile = "east";
+cb.Label.String = "\Deltau [m/yr]";
+%subplot(1,2,1); hold on; PlotMeshScalarVariable([],MUA_yr2,deltau_ua(:)-deltau_meas(:)); title("Ua nearest to MAP - Measured");
+%subplot(1,2,2); hold on; PlotMeshScalarVariable([],MUA_yr2,deltau_emul(:)-deltau_meas(:)); title("Emulator at MAP - Measured");
+
+title(tlo,["Comparison of MAP with measurements "+yearstr;...
+    "MAP: "+...
+sprintf('log_{10}(gaA)=%.1f, log_{10}(gaC)=%.1f, log_{10}(gsA)=%.1f, log_{10}(gsC)=%.1f, m=%.1f, n=%.1f',MAP(1:6))]);

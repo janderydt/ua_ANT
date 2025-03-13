@@ -54,19 +54,19 @@ for i in range(data_global.shape[0]):
                     data_global.at[i,'Finished']=0
                     data_global.at[i,'Running']=0
                     data_global.at[i,'Submitted']=0
-                    shutil.rmtree('./cases/ANT_nsmbl_Diagnostic_'+str(ExpID))
+                    shutil.rmtree(expfolder)
             else:
                 print('Wrong combination of read_table and write_table. They should not be the same.')
         else:
             if 'Inverse' in expfolder:
                 print('Cannot find '+exptable+', no changes to '+write_table+' run table.')
-            elif 'Diagnostic' in expfolder:
+            else:
                 print('Cannot find '+exptable+'. Something went wrong for ExpID '+str(ExpID)+'. Deleting experiment folder and resetting global RunTable.')
                 data_global.at[i,'ExpID']=0
                 data_global.at[i,'Finished']=0
                 data_global.at[i,'Running']=0
                 data_global.at[i,'Submitted']=0
-                #shutil.rmtree('./cases/ANT_nsmbl_Diagnostic_'+str(ExpID))
+
 
 # save modified version of the global runtable
 if read_table == 'local' and write_table == 'global':

@@ -7,10 +7,10 @@ only_finished=1;
 
 UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Inverse";
-UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_08-10-2024_"+string([14 15 16 17])+".csv";
-UserVar.idrange = [14000,14999; 15000, 15999; 16000, 16999; 17000, 17999];
+UserVar.Table = UserVar.home+"ANT_"+UserVar.type+"/RunTable_ARCHER2_11-02-2025_"+string([20 21 22 23])+".csv";
+UserVar.idrange = [20000,20999; 21000, 21999; 22000, 22999; 23000, 23999];
 
-inversiondata_filename = "inversiondata_Weertman.mat";
+inversiondata_filename = "inversiondata_AMUND_Weertman.mat";
 
 if exist(inversiondata_filename,"file")
     load(inversiondata_filename);
@@ -36,9 +36,9 @@ for tt=1:numel(UserVar.Table)
     end
 
     %% Gather data
-    for ii=1:numel(Ind)
+    for ii=1:10:numel(Ind)
 
-        folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/ANT_nsmbl_Inverse_"+ExpID(Ind(ii));
+        folder = UserVar.home+"/ANT_"+UserVar.type+"/cases/AMUND_nsmbl_Inverse_"+ExpID(Ind(ii));
         
         [~,data_ind] = ismember(ExpID(Ind(ii)),[data(:).InverseExpID]);
         if data_ind==0 % add new element to data structure
@@ -47,7 +47,7 @@ for tt=1:numel(UserVar.Table)
 
         for cc=1:2
 
-            restartfile = folder+"/ANT_nsmbl_Inverse_"+ExpID(Ind(ii))+"-RestartFile_InverseCycle"+...
+            restartfile = folder+"/AMUND_nsmbl_Inverse_"+ExpID(Ind(ii))+"-RestartFile_InverseCycle"+...
                 string(cc)+".mat";
 
             if exist(restartfile,"file")
@@ -79,7 +79,7 @@ for ii=1:numel(data_tmp)
     data(data_tmp(ii).data_ind).semivariogram_range(data_tmp(ii).cc) = r(ii);
 end
 
-save("test.mat",data);
+save("test.mat","data");
 
 end
 
@@ -100,36 +100,43 @@ else
     %    assemble = 1;
     %end
 end
+
 if assemble
+    nNodes = size(data(1).X,1);
     for ii=1:numel(dist) 
-        RS(ii).Idx = rangesearch(data(1).X,data(1).X,dist(ii),'SortIndices',false);
+        tmp = rangesearch(data(1).X,data(1).X,dist(ii),'SortIndices',false);
+        tmp = cell2nancat(tmp);
+        Inan = find(isnan(tmp));
+        I = [0; Inan];
+        Idx = zeros(nNodes,nNodes);
+        for jj=1:nNodes
+            Istart = I(jj)+1;
+            Iend = I(jj+1)-1;
+            Idx(1:Iend-Istart+1,jj)=tmp(Istart:Iend); % 1st dimension are node indices within range,
+            % 2nd dimension are nodes
+        end
+        Idx_sum = sum(Idx,2); Idx_zero = find(Idx_sum==0);
+        Idx(Idx_zero,:)=[];
+        RS(ii).Idx = Idx;
         disp("Assembling range search. Done "+string(ii)+" out of "+string(numel(dist)));
     end
 end
 
 for ii=1:numel(dist)
-
-    N=zeros(numel(data),1);
-
-    for jj=1:numel(RS(ii).Idx)
-
-        for kk = 1:numel(data)
-
-            z = data(kk).u(jj);
-            z2 = data(kk).u(RS(ii).Idx{jj}(2:end));
-            N(kk) = N(kk)+numel(z2);
-            Y(kk,ii) = Y(kk,ii)+sum((z-z2).^2,"all");
-
-        end
-
+    for kk = 1:numel(data)        
+        utmp = data(kk).u; utmp = [-9999; utmp];
+        z = utmp(RS(ii).Idx+1);
+        z(z==-9999)=nan;
+        z2 = repmat(utmp(2:end)',size(z,1),1);        
+        dz = (z-z2).^2;
+        Y(kk,ii) = mean(dz,'all','omitmissing'); % mse between speeds
+        disp("range: "+string(ii)+"/"+string(numel(dist))+...
+            ", experiments: "+string(kk)+"/"+string(numel(data)));
     end
-
-    disp("done "+string(ii))
-    Y(:,ii) = Y(:,ii)./(2*N); 
-
 end
 
-% fit exponential curve Y(h) = c0*(1-exp(-h/a0)), where 3*a0 is the \
+
+% fit exponential curve Y(h) = c0*(1-exp(-h/a0)), where 3*a0 is the
 % effective range (the h value where the covariance is approximately 5% of
 % its value at zero) and c0 is the scale. The sill can be computed as
 % Y(3*a0). In this model the nugget is zero.
@@ -139,8 +146,8 @@ for kk=1:numel(data)
     fittedmdl = fit(dist(:),Y(kk,:)',mdl,start=[1e5 1e5]);
     r(kk)=3*fittedmdl.a0;
 end
-% figure; hold on;
-% plot(dist,Y);
-% plot(fittedmdl);
+%figure; hold on;
+%plot(dist,Y);
+%plot(fittedmdl);
 
 end

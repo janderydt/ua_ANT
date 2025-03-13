@@ -5,7 +5,7 @@ if nargin==0
     domain = "AMUND";
     perturbation = "Calv_dh"; % valid choices are "Calv", "dhIS", "dh" or "Calv_dh"
     startyear = "2000";
-    targetyear = "2009";
+    targetyear = "2014";
     slidinglaw = ["Weertman" "Umbi"]; % valid choices are "Weertman" or "Umbi"
     cycle = [2 2]; % cycle 1: inversion without spinup, cycle 2: inversion after spinup
     only_grounded_ice = 0;
