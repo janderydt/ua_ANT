@@ -11,10 +11,10 @@ UserVar.home = "/mnt/md0/Ua/cases/ANT/";
 UserVar.type = "Diagnostic";
 
 domain = "AMUND";
-years = ["2000-2020"]; % can be individual years, e.g. "2000", or multiple years
+years = ["2000-2020" "2000-2020"]; % can be individual years, e.g. "2000", or multiple years
     % seperated by a "-", e.g. "2000-2020"
-cycle = [1];  % specify a cycle for each string of years above
-slidinglaw = ["Weertman"]; % specify a sliding law for each string of years above
+cycle = [1 1];  % specify a cycle for each string of years above
+slidinglaw = ["Weertman" "Umbi"]; % specify a sliding law for each string of years above
 
 xmin = zeros(numel(glaciers),1)+200;
 xmax = zeros(numel(glaciers),1);

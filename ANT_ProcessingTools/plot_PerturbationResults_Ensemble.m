@@ -4,12 +4,12 @@ addpath(getenv("froot_tools"));
 addpath(getenv("froot_ua")+"cases/ANT");
 
 if nargin==0
-    diagnostic_to_plot = 'Delta_u'; % Delta_qGL, Delta_qOB, Delta_u
+    diagnostic_to_plot = 'Delta_qGL'; % Delta_qGL, Delta_qOB, Delta_u
     parameter_to_plot = 'm'; % m, n, gaA, gaC, gsA, gsC
     cycles_to_plot = [1 2]; %[1 2]
-    slidinglaw = "Umbi";
+    slidinglaw = "Weertman";
     startyear = "2000";
-    targetyear =  "2014";
+    targetyear =  "2020";
 end
 
 basins_to_analyze = {'F-G',...  % Getz
@@ -128,11 +128,17 @@ data_inverse = tmp.data;
 
 % available drainage basins
 available_basins = fieldnames(data(1).Original.("yr"+startyear).qGL);
-% check that data for basins_to_analyze is available
+% check that data for basins_to_analyze is available and set up data structure
 for bb=1:numel(basins_to_analyze)
     if ~ismember(erase(basins_to_analyze{bb},'-'),available_basins)
         error("Data for basin "+basins_to_analyze{bb}+" is not available.")
     end
+    basin = char(erase(basins_to_analyze{bb},'-'));
+    qGL_orig.(basin) = nan+zeros(numel(data),2);
+    qGL_calv.(basin) = nan+zeros(numel(data),2);
+    qGL_dhIS.(basin) = nan+zeros(numel(data),2);
+    qGL_dh.(basin) = nan+zeros(numel(data),2);
+    qGL_calvdh.(basin) = nan+zeros(numel(data),2);
 end
 
 %% gather data in a user-friendly format
@@ -161,11 +167,31 @@ for ii=1:numel(data)
 
             % grounding line flux
             case "Delta_qGL"
-                qGL_orig.(basin)(ii,:) = data(ii).Original.("yr"+startyear).qGL.(basin)(:)';
-                qGL_calv.(basin)(ii,:) = data(ii).Calv.("yr"+targetyear).qGL.(basin)(:)';
-                qGL_dhIS.(basin)(ii,:) = data(ii).dhIS.("yr"+targetyear).qGL.(basin)(:)';
-                qGL_dh.(basin)(ii,:) = data(ii).dh.("yr"+targetyear).qGL.(basin)(:)';
-                qGL_calvdh.(basin)(ii,:) = data(ii).Calv_dh.("yr"+targetyear).qGL.(basin)(:)';
+                qGL_orig_tmp =  data(ii).Original.("yr"+startyear).qGL.(basin)(:)';
+                if size(qGL_orig_tmp,2)==2
+                    qGL_orig.(basin)(ii,:) = qGL_orig_tmp;
+                end
+                
+                qGL_calv_tmp = data(ii).Calv.("yr"+targetyear).qGL.(basin)(:)';
+                if size(qGL_calv_tmp,2)==2
+                    qGL_calv.(basin)(ii,:) = qGL_calv_tmp;
+                end
+
+                qGL_dhIS_tmp = data(ii).dhIS.("yr"+targetyear).qGL.(basin)(:)';
+                if size(qGL_dhIS_tmp,2)==2
+                    qGL_dhIS.(basin)(ii,:) = qGL_dhIS_tmp;
+                end
+
+                qGL_dh_tmp = data(ii).dh.("yr"+targetyear).qGL.(basin)(:)';
+                if size(qGL_dh_tmp,2)==2
+                    qGL_dh.(basin)(ii,:) = qGL_dh_tmp;
+                end
+
+                qGL_calvdh_tmp = data(ii).Calv_dh.("yr"+targetyear).qGL.(basin)(:)';
+                if size(qGL_calvdh_tmp,2)==2
+                    qGL_calvdh.(basin)(ii,:) = qGL_calvdh_tmp;
+                end
+                
                 if ~isempty(qGL_orig.(basin))
                     qGL_orig.total(ii,:) = qGL_orig.total(ii,:)+qGL_orig.(basin)(ii,:);
                 end
@@ -430,6 +456,8 @@ switch diagnostic_to_plot
         ax1.YScale='log';
         grid(ax1,"on")
         box(ax1,"on");
+        ax1_ylim = ylim(ax1);
+        ylim(ax1,[1 ax1_ylim(2)]);
         ax1_ylim = ylim(ax1);
         yticks(ax1,[10:10:100 200:100:1000]);
         yticklabels(ax1,["10","","","","","","","","","100","","","","","","","","","1000"]);

@@ -1,4 +1,4 @@
-function dqGL = Calc_Delta_qGL(cycle,basins_to_analyze)
+function qGL = Calc_Delta_qGL(cycle,basins_to_analyze)
 
 if nargin==0
     UserVar.cycle = 2;
@@ -70,7 +70,7 @@ end
 % ind_2000_matching(isnan(ind_2000_matching))=[];
 % % calculate difference in grounding line flux between both
 % dqGL = qGL(inv_2018)-qGL(ind_2000_matching);
-
+% 
 % plot distribution
 % edges = linspace(min(qGL),max(qGL),25);
 % [N_2018,~] = histcounts(qGL(inv_2018),edges,'Normalization','percentage');

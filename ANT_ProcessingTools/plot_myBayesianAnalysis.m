@@ -7,8 +7,11 @@ rng(1,'twister'); % set the random number generator for reproducible results
 uqlab; % initialize uqlab
 
 if nargin==0
-    [file,location] = uigetfile("/mnt/md0/Ua/cases/ANT/ANT_ProcessingTools/BayesianAnalysis/*.mat");
-    load(location+"/"+file);
+    [fname,location] = uigetfile("/mnt/md0/Ua/cases/ANT/ANT_ProcessingTools/BayesianAnalysis/*.mat");
+    load(location+"/"+fname);
+else
+    file = dir(UserVar.fname);
+    fname = file.name;
 end
 
 mySolver = myBayesianAnalysis.Options.Solver;
@@ -45,8 +48,8 @@ for ii=1:numel(myPriorDist.Marginals)
     Post(ii).min = min(Post(ii).Sample_NoOutliers);
     Post(ii).max = max(Post(ii).Sample_NoOutliers);
     dsample = Post(ii).max-Post(ii).min;
-    Post(ii).min = Post(ii).min-0.4*dsample;
-    Post(ii).max = Post(ii).max+0.4*dsample;
+    %Post(ii).min = max([Post(ii).min-0.4*dsample myPriorDist.Marginals(ii).Bounds(1)]);
+    %Post(ii).max = min([Post(ii).max+0.4*dsample myPriorDist.Marginals(ii).Bounds(2)]);
     Post(ii).Name = myPriorDist.Marginals(ii).Name;
 
     % Identify discrete variables
@@ -105,21 +108,34 @@ for iy=1:numel(Post)
                 b.CData(2,:) = CM(2).map(16,:);
                 MAPx = round(MAP(ix)/0.5)*0.5-0.25;
             else
-                edges = linspace(Post(ix).min,Post(ix).max,30);
+                edges = linspace(Post(ix).min,Post(ix).max,15);
                 xmid = 0.5*(edges(1:end-1)+edges(2:end));
                 dx = edges(2)-edges(1);
                 if nDiscrete == 0
                     [n,~,~] = histcounts(Post(ix).Sample,edges,"Normalization","probability"); 
-                    b = bar(ax_fig(Ind),xmid,n/dx);     
+                    b = bar(ax_fig(Ind),xmid,n/dx);   
+                    if exist("myPosteriorDist","var")
+                        X = linspace(myPosteriorDist.Marginals(ix).Bounds(1),myPosteriorDist.Marginals(ix).Bounds(2),1e3);
+                        f = uq_all_pdf(X(:),myPosteriorDist.Marginals(ix));
+                        plot(ax_fig(Ind),X,f,'-k','linewidth',1.5);
+                    end
                 elseif nDiscrete == 1
                     % split data into two parts
                     Ind1 = find(Post(end).Sample<=0.5);
                     Ind2 = find(Post(end).Sample>0.5);
                     [n1,~,~] = histcounts(Post(ix).Sample(Ind1),edges); 
                     [n2,~,~] = histcounts(Post(ix).Sample(Ind2),edges); 
-                    b = bar(ax_fig(Ind),xmid,[n1(:)'; n2(:)']/(dx*sum([n1,n2])),'stacked');
-                    b(1).FaceColor = CM(1).map(16,:);
-                    b(2).FaceColor = CM(2).map(16,:);                   
+                    b = bar(ax_fig(Ind),xmid,[n1(:)'; n2(:)']/(dx*sum([n1,n2])),'grouped');
+                    b(1).FaceColor = CM(1).map(16,:); b(1).BarWidth = 1.75;
+                    b(2).FaceColor = CM(2).map(16,:); b(2).BarWidth = 1.75;
+                    if exist("myPosteriorDist","var")
+                        X = linspace(myPosteriorDist(1).Marginals(ix).Bounds(1),myPosteriorDist(1).Marginals(ix).Bounds(2),1e3);
+                        f = uq_all_pdf(X(:),myPosteriorDist(1).Marginals(ix));
+                        plot(ax_fig(Ind),X,f*sum(n1)/sum([n1 n2]),'-','color',CM(1).map(16,:),'linewidth',1.5);
+                        X = linspace(myPosteriorDist(2).Marginals(ix).Bounds(1),myPosteriorDist(2).Marginals(ix).Bounds(2),1e3);
+                        f = uq_all_pdf(X(:),myPosteriorDist(2).Marginals(ix));
+                        plot(ax_fig(Ind),X,f*sum(n2)/sum([n1 n2]),'-','color',CM(2).map(16,:),'linewidth',1.5);
+                    end
                 else
                     error("plotting so far only implemented for 1 discrete variable.");
                 end
@@ -225,6 +241,11 @@ for iy=1:numel(Post)
         grid(ax_fig(Ind),'on'); box(ax_fig(Ind),'on');
     end
 end
+
+pos = get(H,"Position");
+set(H,"PaperPositionMode","Auto","PaperUnits","Inches","PaperSize",[pos(3),pos(4)]);
+Hname = "./Figures/Aposterior_"+erase(fname,".mat");
+print(H,Hname,"-dpng","-r400");
 
 %% MAP
 cycle = UserVar.cycle(1);
@@ -340,7 +361,9 @@ if UserVar.only_grounded_ice(Itmp)
     deltau_meas_SVD(GF.node<0.5) = 0;
 end
 
-figure; tlo = tiledlayout(1,4,"TileSpacing","tight");
+H=fig('units','inches','width',120*12/72.27,'height',50*12/72.27,'fontsize',14,'font','Helvetica');
+
+tlo = tiledlayout(1,4,"TileSpacing","tight");
 
 nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_ua(:)); hold on;
 PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
@@ -374,7 +397,15 @@ title(tlo,["Comparison of MAP with measurements "+yearstr;...
     "MAP: "+...
     sprintf('log_{10}(gaA)=%.1f, log_{10}(gaC)=%.1f, log_{10}(gsA)=%.1f, log_{10}(gsC)=%.1f, m=%.1f, n=%.1f',MAP(1:6))]);
 
-figure; tlo = tiledlayout(1,4,"TileSpacing","tight");
+pos = get(H,"Position");
+set(H,"PaperPositionMode","Auto","PaperUnits","Inches","PaperSize",[pos(3),pos(4)]);
+Hname = "./Figures/MAP_"+erase(fname,"*.mat");
+print(H,Hname,"-dpng","-r400");
+
+
+H=fig('units','inches','width',120*12/72.27,'height',50*12/72.27,'fontsize',14,'font','Helvetica');
+
+tlo = tiledlayout(1,4,"TileSpacing","tight");
 
 nexttile; PlotMeshScalarVariable([],MUA_yr2,deltau_ua(:)-deltau_meas(:)); hold on;
 PlotGroundingLines([],MUA,GF,[],[],[],'-k','linewidth',1);
@@ -409,3 +440,8 @@ cb.Label.String = "\Deltau [m/yr]";
 title(tlo,["Comparison of MAP with measurements "+yearstr;...
     "MAP: "+...
 sprintf('log_{10}(gaA)=%.1f, log_{10}(gaC)=%.1f, log_{10}(gsA)=%.1f, log_{10}(gsC)=%.1f, m=%.1f, n=%.1f',MAP(1:6))]);
+
+pos = get(H,"Position");
+set(H,"PaperPositionMode","Auto","PaperUnits","Inches","PaperSize",[pos(3),pos(4)]);
+Hname = "./Figures/MAP-Meas_"+erase(fname,"*.mat");
+print(H,Hname,"-dpng","-r400");

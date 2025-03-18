@@ -1,17 +1,19 @@
-function Calc_BayesianInference
+function Calc_BayesianInference(UserVar)
 
-Klear;
-
-%% user defined parameters
-UserVar.domain = "AMUND";
-UserVar.slidinglaw = ["Weertman" "Weertman" "Weertman" "Umbi" "Umbi" "Umbi"];
-UserVar.cycle = [2 2 2 2 2 2]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
-UserVar.dataformat = ["du" "du" "du" "du" "du" "du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
-UserVar.only_grounded_ice = [1 1 1 1 1 1];
-UserVar.years = ["2000-2009" "2000-2014" "2000-2020" "2000-2009" "2000-2014" "2000-2020"]; % a vector with years for which velocity data is used
-UserVar.NN = ["RNN" "RNN" "RNN" "RNN" "RNN" "RNN"]; % which emulator? FNN or RNN
-
-UserVar.do_plots = 1;
+if nargin==0
+    Klear
+    %% user defined parameters
+    UserVar.l = 50e3; % range in the ua semivariogram
+    UserVar.fac_su = 3; % multiplication factor for model errors compared to observation errors
+    UserVar.domain = "AMUND";
+    UserVar.slidinglaw = ["Weertman" "Weertman" "Weertman" "Umbi" "Umbi" "Umbi"];
+    UserVar.cycle = [1 1 1 1 1 1]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
+    UserVar.dataformat = ["du" "du" "du" "du" "du" "du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
+    UserVar.only_grounded_ice = [1 1 1 1 1 1];
+    UserVar.years = ["2000-2009" "2000-2014" "2000-2020" "2000-2009" "2000-2014" "2000-2020"]; % a vector with years for which velocity data is used
+    UserVar.NN = ["RNN" "RNN" "RNN" "RNN" "RNN" "RNN"]; % which emulator? FNN or RNN
+    UserVar.do_plots = 1;
+end
 
 % dataformat = ["du"]; % use speed ("u"), log of speed ("LOGu") or change in speed ("du")
 % cycle = [1]; % without spinup (cycle=1) or with spinup and dhdt (cycle=2)
@@ -24,6 +26,7 @@ UserVar.do_plots = 1;
 addpath(genpath(getenv("froot_matlabfunctions")+"/../UQLab_Rel2.0.0"));
 
 rng(1,'twister'); % set the random number generator for reproducible results
+clear uqlab;
 uqlab; % initialize uqlab
 
 %% define prior distribution
@@ -42,40 +45,50 @@ PriorOpts.Name = 'Model parameters prior';
 ind = 1;
 PriorOpts.Marginals(ind).Name = 'log10(gaA)';
 PriorOpts.Marginals(ind).Type = 'Gaussian';
-PriorOpts.Marginals(ind).Parameters = [0 0.5]; % mean and std
+PriorOpts.Marginals(ind).Parameters = [0.7 0.51]; % mean and std
+% mean is based on L curve
+% std is chosen such that integral under distribution between mean-1 
+% and mean+1 (in log space) captures 95% of the variability:
+% -0.5*(1+erf((-0.7+(0.7-1))/(sqrt(2)*0.51)))+0.5*(1+erf(((0.7+1)-0.7)/(sqrt(2)*0.51)))=0.95
 %PriorOpts.Marginals(ind).Type = 'Uniform';
 %PriorOpts.Marginals(ind).Parameters = [-1 log10(200)];
 PriorOpts.Marginals(ind).Bounds = [-1 log10(200)];
 ind = ind+1;
+
 PriorOpts.Marginals(ind).Name = 'log10(gaC)';
 PriorOpts.Marginals(ind).Type = 'Gaussian';
-PriorOpts.Marginals(ind).Parameters = [0 0.5];
+PriorOpts.Marginals(ind).Parameters = [0.7 0.51];
 %PriorOpts.Marginals(ind).Type = 'Uniform';
 %PriorOpts.Marginals(ind).Parameters = [-1 log10(50)];
 PriorOpts.Marginals(ind).Bounds = [-1 log10(50)];
 ind = ind+1;
+
 PriorOpts.Marginals(ind).Name = 'log10(gsA)';
 PriorOpts.Marginals(ind).Type = 'Gaussian';
-PriorOpts.Marginals(ind).Parameters = [4 0.5];
+PriorOpts.Marginals(ind).Parameters = [4.3 0.51];
 %PriorOpts.Marginals(ind).Type = 'Uniform';
 %PriorOpts.Marginals(ind).Parameters = [3 6];
 PriorOpts.Marginals(ind).Bounds = [3 6];
 ind = ind+1;
+
 PriorOpts.Marginals(ind).Name = 'log10(gsC)';
 PriorOpts.Marginals(ind).Type = 'Gaussian';
-PriorOpts.Marginals(ind).Parameters = [4 0.5];
+PriorOpts.Marginals(ind).Parameters = [4.3 0.51];
 %PriorOpts.Marginals(ind).Type = 'Uniform';
 %PriorOpts.Marginals(ind).Parameters = [3 6];
 PriorOpts.Marginals(ind).Bounds = [3 6];
 ind = ind+1;
+
 PriorOpts.Marginals(ind).Name = 'm';
 PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [2 9];
-
+PriorOpts.Marginals(ind).Bounds = [2 9];
 ind = ind+1;
+
 PriorOpts.Marginals(ind).Name = 'n';
 PriorOpts.Marginals(ind).Type = 'Uniform';
 PriorOpts.Marginals(ind).Parameters = [2 5];
+PriorOpts.Marginals(ind).Bounds = [2 5];
 
 % add dhdt if any cycle>1
 if max(UserVar.cycle) > 1
@@ -83,7 +96,7 @@ if max(UserVar.cycle) > 1
     PriorOpts.Marginals(ind).Name = 'log(dhdt_err)';
     PriorOpts.Marginals(ind).Type = 'Uniform';
     PriorOpts.Marginals(ind).Parameters = [log10(0.05) log10(0.5)];
-    %PriorOpts.Marginals(ind).Bounds = [log10(0.05) log10(0.5)];
+    PriorOpts.Marginals(ind).Bounds = [log10(0.05) log10(0.5)];
 end
 
 % add discrete variables
@@ -94,12 +107,14 @@ if ncycle>1
     PriorOpts.Marginals(ind).Name = 'Cycle';
     PriorOpts.Marginals(ind).Type = 'Uniform';
     PriorOpts.Marginals(ind).Parameters = [0 1];
+    PriorOpts.Marginals(ind).Bounds = [0 1];
 end
 if nslidinglaw>1
     ind = ind+1;
     PriorOpts.Marginals(ind).Name = 'SlidingLaw';
     PriorOpts.Marginals(ind).Type = 'Uniform';
     PriorOpts.Marginals(ind).Parameters = [0 1];
+    PriorOpts.Marginals(ind).Bounds = [0 1];
 end
 
 myPriorDist = uq_createInput(PriorOpts);
@@ -120,8 +135,8 @@ myLogLikelihood = @(params,y) customLogLikelihood(params, y, UserVar);
 %% define solver options
 mySolver.Type = 'MCMC';
 mySolver.MCMC.Sampler = 'AIES'; % AM, HMS or AIES (default)
-mySolver.MCMC.Steps = 10000; % T=300 default
-mySolver.MCMC.NChains = 100; % C=100 default
+mySolver.MCMC.Steps = 20000; % T=300 default
+mySolver.MCMC.NChains = 25; % C=100 default
 mySolver.MCMC.Visualize.Parameters = 1:numel(PriorOpts.Marginals);
 mySolver.MCMC.Visualize.Interval = 20;
 
@@ -150,7 +165,9 @@ fname = "./BayesianAnalysis/BayesianAnalysis_Steps"+string(mySolver.MCMC.Steps)+
     string(mySolver.MCMC.NChains)+"_"+UserVar.dataformat(1)+"_Calv_dh_"+...
             strjoin(string(UserVar.years),"_")+"_"+strjoin(string(UserVar.slidinglaw),"_")+"_cycle"+string(UserVar.cycle(1))+...
             "_floatingice"+string(1-UserVar.only_grounded_ice(1));
-save(fname(1),"myBayesianAnalysis","UserVar");
+n_exist = numel(dir(fname(1)+"*.mat"));
+UserVar.fname = fname(1)+"_v"+string(n_exist+1)+".mat";
+save(UserVar.fname,"myBayesianAnalysis","UserVar");
 
 %% print some results
 uq_print(myBayesianAnalysis);
@@ -191,6 +208,8 @@ dataformat = UserVar.dataformat;
 only_grounded_ice = double(UserVar.only_grounded_ice);
 years = UserVar.years;
 NN = UserVar.NN;
+l = UserVar.l; % range in the semivariogram
+fac_su = UserVar.fac_su; % multiplication factor for model errors compared to observation errors
 N = numel(slidinglaw);
 
 % Load forward model(s)
@@ -293,15 +312,20 @@ if isempty(M)
         S_meas = T_reproj*diag(std_tmp.^2)*T_reproj';
 
         % 2. Ua errors: obtained from  FIXME
-        s_u = 3*mean(std_tmp); %m/yr
+        su = fac_su*mean(std_tmp); %m/yr
         % if dataformat == "LOGu"
         %     s_u = log10(s_u);
         % end
-        l = 50e3; % range in the semivariogram
-        load("Delta_u_"+domain+"_"+slidinglaw(1)+"_"+yearstr+".mat","MUA_yr2");
+        load("Delta_u_"+domain+"_"+slidinglaw(1)+"_"+yearstr+".mat","MUA_yr2","GF_yr2");
         MUA = MUA_yr2;
+        GF= GF_yr2;
         D_tmp = pdist2(MUA.coordinates,MUA.coordinates,"squaredeuclidean");
-        D_tmp = s_u^2*exp(-D_tmp/(2*l^2));
+        su_nodal = su*ones(MUA.Nnodes,1);
+        if only_grounded_ice(ii)==0
+            su_nodal(GF.node<0.5)=2*su; % give floating nodes a larger error
+        end
+        D_tmp = tensorprod(su_nodal,su_nodal,2).*exp(-D_tmp/(2*l^2));
+
         S_ua = T_reproj*D_tmp*T_reproj';
         clear D_tmp
 
