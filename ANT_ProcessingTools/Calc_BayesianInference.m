@@ -3,6 +3,7 @@ function Calc_BayesianInference(UserVar)
 if nargin==0
     Klear
     %% user defined parameters
+    UserVar.a = 2;
     UserVar.l = 50e3; % range in the ua semivariogram
     UserVar.fac_su = 3; % multiplication factor for model errors compared to observation errors
     UserVar.domain = "AMUND";
@@ -141,7 +142,7 @@ mySolver.MCMC.Visualize.Parameters = 1:numel(PriorOpts.Marginals);
 mySolver.MCMC.Visualize.Interval = 20;
 
 if mySolver.MCMC.Sampler == "AIES"
-    mySolver.MCMC.a = 2; % default a=2, Rosier et al.: a=1.5
+    mySolver.MCMC.a = UserVar.a; % default a=2, Rosier et al.: a=1.5
 else
     error("Define parameters for sampler.")
 end
@@ -161,13 +162,17 @@ myBayesianAnalysis = uq_createAnalysis(BayesOpts);
 %% postprocessing and save
 uq_postProcessInversionMCMC(myBayesianAnalysis,'pointEstimate','MAP','gelmanRubin','true');
 
-fname = "./BayesianAnalysis/BayesianAnalysis_Steps"+string(mySolver.MCMC.Steps)+"_NChains"+...
+UserVar.location = pwd+"/BayesianAnalysis/";
+fname = "BayesianAnalysis_Steps"+string(mySolver.MCMC.Steps)+"_NChains"+...
     string(mySolver.MCMC.NChains)+"_"+UserVar.dataformat(1)+"_Calv_dh_"+...
             strjoin(string(UserVar.years),"_")+"_"+strjoin(string(UserVar.slidinglaw),"_")+"_cycle"+string(UserVar.cycle(1))+...
             "_floatingice"+string(1-UserVar.only_grounded_ice(1));
-n_exist = numel(dir(fname(1)+"*.mat"));
+n_exist = numel(dir(UserVar.location+fname(1)+"*.mat"));
 UserVar.fname = fname(1)+"_v"+string(n_exist+1)+".mat";
-save(UserVar.fname,"myBayesianAnalysis","UserVar");
+
+save(UserVar.location+UserVar.fname,"myBayesianAnalysis","UserVar");
+
+Calc_MarginalsInference(UserVar.location,UserVar.fname);
 
 %% print some results
 uq_print(myBayesianAnalysis);

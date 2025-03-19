@@ -1,24 +1,20 @@
-function Calc_MarginalsInference
+function Calc_MarginalsInference(location,fname)
 
-Klear
+if nargin==0    
+    Klear;
+    %% initialize UQLAB
+    addpath(genpath(getenv("froot_matlabfunctions")+"/../UQLab_Rel2.0.0"));
+    rng(1,'twister'); % set the random number generator for reproducible results
+    uqlab; % initialize uqlab
+    %% load sample from existing Bayesian Analysis
+    [fname,location] = uigetfile("/mnt/md0/Ua/cases/ANT/ANT_ProcessingTools/BayesianAnalysis/*.mat","MultiSelect","on");
+end
 
-%% initialize UQLAB
-addpath(genpath(getenv("froot_matlabfunctions")+"/../UQLab_Rel2.0.0"));
-
-rng(1,'twister'); % set the random number generator for reproducible results
-uqlab; % initialize uqlab
-
-%% load sample from existing Bayesian Analysis
-[fname,location] = uigetfile("/mnt/md0/Ua/cases/ANT/ANT_ProcessingTools/BayesianAnalysis/*.mat","MultiSelect","on");
 fname = string(fname);
 
 for ff=1:numel(fname)
 
-    if numel(fname)>1
-        load(location+"/"+fname(ff));
-    else
-        load(location+"/"+fname);
-    end
+    load(location+"/"+fname(ff));
     
     if ~exist("myPosteriorDist","var")
 

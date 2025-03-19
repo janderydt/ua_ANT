@@ -24,27 +24,34 @@ for ff=1:numel(fname)
     data(ff).l = UserVar.l;
     data(ff).fac_su = UserVar.fac_su;
     data(ff).mpsrf = myBayesianAnalysis.Results.PostProc.MPSRF;
+    tmp = split(UserVar.fname,"_");
+    data(ff).nametag = erase(tmp(end),".mat");
 
 end
 
 % reorder data
-[B,I] = sort([data(:).fac_su],'ascend');
+[~,I] = sort([data(:).fac_su],'ascend');
 data = data(I);
-
-ndiscrete = numel(data(1).myPosteriorDist);
-nmarginals = numel(data(1).myPosteriorDist(1).dist.Marginals);
-l = unique([data(:).l]);
 fac_su = unique([data(:).fac_su]);
-linewidth = linspace(2,0.75,numel(l));
-linestyle = ["-","--",":","-."];
-CM = cmocean('curl',2*numel(fac_su));
-if ndiscrete==1
-    CM = CM(1:numel(fac_su),:);
-else
-    CM(numel(fac_su):end,:)=flipud(CM(numel(fac_su):end,:));
+for ii=1:numel(fac_su)
+    I=find([data(:).fac_su]==fac_su(ii));
+    % reorder data
+    [~,I2] = sort([data(I).l],'ascend');
+    data(I) = data(I(I2));
 end
 
-for ff=1:numel(fname)
+l = unique([data(:).l]);
+ndiscrete = numel(data(1).myPosteriorDist);
+nmarginals = numel(data(1).myPosteriorDist(1).dist.Marginals);
+
+linewidth = linspace(2,0.75,numel(fac_su));
+linestyle = ["-","--",":","-.","-","--",":","-."];
+CM = flipud(cmocean('speed',numel(l)+1)); CM=CM(1:end-1,:);
+if ndiscrete==2
+    CM = [CM; flipud(cmocean('matter',numel(l)+1))]; CM=CM(1:end-1,:);
+end
+
+for ff=1:numel(data)
     data(ff).linewidthind = find(fac_su==data(ff).fac_su);
     data(ff).linestyleind = find(fac_su==data(ff).fac_su);
     data(ff).colorind = find(l==data(ff).l);
@@ -73,7 +80,7 @@ for jj=1:nmarginals
             if jj==1 && kk==1
                 g(nn) = plot(ax_fig(jj),X,f,linestyle(data(ii).linestyleind),'color',CM((kk-1)*numel(fac_su)+data(ii).colorind,:),...
                     'LineWidth',linewidth(data(ii).linewidthind),'markersize',4);
-                label(nn) = "fac="+string(data(ii).fac_su)+", l="+string(data(ii).l)+", MPSRF="+sprintf("%.1f",data(ii).mpsrf);
+                label(nn) = "("+data(ii).nametag+") fac="+string(data(ii).fac_su)+", l="+string(data(ii).l)+", MPSRF="+sprintf("%.1f",data(ii).mpsrf);
                 nn=nn+1;
             else
                 plot(ax_fig(jj),X,f,linestyle(data(ii).linestyleind),'color',CM((kk-1)*numel(fac_su)+data(ii).colorind,:),...
@@ -88,6 +95,7 @@ for ii=1:nmarginals
     box(ax_fig(ii),'on');
     xlabel(ax_fig(ii),myBayesianAnalysis.PriorDist.Marginals(ii).Name);
     if ii==1
-        legend(g,label);
+        leg=legend(g,label,'Orientation','Horizontal','NumColumns',5);
+        leg.Layout.Tile = 'north';
     end
 end

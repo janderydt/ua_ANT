@@ -10,7 +10,7 @@ if nargin==0
     [fname,location] = uigetfile("/mnt/md0/Ua/cases/ANT/ANT_ProcessingTools/BayesianAnalysis/*.mat");
     load(location+"/"+fname);
 else
-    file = dir(UserVar.fname);
+    file = dir(UserVar.location+"/"+UserVar.fname);
     fname = file.name;
 end
 
@@ -129,12 +129,16 @@ for iy=1:numel(Post)
                     b(1).FaceColor = CM(1).map(16,:); b(1).BarWidth = 1.75;
                     b(2).FaceColor = CM(2).map(16,:); b(2).BarWidth = 1.75;
                     if exist("myPosteriorDist","var")
-                        X = linspace(myPosteriorDist(1).Marginals(ix).Bounds(1),myPosteriorDist(1).Marginals(ix).Bounds(2),1e3);
-                        f = uq_all_pdf(X(:),myPosteriorDist(1).Marginals(ix));
-                        plot(ax_fig(Ind),X,f*sum(n1)/sum([n1 n2]),'-','color',CM(1).map(16,:),'linewidth',1.5);
-                        X = linspace(myPosteriorDist(2).Marginals(ix).Bounds(1),myPosteriorDist(2).Marginals(ix).Bounds(2),1e3);
-                        f = uq_all_pdf(X(:),myPosteriorDist(2).Marginals(ix));
-                        plot(ax_fig(Ind),X,f*sum(n2)/sum([n1 n2]),'-','color',CM(2).map(16,:),'linewidth',1.5);
+                        if ~isempty(myPosteriorDist(1).dist)
+                            X = linspace(myPosteriorDist(1).dist.Marginals(ix).Bounds(1),myPosteriorDist(1).dist.Marginals(ix).Bounds(2),1e3);
+                            f = uq_all_pdf(X(:),myPosteriorDist(1).dist.Marginals(ix));
+                            plot(ax_fig(Ind),X,f*sum(n1)/sum([n1 n2]),'-','color',CM(1).map(16,:),'linewidth',1.5);
+                        end
+                        if ~isempty(myPosteriorDist(2).dist)
+                            X = linspace(myPosteriorDist(2).dist.Marginals(ix).Bounds(1),myPosteriorDist(2).dist.Marginals(ix).Bounds(2),1e3);
+                            f = uq_all_pdf(X(:),myPosteriorDist(2).dist.Marginals(ix));
+                            plot(ax_fig(Ind),X,f*sum(n2)/sum([n1 n2]),'-','color',CM(2).map(16,:),'linewidth',1.5);
+                        end
                     end
                 else
                     error("plotting so far only implemented for 1 discrete variable.");
